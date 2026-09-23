@@ -3,12 +3,18 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-agent" content="format=html5">
 <meta name="theme-color" content="#0f766e">
 <title>南京 × 苏州｜10天9晚旅行手册 2026</title>
 <style>
 :root{--bg:#f4f7f4;--card:#fff;--ink:#182522;--muted:#6d7b76;--line:#e2ebe6;--brand:#0f766e;--brand2:#14b8a6;--gold:#c8913d;--rose:#c85b72;--shadow:0 18px 50px rgba(20,55,47,.09);--r:24px}
 *{box-sizing:border-box}
 html{scroll-behavior:smooth; overflow-anchor:none;}
+html, body {
+    height: 100%;
+    min-height: 100%;
+    overscroll-behavior-y: none;
+}
 body{
     margin:0;
     background:radial-gradient(circle at 5% 0%,#e5f4ef 0,#f4f7f4 34%,#f4f7f4 100%);
@@ -17,10 +23,26 @@ body{
     line-height:1.7;
     -webkit-font-smoothing:antialiased;
     overflow-anchor:none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
 }
 button{font:inherit;touch-action:manipulation;min-height:44px;min-width:44px}
-.wrap{max-width:1220px;margin:auto;padding:22px}
-.hero{position:relative;overflow:hidden;border-radius:34px;padding:42px;background:linear-gradient(135deg,#0b3d36,#0f766e 55%,#1b8d7b);color:#fff;box-shadow:var(--shadow)}
+.wrap{
+    max-width:1220px;
+    margin:0 auto;
+    padding:22px;
+    padding-top: max(22px, env(safe-area-inset-top));
+    padding-bottom: max(22px, env(safe-area-inset-bottom));
+}
+.hero{
+    position:relative;
+    overflow:hidden;
+    border-radius:34px;
+    padding:42px;
+    background:linear-gradient(135deg,#0b3d36,#0f766e 55%,#1b8d7b);
+    color:#fff;
+    box-shadow:var(--shadow)
+}
 .hero:before,.hero:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
 .hero:before{width:330px;height:330px;right:-120px;top:-170px}
 .hero:after{width:220px;height:220px;right:90px;bottom:-170px}
@@ -53,6 +75,9 @@ button{font:inherit;touch-action:manipulation;min-height:44px;min-width:44px}
 .side-actions button,.topbar button{border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;cursor:pointer}
 .side-actions button:hover,.topbar button:hover{border-color:#b7d7cf;background:#f6fbf9}
 .maincard{padding:27px;min-height:680px}
+#dayContent {
+    min-height: 420px;
+}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
 .hint{font-size:12px;color:var(--muted)}
 .navbuttons{display:flex;gap:7px}
@@ -85,27 +110,73 @@ button{font:inherit;touch-action:manipulation;min-height:44px;min-width:44px}
 .budget{width:100%;border-collapse:collapse;min-width:650px}
 .budget th,.budget td{border:1px solid var(--line);padding:9px 11px;text-align:left}
 .budget th{background:#f0f7f4}
-.footer{text-align:center;color:var(--muted);font-size:12px;padding:26px 0 8px}
-.toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));transform:translate(-50%,20px);opacity:0;pointer-events:none;background:#173d37;color:#fff;padding:10px 14px;border-radius:999px;transition:.25s;box-shadow:var(--shadow);font-size:13px;z-index:999}
+.footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    padding:26px 0;
+    padding-bottom: calc(26px + env(safe-area-inset-bottom));
+}
+.toast {
+    position: fixed;
+    left: 50%;
+    bottom: calc(28px + env(safe-area-inset-bottom));
+    transform: translate(-50%, 20px);
+    opacity: 0;
+    pointer-events: none;
+    background: #173d37;
+    color: #fff;
+    padding: 10px 14px;
+    border-radius: 999px;
+    transition: .25s;
+    box-shadow: var(--shadow);
+    font-size: 13px;
+    z-index: 999;
+    max-width: 92%;
+    white-space: nowrap;
+}
 .toast.show{opacity:1;transform:translate(-50%,0)}
 
-/* 移动端 */
+/* 移动端大屏断点 */
 @media(max-width:980px){
   .cards{grid-template-columns:repeat(3,1fr)}
   .grid{grid-template-columns:1fr}
   .sidebar{position:static;top:auto}
   .daylist{display:grid;grid-template-columns:repeat(2,1fr)}
+  body {
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+  .wrap {
+        padding-top: max(12px, env(safe-area-inset-top));
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+    }
+  .hero {
+        padding-top: 28px;
+        padding-bottom: 28px;
+    }
 }
+/* 手机小屏 */
 @media(max-width:650px){
-  .wrap{padding:11px}
-  .hero{padding:28px 21px;border-radius:25px}
+  .wrap{
+        padding:11px;
+        padding-top: max(11px, env(safe-area-inset-top));
+        padding-bottom: max(11px, env(safe-area-inset-bottom));
+    }
+  .hero{padding:24px 18px;border-radius:25px}
   .cards{grid-template-columns:1fr 1fr}
-  .maincard{padding:20px}
+  .maincard{padding:18px;padding-bottom:24px}
+  #dayContent {
+        min-height: 360px;
+    }
   .dayhead h2{font-size:27px}
   .twocol,.lower{grid-template-columns:1fr}
   .daylist{grid-template-columns:1fr 1fr}
   .stat strong{font-size:18px}
   .budget{min-width:100%}
+  .footer {
+        padding-bottom: calc(14px + env(safe-area-inset-bottom));
+    }
 }
 </style>
 </head>
@@ -225,10 +296,7 @@ function findAutoIndex(){
 function render(doScroll=false){
     if(renderLock) return;
     renderLock=true;
-
-    //===== 保存当前页面滚动位置【关键修复】=====
     const saveScrollY = window.scrollY || document.documentElement.scrollTop || document.body.scrollTop;
-
     const d=days[index];
     document.querySelectorAll('.day').forEach((el,i)=>el.classList.toggle('active',i===index));
     document.getElementById('dayContent').innerHTML=`<div class="dayhead"><div><span class="badge ${d.wedding?'wedding':''}">${d.wedding?'💍 婚纱照核心日':'DAY '+(index+1)}</span><h2>${d.title}</h2><div class="sub">2026年${d.date.replace('/','月')}日 · ${d.dow} · ${d.sub}</div></div><div>${d.tags.map(t=>`<span class="badge" style="margin-left:5px">#${t}</span>`).join('')}</div></div>${d.html}`;
@@ -236,14 +304,11 @@ function render(doScroll=false){
     document.getElementById('next').disabled=index===days.length-1;
     document.getElementById('prev').style.opacity=index===0?.45:1;
     document.getElementById('next').style.opacity=index===days.length-1?.45:1;
-
     if(doScroll){
         window.scrollTo({top:0,behavior:'smooth'});
     }else{
-        //恢复保存的滚动位置，防止innerHTML重绘跳到顶部
         window.scrollTo(0, saveScrollY);
     }
-
     setTimeout(()=>{renderLock=false},120);
 }
 
@@ -317,8 +382,11 @@ document.addEventListener('keydown',e=>{
 });
 
 buildList();
-index=findAutoIndex();
-render(true);
+index = findAutoIndex();
+render(false);
+setTimeout(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+}, 50);
 
 {
     const ck=document.getElementById('weddingChecks');
@@ -330,7 +398,7 @@ const badge=document.getElementById('todayBadge');
 const note=document.getElementById('todayNote');
 if(now<localDateOnly(start)){
     badge.textContent='🧭 出发前｜默认显示 Day 1';
-    note.textContent='到10月16日后会自动切换到当天行程。'
+    note.textContent='到10月16日后会自动定位到当天行程。'
 }else if(now>end){
     badge.textContent='🏁 行程已结束｜显示 Day 10';
     note.textContent='如需复盘可手动切换10天行程。'
