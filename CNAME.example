@@ -1,0 +1,4 @@
+# 如果以后绑定自己的域名：
+# 1. 将此文件改名为 CNAME
+# 2. 把下一行替换成你的域名，例如：trip.example.com
+trip.example.com
