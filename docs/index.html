@@ -19,7 +19,10 @@
   --shadow:0 18px 50px rgba(20,55,47,.09);
   --r:24px
 }
-*{box-sizing:border-box}
+*{
+  box-sizing:border-box;
+  min-width:0;
+}
 html{
   scroll-behavior:smooth;
   overflow-anchor:none;
@@ -43,7 +46,6 @@ body{
 }
 button{font:inherit;touch-action:manipulation;min-height:44px;min-width:44px}
 a{word-break:break-word}
-
 .wrap{
   width:100%;
   max-width:100%;
@@ -53,7 +55,6 @@ a{word-break:break-word}
   padding-bottom:max(12px,env(safe-area-inset-bottom));
   overflow:hidden
 }
-
 .hero{
   position:relative;
   overflow:hidden;
@@ -79,7 +80,6 @@ a{word-break:break-word}
 .status{position:relative;z-index:2;margin-top:18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .status-badge{background:#fff;color:var(--brand);padding:7px 11px;border-radius:999px;font-weight:800;font-size:12px}
 .status-note{font-size:12px;color:rgba(255,255,255,.82)}
-
 .cards{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -96,13 +96,11 @@ a{word-break:break-word}
 .stat .label{font-size:11px;color:var(--muted)}
 .stat strong{display:block;font-size:19px;margin:2px 0}
 .stat small{color:var(--muted);font-size:12px}
-
 .grid{
   display:grid;
   grid-template-columns:1fr;
   gap:14px
 }
-
 .sidebar,.maincard,.detail{
   background:rgba(255,255,255,.92);
   border:1px solid var(--line);
@@ -112,13 +110,11 @@ a{word-break:break-word}
   max-width:100%;
   overflow:hidden
 }
-
 .sidebar{
   padding:14px;
   position:static
 }
 .side-title{font-weight:900;margin:2px 4px 10px;font-size:15px}
-
 .daylist{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -143,7 +139,6 @@ a{word-break:break-word}
 .daynum{font-weight:900;color:var(--brand)}
 .date{font-size:11px}
 .name{font-size:13px;font-weight:800}
-
 .side-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px}
 .side-actions button,.topbar button{
   border:1px solid var(--line);
@@ -154,7 +149,6 @@ a{word-break:break-word}
   font-size:13px
 }
 .side-actions button:hover,.topbar button:hover{border-color:#b7d7cf;background:#f6fbf9}
-
 .maincard{
   padding:18px;
   width:100%;
@@ -167,7 +161,6 @@ a{word-break:break-word}
   max-width:100%;
   overflow:hidden
 }
-
 .topbar{
   display:flex;
   justify-content:space-between;
@@ -178,7 +171,6 @@ a{word-break:break-word}
 }
 .hint{font-size:12px;color:var(--muted);flex:1 1 180px}
 .navbuttons{display:flex;gap:7px}
-
 .dayhead{
   display:flex;
   flex-wrap:wrap;
@@ -201,13 +193,11 @@ a{word-break:break-word}
   color:#0b675e
 }
 .wedding{background:#fff0f3;color:#a53f58}
-
 .maincard h3{font-size:18px;margin:22px 0 6px}
 .maincard h4{font-size:15px;margin:16px 0 5px}
 .maincard p{margin:7px 0;color:#35443f;font-size:14px}
 .maincard ul{padding-left:20px;margin:6px 0}
 .maincard li{margin:3px 0;font-size:14px}
-
 .quote{
   padding:12px 14px;
   border-left:4px solid var(--brand2);
@@ -230,7 +220,6 @@ a{word-break:break-word}
   border:1px solid #f2c9d2;
   font-size:14px
 }
-
 .twocol{display:grid;grid-template-columns:1fr;gap:10px}
 .mini{
   border:1px solid var(--line);
@@ -240,10 +229,8 @@ a{word-break:break-word}
   font-size:14px
 }
 .mini strong{display:block;margin-bottom:3px}
-
 .check{display:flex;gap:8px;align-items:center;margin:6px 0}
 .check input{width:17px;height:17px;accent-color:var(--brand)}
-
 .maplink{
   display:inline-flex;
   margin-top:6px;
@@ -256,7 +243,6 @@ a{word-break:break-word}
   font-size:12px
 }
 .maplink:hover{background:#d9f0ea}
-
 .lower{
   display:grid;
   grid-template-columns:1fr;
@@ -267,7 +253,6 @@ a{word-break:break-word}
 .detail summary{padding:16px 0;font-weight:900;cursor:pointer;font-size:15px}
 .detail .inside{padding:0 0 16px}
 .detail h3{font-size:17px}
-
 .tablewrap{
   width:100%;
   max-width:100%;
@@ -277,7 +262,6 @@ a{word-break:break-word}
 .budget{width:100%;border-collapse:collapse}
 .budget th,.budget td{border:1px solid var(--line);padding:8px 9px;text-align:left;font-size:13px}
 .budget th{background:#f0f7f4}
-
 .booking-grid{display:grid;grid-template-columns:1fr;gap:12px}.booking-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:#fbfdfc}.booking-card h3{margin:0 0 6px}.booking-card p{margin:6px 0}.booking-card a{color:#08776b;font-weight:800}.booking-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.booking-actions button{border:0;border-radius:12px;padding:10px 14px;background:var(--brand);color:white;font-weight:800;cursor:pointer}.booking-actions .secondary{background:#e8f5f1;color:#075e56}.source-note{font-size:12px;color:var(--muted)}
 .footer{
   text-align:center;
@@ -286,7 +270,6 @@ a{word-break:break-word}
   padding:20px 10px 14px;
   padding-bottom:calc(14px + env(safe-area-inset-bottom))
 }
-
 .toast{
   position:fixed;
   left:50%;
@@ -306,26 +289,6 @@ a{word-break:break-word}
   white-space:nowrap
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
-
-@media (min-width: 650px){
-  .wrap{padding:18px}
-  .hero{padding:30px}
-  .cards{grid-template-columns:repeat(3,1fr)}
-  .twocol{grid-template-columns:1fr 1fr}
-}
-
-@media (min-width: 980px){
-  .wrap{padding:22px}
-  .hero{padding:42px}
-  .hero h1{font-size:clamp(32px,4vw,54px)}
-  .cards{grid-template-columns:repeat(5,1fr)}
-  .grid{grid-template-columns:280px 1fr}
-  .sidebar{position:sticky;top:14px}
-  .daylist{grid-template-columns:1fr}
-  .maincard{padding:26px}
-  .twocol{grid-template-columns:1fr 1fr}
-  .lower{grid-template-columns:1fr 1fr}
-}
 </style>
 </head>
 <body>
@@ -337,7 +300,6 @@ a{word-break:break-word}
 <div class="pills"><span class="pill">#不赶路</span><span class="pill">#婚纱照</span><span class="pill">#苏州古城</span><span class="pill">#自然旅拍</span><span class="pill">#预算¥14,000内</span></div>
 <div class="status"><span class="status-badge" id="todayBadge">正在定位日期…</span><span class="status-note" id="todayNote"></span></div>
 </header>
-
 <section class="cards">
 <div class="stat"><div class="label">总预算</div><strong>¥13,000–14,000</strong><small>目标约 ¥13,700</small></div>
 <div class="stat"><div class="label">婚纱照</div><strong>¥9,000</strong><small>10/22 全天</small></div>
@@ -345,14 +307,12 @@ a{word-break:break-word}
 <div class="stat"><div class="label">旅行旅拍</div><strong>≤ ¥1,000</strong><small>自然纪实</small></div>
 <div class="stat"><div class="label">纪念品</div><strong>≤ ¥500</strong><small>南京≤200 / 苏州≤300</small></div>
 </section>
-
 <div class="grid">
 <aside class="sidebar">
 <div class="side-title">🗓 每日规划</div>
 <div class="daylist" id="dayList"></div>
 <div class="side-actions"><button onclick="jumpToday()">📍 定位今天</button><button onclick="copyDay()">📋 复制本日</button></div>
 </aside>
-
 <main class="maincard">
 <div class="topbar">
   <div class="hint">点击日期切换 · ← → 键盘也可切换</div>
@@ -364,7 +324,6 @@ a{word-break:break-word}
 <section id="dayContent"></section>
 </main>
 </div>
-
 <section class="lower">
 <details class="detail" open><summary>💰 预算与酒店策略</summary>
 <div class="inside">
@@ -384,7 +343,6 @@ a{word-break:break-word}
 <ul><li>养育巷349号附近：都市118连锁酒店</li><li>养育巷229号附近：苏州轻贸酒店式公寓</li><li>养育巷99号：锦江之星苏州养育巷店</li><li>景德路368号：ANDU HOTEL</li></ul>
 <p class="hint">这些是订房时的优先询价点，不代表已预订；10月实际房价以订房平台为准。</p>
 </div></details>
-
 <details class="detail" open><summary>💍 合喜映画｜婚纱照提醒 & 拍摄清单</summary>
 <div class="inside">
 <div class="rose"><strong>10/22全天只做婚纱照。</strong><br>苏州HX·合喜映画婚纱摄影：苏州市姑苏区养育巷415号婚庆创意产业园15幢。</div>
@@ -402,7 +360,6 @@ a{word-break:break-word}
 <h3>订单防二次消费</h3>
 <div class="quote">拍摄前确认：底片、精修、相册、礼服升级、化妆、假睫毛/饰品、外景门票、外景交通、选片是否收费，以及不满意的重拍/修改规则。</div>
 </div></details>
-
 <details class="detail" open><summary>🎟️ 南京景点预约 / 门票 / 一键提醒</summary>
 <div class="inside">
 <div class="callout"><strong>先做这几件事：</strong>南京博物院必须官方实名预约；红山动物园建议提前官方购票；鸡鸣寺按官方公众号当期票务执行；中山陵免费预约。不要买黄牛票或所谓“内部名额”。</div>
@@ -423,18 +380,15 @@ a{word-break:break-word}
 <h3>苏州</h3>
 <div class="twocol"><label class="check"><input type="checkbox">苏式焖肉面</label><label class="check"><input type="checkbox">爆鱼面</label><label class="check"><input type="checkbox">白汤面</label><label class="check"><input type="checkbox">松鼠桂鱼</label><label class="check"><input type="checkbox">清炒虾仁</label><label class="check"><input type="checkbox">响油鳝糊</label><label class="check"><input type="checkbox">生煎</label><label class="check"><input type="checkbox">酒酿圆子</label></div>
 <p class="quote">原则：早餐吃面，中午正常吃饭，晚上吃苏帮菜；不为了“必吃榜”每天支付网红溢价。</p></div></details>
-
 <details class="detail"><summary>📷 旅行旅拍 ¥1,000</summary>
 <div class="inside"><p><strong>婚纱照¥9,000和旅行旅拍≤¥1,000分开计算。</strong></p>
 <h3>推荐取景</h3>
 <ul><li>南京：明孝陵石象路、秦淮河夜景</li><li>苏州：平江路、山塘街、周庄</li></ul>
 <p class="quote">自然、纪实、旅行感、低饱和、抓拍、不过度摆拍。</p></div></details>
-
 <details class="detail"><summary>🎁 纪念品 ≤ ¥500</summary>
 <div class="inside"><p><strong>南京≤¥200，苏州≤¥300。</strong></p>
 <ul><li>南京：盐水鸭真空装、云锦小物、明信片、冰箱贴</li><li>苏州：丝绸小物、园林冰箱贴、苏式糕点、文创</li></ul>
 <p class="quote">不买景区高价礼盒、不买信息不透明食品、不跟购物团。</p></div></details>
-
 <details class="detail"><summary>🎒 出发前打包 & 时间线</summary>
 <div class="inside"><h3>电子</h3>
 <div class="twocol"><label class="check"><input type="checkbox">手机</label><label class="check"><input type="checkbox">充电器</label><label class="check"><input type="checkbox">充电宝</label><label class="check"><input type="checkbox">耳机</label><label class="check"><input type="checkbox">自拍杆</label><label class="check"><input type="checkbox">相机/存储卡</label></div>
@@ -443,12 +397,9 @@ a{word-break:break-word}
 <h3>关键时间点</h3>
 <ul><li>10/10 18:00：南京博物院预约（10/17参观，提前7天放票）。</li><li>尽早：核对中山陵免费预约、红山动物园购票、鸡鸣寺预约规则与旅拍集合点。</li><li>10/20：入住苏州后确认合喜映画路线和集合时间。</li><li>10/21：洗头、早点睡、整理拍摄包。</li><li>10/22：只拍婚纱照。❤️</li></ul></div></details>
 </section>
-
 <div class="footer">南京不安排纪念馆 · 10/19老门东旅拍 · 10/22苏州婚纱照 · 官方票务信息以出行当天为准</div>
 </div>
-
 <div class="toast" id="toast"></div>
-
 <script>
 const start=new Date('2026-10-16T00:00:00');
 const end=new Date('2026-10-25T23:59:59');
@@ -460,21 +411,17 @@ const days=[
 {date:'10/24',dow:'周六',name:'周庄古镇',title:'周庄古镇一日游',sub:'江南水乡｜最后一个大景点',tags:['水乡','一日游'],html:`<h3>08:00｜出发</h3><h3>09:30～17:00｜周庄</h3><ul><li>双桥</li><li>沈厅</li><li>张厅</li><li>南湖</li><li>水巷与古镇街巷</li></ul><div class="callout">🚤 两个人可以坐一次游船。不要一到古镇就被拉去坐所谓“私人包船”，先逛再决定。</div><h3>17:00｜返回苏州</h3><p>晚上回酒店附近吃饭、休息，整理返程行李。</p>`},
 {date:'10/25',dow:'周日',name:'苏州 → 武汉',title:'金鸡湖 → 苏州中心 → 武汉',sub:'轻松收尾｜不要把返程压到最后一班',tags:['收尾','返程'],html:`<h3>09:00～11:30｜金鸡湖</h3><p>散步、拍照。</p><h3>11:30～14:00｜苏州中心</h3><p>午饭、最后采购。纪念品总额不超过¥500。</p><h3>14:00～15:00｜回酒店取行李</h3><h3>15:00～16:00｜前往车站</h3><h3>16:00～17:30｜🚄 苏州 → 武汉</h3><div class="callout"><strong>建议：</strong>不要压到晚上最后一班车，给市内交通和晚点留余量。</div>`}
 ];
-
 let index = 0;
 let renderLock = false;
-
 function localDateOnly(d){
   return new Date(d.getFullYear(), d.getMonth(), d.getDate())
 }
-
 function findAutoIndex(){
   const now = localDateOnly(new Date());
   if (now < localDateOnly(start)) return 0;
   if (now > end) return days.length - 1;
   return Math.min(days.length - 1, Math.max(0, Math.floor((now - start) / 86400000)))
 }
-
 /**
  * 唯一重要规则：
  * 普通日期切换一律 doScroll = false
@@ -483,13 +430,10 @@ function findAutoIndex(){
 function render(doScroll = false){
   if (renderLock) return;
   renderLock = true;
-
   const d = days[index];
-
   document.querySelectorAll('.day').forEach((el, i) => {
     el.classList.toggle('active', i === index);
   });
-
   document.getElementById('dayContent').innerHTML = `
     <div class="dayhead">
       <div>
@@ -505,21 +449,17 @@ function render(doScroll = false){
     </div>
     ${d.html}
   `;
-
   document.getElementById('prev').disabled = index === 0;
   document.getElementById('next').disabled = index === days.length - 1;
   document.getElementById('prev').style.opacity = index === 0 ? '.45' : '1';
   document.getElementById('next').style.opacity = index === days.length - 1 ? '.45' : '1';
-
   if (doScroll) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-
   setTimeout(() => {
     renderLock = false;
   }, 120);
 }
-
 function buildList(){
   const list = document.getElementById('dayList');
   list.innerHTML = days.map((d, i) => `
@@ -532,7 +472,6 @@ function buildList(){
       </span>
     </button>
   `).join('');
-
   list.querySelectorAll('.day').forEach((b, i) => {
     b.addEventListener('click', () => {
       index = i;
@@ -540,73 +479,60 @@ function buildList(){
     });
   });
 }
-
 function jumpToday(){
   index = findAutoIndex();
   render(true);
   toast('已定位到当前日期对应的行程');
 }
-
 function copyDay(){
   const d = days[index];
   const text = `Day ${index + 1}｜${d.date} ${d.dow}\n${d.title}\n${d.sub}`;
-
   if (!window.navigator || !navigator.clipboard) {
     toast('当前浏览器环境不支持复制');
     return;
   }
-
   navigator.clipboard.writeText(text)
     .then(() => toast('本日行程标题已复制'))
     .catch(() => toast('复制失败'));
 }
-
 let toastTimer = null;
 function toast(t){
   const el = document.getElementById('toast');
-
   if (toastTimer !== null) {
     clearTimeout(toastTimer);
     toastTimer = null;
   }
-
   el.textContent = t;
   el.classList.add('show');
-
   toastTimer = setTimeout(() => {
     el.classList.remove('show');
     toastTimer = null;
   }, 1800);
 }
-
 document.getElementById('prev').addEventListener('click', () => {
   if (index > 0) {
     index--;
     render(false);
   }
 });
-
 document.getElementById('next').addEventListener('click', () => {
   if (index < days.length - 1) {
     index++;
     render(false);
   }
 });
-
 document.addEventListener('keydown', e => {
   if (e.key === 'ArrowLeft' && index > 0) {
     e.preventDefault();
     index--;
     render(false);
   }
-
   if (e.key === 'ArrowRight' && index < days.length - 1) {
     e.preventDefault();
     index++;
     render(false);
   }
 });
-
 function downloadReminders(){
   const events=[
     ['南博预约提醒：10/17参观','20261010T180000','20261010T183000','进入南京博物院官方微信小程序预约10月17日门票。免费实名预约，放票时间18:00。'],
@@ -625,15 +551,12 @@ function copyBookingChecklist(){
  const t='南京预约清单\n1. 10/10 18:00 南京博物院：微信官方小程序预约10/17，免费实名预约。\n2. 中山陵：官方渠道预约免费陵寝参观。\n3. 明孝陵：参考70元/人；音乐台10元、美龄宫30元、四景点联票100元。\n4. 红山动物园：参考70元/人，官方小程序购票，核对10/20车次。\n5. 鸡鸣寺：官方公众号/服务号确认预约及香花券。\n6. 大报恩寺：参考90元/人，官方渠道核价。\n7. 10/19 15:00 老门东旅拍：剪子巷35号，14:15前出发。';
  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(t).then(()=>toast('预约清单已复制')).catch(()=>toast('复制失败，请手动选择文本'));}else{toast('当前浏览器不支持自动复制');}
 }
-
 buildList();
 index = findAutoIndex();
 render(false);
-
 const now = localDateOnly(new Date());
 const badge = document.getElementById('todayBadge');
 const note = document.getElementById('todayNote');
-
 if (now < localDateOnly(start)) {
   badge.textContent = '🧭 出发前｜默认显示 Day 1';
   note.textContent = '到10月16日后会自动定位到当天行程。';
