@@ -19,10 +19,7 @@
   --shadow:0 18px 50px rgba(20,55,47,.09);
   --r:24px
 }
-*{
-  box-sizing:border-box;
-  min-width:0;
-}
+*{box-sizing:border-box}
 html{
   scroll-behavior:smooth;
   overflow-anchor:none;
@@ -106,9 +103,9 @@ a{word-break:break-word}
   border:1px solid var(--line);
   box-shadow:var(--shadow);
   border-radius:22px;
-  width:100%;
   max-width:100%;
-  overflow:hidden
+  overflow:hidden;
+  box-sizing:border-box;
 }
 .sidebar{
   padding:14px;
@@ -247,22 +244,34 @@ a{word-break:break-word}
   display:grid;
   grid-template-columns:1fr;
   gap:12px;
-  margin-top:16px
+  margin-top:16px;
 }
-.detail{padding:0 16px;width:100%;max-width:100%;overflow:hidden}
-.detail summary{padding:16px 0;font-weight:900;cursor:pointer;font-size:15px}
-.detail .inside{padding:0 0 16px}
+.detail{
+  padding:0;
+  width:auto;
+}
+.detail summary{
+  padding:16px;
+  font-weight:900;
+  cursor:pointer;
+  font-size:15px;
+}
+.detail .inside{
+  padding:0 16px 16px 16px;
+  box-sizing:border-box;
+}
 .detail h3{font-size:17px}
 .tablewrap{
   width:100%;
   max-width:100%;
   overflow-x:auto;
-  -webkit-overflow-scrolling:touch
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
 }
 .budget{width:100%;border-collapse:collapse}
 .budget th,.budget td{border:1px solid var(--line);padding:8px 9px;text-align:left;font-size:13px}
 .budget th{background:#f0f7f4}
-.booking-grid{display:grid;grid-template-columns:1fr;gap:12px}.booking-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:#fbfdfc}.booking-card h3{margin:0 0 6px}.booking-card p{margin:6px 0}.booking-card a{color:#08776b;font-weight:800}.booking-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.booking-actions button{border:0;border-radius:12px;padding:10px 14px;background:var(--brand);color:white;font-weight:800;cursor:pointer}.booking-actions .secondary{background:#e8f5f1;color:#075e56}.source-note{font-size:12px;color:var(--muted)}
+.booking-grid{display:grid;grid-template-columns:1fr;gap:12px}.booking-card{border:1px solid var(--line);border-radius:18px;padding:15px;background:#fbfdfc;box-sizing:border-box}.booking-card h3{margin:0 0 6px}.booking-card p{margin:6px 0}.booking-card a{color:#08776b;font-weight:800}.booking-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.booking-actions button{border:0;border-radius:12px;padding:10px 14px;background:var(--brand);color:white;font-weight:800;cursor:pointer}.booking-actions .secondary{background:#e8f5f1;color:#075e56}.source-note{font-size:12px;color:var(--muted)}
 .footer{
   text-align:center;
   color:var(--muted);
@@ -289,6 +298,24 @@ a{word-break:break-word}
   white-space:nowrap
 }
 .toast.show{opacity:1;transform:translate(-50%,0)}
+@media (min-width: 650px){
+  .wrap{padding:18px}
+  .hero{padding:30px}
+  .cards{grid-template-columns:repeat(3,1fr)}
+  .twocol{grid-template-columns:1fr 1fr}
+}
+@media (min-width: 980px){
+  .wrap{padding:22px}
+  .hero{padding:42px}
+  .hero h1{font-size:clamp(32px,4vw,54px)}
+  .cards{grid-template-columns:repeat(5,1fr)}
+  .grid{grid-template-columns:280px 1fr}
+  .sidebar{position:sticky;top:14px}
+  .daylist{grid-template-columns:1fr}
+  .maincard{padding:26px}
+  .twocol{grid-template-columns:1fr 1fr}
+  .lower{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
