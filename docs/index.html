@@ -283,9 +283,22 @@ a{word-break:break-word}
   -webkit-overflow-scrolling:touch;
   box-sizing:border-box !important;
 }
-.budget{width:100%;border-collapse:collapse}
-.budget th,.budget td{border:1px solid var(--line);padding:8px 9px;text-align:left;font-size:13px}
-.budget th{background:#f0f7f4}
+/* --------表格修复核心---------- */
+table.budget{
+  width:100% !important;
+  border-collapse:collapse !important;
+}
+table.budget th,
+table.budget td{
+  border:1px solid var(--line);
+  padding:8px 9px;
+  text-align:left;
+  font-size:13px;
+}
+table.budget th{
+  background:#f0f7f4;
+}
+/* ----------------------------- */
 .booking-grid{display:grid;grid-template-columns:1fr;gap:12px; width:100%;box-sizing:border-box;}
 .booking-card{
   border:1px solid var(--line);
