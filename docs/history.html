@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华夏历代帝王年号谱 · 掌上历史速查</title>
+    <!-- 引入 Tailwind CSS 提供现代响应式设计 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Vue 3 提供流畅的动态数据联动 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+    <style>
+        :root {
+            --ink: #3d3229;          /* 墨色 */
+            --paper: #f5efe3;        /* 宣纸 */
+            --cinnabar: #b3342c;     /* 朱砂 */
+            --gold: #a8762c;         /* 赭金 */
+        }
+        * { -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--ink);
+            background-color: var(--paper);
+            /* 宣纸底纹：竖格 + 横格 + 顶部柔光 + 四角晕染 */
+            background-image:
+                radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255,255,255,.75), transparent 60%),
+                radial-gradient(ellipse 60% 40% at 0% 100%, rgba(168,118,44,.06), transparent 70%),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(179,52,44,.05), transparent 70%),
+                repeating-linear-gradient(0deg, transparent 0 27px, rgba(120,90,50,.04) 27px 28px),
+                repeating-linear-gradient(90deg, transparent 0 27px, rgba(120,90,50,.03) 27px 28px);
+            min-height: 100vh;
+        }
+        [v-cloak] { display: none; }
+        .kai { font-family: 'STKaiti', 'KaiTi', 'FZKai-Z03S', 'Noto Serif SC', serif; }
+        .song { font-family: 'STSong', 'SimSun', 'Songti SC', serif; }
+
+        /* 印章 */
+        .seal {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #c0392f, #9e2b23);
+            color: #fdf6ec;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'STKaiti', 'KaiTi', serif;
+            box-shadow: 0 3px 10px rgba(158,43,35,.35), inset 0 0 0 2px rgba(255,255,255,.35), inset 0 0 0 5px rgba(158,43,35,.9);
+            transform: rotate(-4deg);
+            letter-spacing: 2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,.25);
+            flex-shrink: 0;
+        }
+        .seal-sm { width: 44px; height: 44px; font-size: 15px; line-height: 1.1; }
+
+        /* 云纹分隔线 */
+        .deco-line { display: flex; align-items: center; gap: 10px; }
+        .deco-line::before, .deco-line::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(120,90,50,.35), transparent);
+        }
+
+        /* 卡片 */
+        .paper-card {
+            background: rgba(255,253,247,.92);
+            border: 1px solid rgba(120,90,50,.14);
+            border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(90,70,40,.06), 0 8px 24px -12px rgba(90,70,40,.18);
+            backdrop-filter: blur(2px);
+        }
+
+        /* 帝王列表项 */
+        .emp-item { transition: all .18s ease; border-left: 3px solid transparent; }
+        .emp-item:hover { background: rgba(168,118,44,.07); transform: translateX(2px); }
+        .emp-item.active {
+            background: rgba(168,118,44,.1);
+            border-left-color: var(--active-color, var(--gold));
+        }
+        .emp-item .idx {
+            font-family: 'STSong', 'SimSun', serif;
+            color: rgba(120,90,50,.4);
+            font-size: 11px; width: 22px; flex-shrink: 0;
+        }
+
+        /* 朝代按钮 */
+        .dyn-btn {
+            border: 1px solid rgba(120,90,50,.18);
+            background: rgba(255,253,247,.8);
+            transition: all .2s ease;
+            position: relative;
+        }
+        .dyn-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px -4px rgba(90,70,40,.3); }
+        .dyn-btn.active {
+            background: var(--c, var(--ink));
+            border-color: var(--c, var(--ink));
+            color: #fdf6ec !important;
+            box-shadow: 0 4px 12px -4px var(--c, rgba(90,70,40,.5));
+        }
+        .dyn-dot { width: 7px; height: 7px; border-radius: 9999px; display: inline-block; }
+
+        /* 年号标签 */
+        .era-chip {
+            background: rgba(168,118,44,.08);
+            border: 1px solid rgba(168,118,44,.22);
+            color: #7a5a24;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            transition: all .15s ease;
+            cursor: default;
+        }
+        .era-chip:hover { background: rgba(168,118,44,.16); transform: translateY(-1px); }
+
+        /* 动画 */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-up { animation: fadeUp .45s ease both; }
+        .fade-in { animation: fadeIn .35s ease both; }
+        .list-anim { animation: fadeUp .4s ease both; }
+
+        .scroll-slim::-webkit-scrollbar { width: 5px; height: 5px; }
+        .scroll-slim::-webkit-scrollbar-thumb { background: rgba(120,90,50,.25); border-radius: 4px; }
+        .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+
+        /* 事迹引文装饰 */
+        .quote-box { position: relative; }
+        .quote-box::before {
+            content: '『';
+            position: absolute; top: -4px; left: 6px;
+            font-family: 'STKaiti','KaiTi',serif;
+            font-size: 30px; color: rgba(168,118,44,.25); line-height: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="w-full max-w-5xl mx-auto px-4 py-6 md:py-10 flex-grow flex flex-col" v-cloak>
+
+        <!-- ═══════════ 页头：印章 + 题名 + 统计 ═══════════ -->
+        <header class="text-center mb-8">
+            <div class="flex items-center justify-center gap-4">
+                <div class="deco-line w-16 md:w-28">
+                    <span class="text-[10px] text-[#a8762c] opacity-60">☰</span>
+                </div>
+                <div class="seal kai text-xl">史</div>
+                <div class="deco-line w-16 md:w-28">
+                    <span class="text-[10px] text-[#a8762c] opacity-60">☰</span>
+                </div>
+            </div>
+            <h1 class="kai text-3xl md:text-5xl font-bold mt-4 tracking-[0.25em] text-[#3d3229]"
+                style="text-shadow: 0 2px 0 rgba(255,255,255,.8), 0 3px 8px rgba(90,70,40,.15);">
+                华夏历代帝王年号谱
+            </h1>
+            <p class="song text-xs md:text-sm text-[#8a7355] mt-3 tracking-[0.35em]">
+                秦皇汉武 · 唐宗宋祖 · 一卷在手 · 千年在目
+            </p>
+
+            <!-- 统计栏 -->
+            <div class="flex items-center justify-center gap-0 mt-6 fade-up">
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#b3342c]">{{ dynasties.length - 1 }}</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">朝 代</div>
+                </div>
+                <div class="w-px h-8 bg-[rgba(120,90,50,.2)]"></div>
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#a8762c]">{{ rawData.length }}</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">帝 王</div>
+                </div>
+                <div class="w-px h-8 bg-[rgba(120,90,50,.2)]"></div>
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#3d3229]">2133</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">载帝制</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════ 检索与筛选区 ═══════════ -->
+        <section class="paper-card p-4 md:p-5 mb-6 space-y-4">
+            <!-- 朝代快速选择 -->
+            <div>
+                <label class="kai block text-xs font-semibold text-[#8a7355] mb-2 tracking-widest">
+                    ◆ 卷首 · 择朝代
+                </label>
+                <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x">
+                    <button
+                        v-for="dynasty in dynasties"
+                        :key="dynasty"
+                        @click="selectDynasty(dynasty)"
+                        :class="['dyn-btn px-3.5 py-1.5 text-sm rounded-full whitespace-nowrap snap-center kai flex items-center gap-1.5', selectedDynasty === dynasty ? 'active' : 'text-[#5c4d3c]']"
+                        :style="selectedDynasty === dynasty ? {'--c': dynasty === '全部' ? '#3d3229' : dynColor(dynasty)} : {}"
+                    >
+                        <span v-if="dynasty !== '全部'" class="dyn-dot" :style="{background: dynColor(dynasty)}"></span>
+                        {{ dynasty }}
+                        <span class="text-[10px] opacity-60">{{ dynasty === '全部' ? rawData.length : dynastyCount(dynasty) }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜索框与快捷操作 -->
+            <div class="flex gap-2">
+                <div class="relative flex-grow">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a8762c]/50 text-sm">⌕</span>
+                    <input
+                        type="text"
+                        v-model="searchQuery"
+                        placeholder="输入名讳、庙号或年号搜索（如：刘彻 / 太宗 / 康熙）"
+                        class="w-full pl-9 pr-16 py-2.5 bg-[rgba(245,239,227,.6)] border border-[rgba(120,90,50,.18)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a8762c]/40 focus:bg-white transition-all placeholder:text-[#b3a58c]"
+                    >
+                    <button
+                        v-if="searchQuery"
+                        @click="searchQuery = ''"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8a7355] hover:text-[#b3342c] bg-[rgba(120,90,50,.08)] px-2 py-0.5 rounded-full transition-colors"
+                    >
+                        清空
+                    </button>
+                </div>
+                <!-- 随机一位：探索历史上的今天主角 -->
+                <button
+                    @click="pickRandom"
+                    title="随机抽览一位帝王"
+                    class="kai px-4 py-2.5 rounded-lg text-sm whitespace-nowrap border border-[rgba(179,52,44,.3)] text-[#b3342c] bg-[rgba(179,52,44,.05)] hover:bg-[rgba(179,52,44,.12)] hover:-translate-y-0.5 transition-all"
+                >
+                    ⚄ 随机
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══════════ 主体数据呈现层 ═══════════ -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-5 gap-6">
+
+            <!-- 帝王名录（左/上） -->
+            <section class="md:col-span-2 flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <h2 class="kai text-sm font-bold text-[#3d3229] tracking-widest">
+                        {{ selectedDynasty }} · 帝王名录
+                    </h2>
+                    <span class="song text-xs text-[#8a7355]">共 {{ filteredEmperors.length }} 位</span>
+                </div>
+                <!-- 皇帝列表滚动盒 -->
+                <div class="paper-card overflow-hidden max-h-[320px] md:max-h-[560px] overflow-y-auto scroll-slim">
+                    <div
+                        v-for="(emp, index) in filteredEmperors"
+                        :key="emp.name + emp.title"
+                        @click="choose(emp)"
+                        :class="['emp-item list-anim p-3 pl-2.5 cursor-pointer flex items-center gap-1.5 text-sm', currentEmperor === emp ? 'active' : '']"
+                        :style="[
+                            {'--active-color': dynColor(emp.dynasty)},
+                            {'animation-delay': Math.min(index * 30, 400) + 'ms'}
+                        ]"
+                    >
+                        <span class="idx kai">{{ index + 1 }}</span>
+                        <div class="flex-grow min-w-0">
+                            <span class="kai font-semibold text-[#3d3229]">{{ emp.title }}</span>
+                            <span class="text-xs text-[#8a7355] ml-1.5">{{ emp.name }}</span>
+                        </div>
+                        <span class="song text-[11px] text-[#8a7355] bg-[rgba(168,118,44,.07)] px-2 py-0.5 rounded-full flex-shrink-0">
+                            {{ emp.time.split('－')[0].split('/')[0] }}
+                        </span>
+                    </div>
+                    <div v-if="filteredEmperors.length === 0" class="text-center py-14 text-[#8a7355] text-xs space-y-2">
+                        <div class="kai text-3xl opacity-30">空</div>
+                        <div>未寻得相关帝王，换个关键词试试</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 帝王志纪（右/下） -->
+            <section class="md:col-span-3" ref="detailRef">
+                <h2 class="kai text-sm font-bold text-[#3d3229] mb-2 px-1 tracking-widest">帝王志纪 · 年号纪元</h2>
+
+                <Transition name="swap" mode="out-in">
+                    <div v-if="currentEmperor" :key="currentEmperor.name + currentEmperor.title"
+                         class="paper-card p-5 md:p-7 md:sticky md:top-6 space-y-5 fade-up">
+
+                        <!-- 头部核心身份 -->
+                        <div class="flex justify-between items-start gap-4 border-b border-dashed border-[rgba(120,90,50,.25)] pb-5">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs text-[#fdf6ec] px-2.5 py-0.5 rounded-full kai"
+                                          :style="{background: dynColor(currentEmperor.dynasty)}">
+                                        {{ currentEmperor.dynasty }}
+                                    </span>
+                                    <span class="song text-xs text-[#8a7355]">⏱ 在位 {{ currentEmperor.time }}</span>
+                                </div>
+                                <h3 class="kai text-2xl md:text-3xl font-bold text-[#3d3229] mt-2.5 tracking-wider">
+                                    {{ currentEmperor.title }}
+                                </h3>
+                                <p class="song text-sm text-[#8a7355] mt-1">
+                                    讳 <span class="text-[#5c4d3c] font-semibold">{{ currentEmperor.name }}</span>
+                                </p>
+                            </div>
+                            <div class="seal seal-sm kai" :title="currentEmperor.dynasty">
+                                {{ currentEmperor.dynasty.replace('朝','') }}
+                            </div>
+                        </div>
+
+                        <!-- 年号标签墙 -->
+                        <div>
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 年号纪元</h4>
+                            <div v-if="eraList.length" class="flex flex-wrap gap-1.5">
+                                <span v-for="(era, i) in eraList" :key="i" class="era-chip song">{{ era }}</span>
+                            </div>
+                            <p v-else class="song text-sm text-[#8a7355] bg-[rgba(168,118,44,.06)] border border-[rgba(168,118,44,.15)] rounded-lg px-3 py-2">
+                                {{ currentEmperor.era }}
+                            </p>
+                        </div>
+
+                        <!-- 主要事迹梗概 -->
+                        <div>
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 生平事迹</h4>
+                            <p class="song text-sm leading-loose text-[#5c4d3c] bg-[rgba(245,239,227,.7)] rounded-lg p-4 pt-5 border border-[rgba(120,90,50,.1)] quote-box">
+                                {{ currentEmperor.achievements }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div v-else key="empty" class="paper-card p-14 text-center fade-in">
+                        <div class="kai text-5xl opacity-15 mb-3">朕</div>
+                        <p class="song text-sm text-[#8a7355]">请在左侧或上方择一位帝王，览其年号与生平</p>
+                    </div>
+                </Transition>
+            </section>
+        </main>
+
+        <!-- ═══════════ 页脚 ═══════════ -->
+        <footer class="text-center mt-12 py-5 border-t border-[rgba(120,90,50,.15)]">
+            <div class="deco-line mb-3 px-20">
+                <span class="text-[10px] text-[#a8762c]/50">❖</span>
+            </div>
+            <p class="song text-xs text-[#8a7355]/80 tracking-wider">
+                数据据二十四史及《资治通鉴》正统编排 · 帝王庙号谥号以史书通称为准
+            </p>
+        </footer>
+    </div>
+
+    <!-- 详情切换过渡 -->
+    <style>
+        .swap-enter-active, .swap-leave-active { transition: all .28s ease; }
+        .swap-enter-from { opacity: 0; transform: translateY(14px); }
+        .swap-leave-to { opacity: 0; transform: translateY(-8px); }
+    </style>
+
+    <!-- 逻辑与全量数据脚本 -->
+    <script>
+        const { createApp, ref, computed, watch } = Vue;
+
+        createApp({
+            setup() {
+                // 原文档清洗整理出的全量历史数据
+                const rawData = [
+                    { dynasty: "秦朝", title: "始皇帝", name: "嬴政", time: "前221年－前210年", era: "无（以始皇纪年）", achievements: "扫灭六国完成中国历史首次大一统，废分封立郡县，统一度量衡、文字、货币、车轨，筑长城，开创中央集权帝制。" },
+                    { dynasty: "秦朝", title: "二世皇帝", name: "胡亥", time: "前210年－前207年", era: "无（以二世纪年）", achievements: "赵高、李斯矫诏继位。执政期间实行暴政，致使阶级矛盾激化，爆发了陈胜吴广起义和大泽乡起义。" },
+                    { dynasty: "秦朝", title: "秦三世", name: "子婴", time: "前207年（46天）", era: "无", achievements: "设计诛杀权臣赵高，去皇帝号改称秦王。向率军入关的刘邦投降，秦朝正式宣告灭亡。" },
+                    { dynasty: "西汉", title: "高祖", name: "刘邦", time: "前202年－前195年", era: "无（汉初以元年计算）", achievements: "出身布衣，楚汉之争击败项羽。建立大汉政权后，推行休养生息政策、消灭异姓诸侯王，实行郡国并行制。" },
+                    { dynasty: "西汉", title: "惠帝", name: "刘盈", time: "前195年－前188年", era: "无", achievements: "个性仁弱，在位期间大权实际由母亲吕后（吕雉）掌控，萧何、曹参相继为相，推行萧规曹随与清静无为政策。" },
+                    { dynasty: "西汉", title: "前少帝", name: "刘恭", time: "前188年－前184年", era: "无", achievements: "西汉第三位皇帝，因发现自己并非皇后亲生并扬言报复，被吕后废黜并秘密杀害。" },
+                    { dynasty: "西汉", title: "后少帝", name: "刘弘", time: "前184年－前180年", era: "无", achievements: "吕后立其为帝。诸吕之乱被平定、吕后去世后，群臣因其不是刘邦亲孙而将其废黜遇害，迎立代王刘恒。" },
+                    { dynasty: "西汉", title: "文帝", name: "刘恒", time: "前180年－前157年", era: "无（史称前元、后元）", achievements: "推行轻徭薄赋、废除肉刑、劝课农桑，为人恭俭。与其子汉景帝共同开创了古代治世典范“文景之治”。" },
+                    { dynasty: "西汉", title: "景帝", name: "刘启", time: "前157年－前141年", era: "无（史称前元、中元、后元）", achievements: "推行削藩策，成功平定“吴楚七国之乱”，收回诸侯王行政权，进一步强化中央集权，延续文景之治。" },
+                    { dynasty: "西汉", title: "汉武帝", name: "刘彻", time: "前141年－前87年", era: "建元、元光、元朔、元狩、元鼎、元封、太初、天汉、太始、征和、后元", achievements: "中国历史上首创年号的皇帝。罢黜百家独尊儒术，派遣卫青、霍去病大破匈奴，命张骞出使西域开辟丝绸之路，极大地扩张了中华版图。" },
+                    { dynasty: "西汉", title: "昭帝", name: "刘弗陵", time: "前87年－前74年", era: "始元、元凤、元平", achievements: "八岁继位，由霍光等辅政。沿袭武帝晚年政策，与民休息、减轻赋税，史称“昭宣之治”的开端。" },
+                    { dynasty: "西汉", title: "昌邑王", name: "刘贺", time: "前74年（27天）", era: "元平", achievements: "汉昭帝无子崩逝后被霍光迎立，因在位27天内荒淫无道、行事不端达一千余事，被霍光联合群臣废黜。" },
+                    { dynasty: "西汉", title: "宣帝", name: "刘询", time: "前74年－前48年", era: "本始、地节、元康、神爵、五凤、甘露、黄龙", achievements: "本名刘病已，流落民间深知疾苦。整顿吏治、惩治外戚霍氏、彻底降服匈奴、设立西域都护府，西汉国力达到全盛。" },
+                    { dynasty: "西汉", title: "元帝", name: "刘奭", time: "前48年－前33年", era: "初元、永光、建昭、竟宁", achievements: "柔仁好儒，任用宦官弘恭、石显导致外戚与宦官弄权。在位期间著名的历史事件包括王昭君出塞和亲。" },
+                    { dynasty: "西汉", title: "成帝", name: "刘骜", time: "前33年－前7年", era: "建始、河平、阳朔、鸿嘉、永始、元延、绥和", achievements: "荒淫无道，沉湎于赵飞燕、赵合德姐妹美色。将大权委任给母族王氏，为王莽篡汉埋下了致命伏笔。" },
+                    { dynasty: "西汉", title: "哀帝", name: "刘欣", time: "前7年－前1年", era: "建平、太初元将、元寿", achievements: "曾尝试推行限田、限奴等改革以挽救衰局但失败。执政后期极度宠信男宠董贤，留下“断袖之癖”的历史典故。" },
+                    { dynasty: "西汉", title: "平帝", name: "刘衎", time: "前1年－6年", era: "元始", achievements: "九岁继位，完全沦为大司马王莽的傀儡。公元6年暴崩，相传是被王莽用毒酒毒死。" },
+                    { dynasty: "西汉", title: "孺子", name: "刘婴", time: "6年－9年", era: "居摄、初始", achievements: "两岁时被王莽立为皇太子，王莽自称“假皇帝”、“摄皇帝”。公元9年被逼逊位，西汉灭亡。" },
+                    { dynasty: "新朝", title: "新帝", name: "王莽", time: "9年－23年", era: "始建国、天凤、地皇", achievements: "通过和平篡位建立新朝。推行托古改制的“王莽币制与田制改革”，因政策脱离实际引发严重天下大乱，最终被绿林军杀死。" },
+                    { dynasty: "更始", title: "更始帝", name: "刘玄", time: "23年－25年", era: "更始", achievements: "西汉皇族，新朝末年被绿林军拥立为帝。攻灭王莽后恢复汉号，但因昏庸无能，政权迅速被赤眉军和光武帝刘秀击垮。" },
+                    { dynasty: "东汉", title: "光武帝", name: "刘秀", time: "25年－57年", era: "建武、建武中元", achievements: "汉高祖九世孙，通过昆阳之战等平定群雄、重建汉室，史称东汉。政治上精简吏治、释放奴婢，开创“光武中兴”。" },
+                    { dynasty: "东汉", title: "明帝", name: "刘庄", time: "57年－75年", era: "永平", achievements: "提倡儒学，整顿吏治极其严明。在位期间派兵北击匈奴，派遣班超出使西域，并迎请佛法，修筑中国第一座佛寺白马寺。" },
+                    { dynasty: "东汉", title: "章帝", name: "刘炟", time: "75年－88年", era: "建初、元和、章和", achievements: "为人宽厚，推行宽刑仁政，与父亲汉明帝合称“明章之治”。但他开始重用外戚窦氏，开启了东汉外戚专权的灾祸之源。" },
+                    { dynasty: "东汉", title: "和帝", name: "刘肇", time: "88年－106年", era: "永元、元兴", achievements: "联合宦官郑众扫灭窦氏外戚，亲政后励精图治，东汉国力达到极盛。著名发明家蔡伦在其在位期间改良了造纸术。" },
+                    { dynasty: "东汉", title: "殇帝", name: "刘隆", time: "106年", era: "延平", achievements: "出生刚满百天即登基，是中国历史上即位年龄最小、寿命最短的皇帝，俗称“百日皇帝”，出生未满周岁便夭折。" },
+                    { dynasty: "东汉", title: "安帝", name: "刘祜", time: "106年－125年", era: "永初、元初、永宁、建光、延光", achievements: "邓太后临朝称制期间尚平稳；亲政后任用外戚阎氏与宦官，导致朝政陷入腐败，多地爆发羌族起义。" },
+                    { dynasty: "东汉", title: "少帝", name: "刘懿", time: "125年", era: "延光", achievements: "被阎太后迎立为帝，在位仅二百余日便患重病暴崩，随后宦官孙程发动政变，迎立汉顺帝。" },
+                    { dynasty: "东汉", title: "顺帝", name: "刘保", time: "125年－144年", era: "永建、阳嘉、永和、汉安、建康", achievements: "依赖宦官势力夺回政权，导致东汉后期宦官彻底专权上台。著名科学家张衡在此期间发明了地动仪。" },
+                    { dynasty: "东汉", title: "冲帝", name: "刘炳", time: "144年－145年", era: "永嘉", achievements: "两岁即位，外戚梁冀把持朝政，在位仅数月便在一岁时夭折。" },
+                    { dynasty: "东汉", title: "质帝", name: "刘钻", time: "145年－146年", era: "本初", achievements: "八岁继位，聪慧过人。因当面斥责大将军梁冀为“跋扈将军”，遭到梁冀忌惮，随后被梁冀在饼中下毒谋害。" },
+                    { dynasty: "东汉", title: "桓帝", name: "刘志", time: "146年－168年", era: "建和、和平、元嘉、永兴、永寿、延熹、永康", achievements: "联合单超等五位宦官诛灭梁冀外戚，但政权转入宦官手中。在位期间因打压太学生与士大夫，引发了第一次“党锢之祸”。" },
+                    { dynasty: "东汉", title: "灵帝", name: "刘宏", time: "168年－189年", era: "建宁、熹平、光和、中平", achievements: "极其昏庸，公开卖官鬻爵，极度宠信“十常侍”宦官。导致朝政彻底崩溃，在位末期爆发了动摇东汉根基的“黄巾之乱”。" },
+                    { dynasty: "东汉", title: "少帝", name: "刘辩", time: "189年", era: "光熹、昭宁", achievements: "即位后不久爆发外戚何进与十常侍的大仇杀。凉州军阀董卓乘机率军入洛阳，将其废黜为弘农王，随后用毒酒杀害。" },
+                    { dynasty: "东汉", title: "献帝", name: "刘协", time: "189年－220年", era: "永汉、初平、兴平、建安、延康", achievements: "东汉末代皇帝。一生先后沦为董卓、李傕、曹操的傀儡（挟天子以令诸侯）。公元220年禅让给曹丕，东汉灭亡。" },
+                    { dynasty: "曹魏", title: "文帝", name: "曹丕", time: "220年－226年", era: "黄初", achievements: "曹操次子，逼迫汉献帝禅让建立曹魏，开启三国时代。推行九品中正制以选拔官吏，在文学上成就极高，著有《典论》。" },
+                    { dynasty: "曹魏", title: "明帝", name: "曹睿", time: "226年－239年", era: "太和、青龙、景初", achievements: "军事才华卓越，成功指挥司马懿等人抵御了诸葛亮北伐和孙权进攻。执政后期大兴土木，临终托孤于司马懿与曹爽。" },
+                    { dynasty: "曹魏", title: "齐王", name: "曹芳", time: "239年－254年", era: "正始、嘉平", achievements: "即位时年幼。在位期间司马懿发动“高平陵之变”诛灭曹爽，曹魏军政大权从此彻底落入司马氏家族手中，后被司马师废黜。" },
+                    { dynasty: "曹魏", title: "高贵乡公", name: "曹髦", time: "254年－260年", era: "正元、甘露", achievements: "留下了“司马昭之心，路人皆知”的名言。因不甘当傀儡，亲自率领宫人讨伐司马昭，在激战中被司马昭部下成济弑杀。" },
+                    { dynasty: "曹魏", title: "元帝", name: "曹奂", time: "260年－266年", era: "景元、咸熙", achievements: "曹魏政权的末代傀儡皇帝。在位期间魏国派遣邓艾、钟会大军灭亡了蜀汉。公元266年禅让于司马炎，魏国灭亡。" },
+                    { dynasty: "蜀汉", title: "昭烈帝", name: "刘备", time: "221年－223年", era: "章武", achievements: "汉室宗亲，弘毅宽厚，三顾茅庐请诸葛亮出山。白手起家建立蜀汉。关羽死后执意发动夷陵之战大败，临终在白帝城托孤。" },
+                    { dynasty: "蜀汉", title: "后主", name: "刘禅", time: "223年－263年", era: "建兴、延熙、景耀、炎兴", achievements: "中国历史上在位最久的三国皇帝。前期完全委任诸葛亮，后期宠信宦官黄皓。魏灭蜀之战时开城投降，留下“乐不思蜀”的典故。" },
+                    { dynasty: "东吴", title: "大帝", name: "孙权", time: "229年－252年", era: "黄龙、嘉禾、赤乌、太元、神凤", achievements: "承父兄基业统治江东。赤壁之战联合刘备大败曹操，夷陵之战击败刘备。执政晚年在继承人问题上举措失当引发内乱。" },
+                    { dynasty: "东吴", title: "会稽王", name: "孙亮", time: "252年－258年", era: "建兴、五凤、太平", achievements: "十岁继位，大权先后被权臣诸葛恪、孙峻、孙綝等把持，后来在密谋诛杀权臣孙綝时由于泄密被孙綝废黜。" },
+                    { dynasty: "东吴", title: "景帝", name: "孙休", time: "258年－264年", era: "永安", achievements: "登基后凭借过人智慧，联合老将丁奉成功设计诛杀了权臣孙綝，重新夺回朝政大权。在位期间大力推行教育、促进农桑。" },
+                    { dynasty: "东吴", title: "末帝", name: "孙皓", time: "264年－280年", era: "元兴、甘露、宝鼎、建衡、凤凰、天册、天玺、天纪", achievements: "东吴末代皇帝。即位初期抚恤百姓，随后变得残暴骄奢，丧失江东民心。公元280年西晋大军南下，孙皓出城投降。" },
+                    { dynasty: "西晋", title: "武帝", name: "司马炎", time: "266年－290年", era: "泰始、咸宁、太康、太熙", achievements: "逼迫魏元帝禅让建立西晋。公元280年挥师南下灭亡孙吴，终结了三国割据局面，实现全国大一统。晚年开始奢靡并大封宗室。" },
+                    { dynasty: "西晋", title: "惠帝", name: "司马衷", time: "290年－307年", era: "永熙、永平、元康、永康、永宁、太安、永安、建武、永兴、光熙", achievements: "天生愚钝，曾留下“何不食肉糜”的典故。在位期间皇后贾南风专权，彻底引发了长达16年的皇族内讧“八王之乱”，国家元气大伤。" },
+                    { dynasty: "西晋", title: "怀帝", name: "司马炽", time: "307年－311年", era: "永嘉", achievements: "八王之乱后接手残局。公元311年汉赵政权攻破洛阳，俘虏怀帝并杀害数万晋朝宗室士民，史称“永嘉之祸”。" },
+                    { dynasty: "西晋", title: "愍帝", name: "司马邺", time: "313年－316年", era: "建兴", achievements: "在长安被拥立为帝，当时的长安城已经残破不堪。公元316年汉赵刘曜围困长安，愍帝被迫出降，西晋正式灭亡。" },
+                    { dynasty: "东晋", title: "元帝", name: "司马睿", time: "317年－323年", era: "建武、大兴、永昌", achievements: "西晋灭亡后，在北方士族与南方豪强王导、王敦等人拥护下在建康建立东晋。由于极度依赖王氏，史称“王与马，共天下”。" },
+                    { dynasty: "东晋", title: "明帝", name: "司马绍", time: "323年－325年", era: "永昌、太宁", achievements: "聪慧有机谋。在位期间成功平定了大将军王敦的叛乱，稳固了东晋在江左的统治根基。可惜在位仅短短三年便英年早逝。" },
+                    { dynasty: "东晋", title: "成帝", name: "司马衍", time: "325年－342年", era: "太宁、咸和、咸康", achievements: "四岁继位，历经了“苏峻、祖约之乱”，建康宫殿曾被叛军焚毁。在位后期重用庾亮，开始实行北伐。" },
+                    { dynasty: "东晋", title: "康帝", name: "司马岳", time: "342年－344年", era: "建元", achievements: "晋成帝同母弟，因庾冰、庾翼兄弟为了把持朝政而劝说成帝传位给弟弟。在位仅仅两年便驾崩。" },
+                    { dynasty: "东晋", title: "穆帝", name: "司马聃", time: "344年－361年", era: "永和、升平", achievements: "两岁继位，褚太后临朝称制。在位期间桓温开始崛起并数次北伐，东晋成功收复了洛阳、消灭了成汉割据政权。" },
+                    { dynasty: "东晋", title: "哀帝", name: "司马丕", time: "361年－365年", era: "隆和、兴宁", achievements: "迷信方术及长生不老之药。在位期间大权完全由大司马桓温把持。后因服用方士炼制的长生药中毒而死。" },
+                    { dynasty: "东晋", title: "废帝", name: "司马奕", time: "365年－371年", era: "太和", achievements: "在位期间，权臣桓温北伐败于慕容垂，为了树立个人威权，桓温捏造诬陷罪名将司马奕废黜为海西公。" },
+                    { dynasty: "东晋", title: "简文帝", name: "司马昱", time: "371年－372年", era: "咸安", achievements: "被桓温扶立为傀儡皇帝。在位期间整日活在随时被桓温篡位的恐惧之中，在位仅八个月便忧愤而死。" },
+                    { dynasty: "东晋", title: "孝武帝", name: "司马曜", time: "372年－396年", era: "宁康、太元", achievements: "东晋后期最有权力的君主。在位期间由谢安辅政，在著名的“淝水之战”中大败前秦苻坚百万大军，取得了保卫江南的决定性胜利。" },
+                    { dynasty: "东晋", title: "安帝", name: "司马德宗", time: "396年－419年", era: "隆安、元兴、大亨、义熙", achievements: "天生患有严重智障，无法言语。在位期间爆发孙恩卢循起义，桓玄夺位。最终权臣刘裕崛起，将其勒死。" },
+                    { dynasty: "东晋", title: "恭帝", name: "司马德文", time: "419年－420年", era: "元熙", achievements: "东晋的末代皇帝。公元420年被迫禅让给宋武帝刘裕，标志着东晋彻底灭亡，中国进入南北朝时期。" },
+                    { dynasty: "隋朝", title: "文帝", name: "杨坚", time: "581年－604年", era: "开皇、仁寿", achievements: "北周外戚夺位建立隋朝。589年派兵南下灭陈朝，终结了长达近三百年的魏晋南北朝大分裂。首创三省六部制与科举制，史称“开皇之治”。" },
+                    { dynasty: "隋朝", title: "炀帝", name: "杨广", time: "604年－618年", era: "大业", achievements: "修筑了影响深远的“隋唐大运河”，营建洛阳。但他频繁营建大兴土木、三征高句丽导致天下民不聊生，最终引发全国隋末农民大起义，在江都被部下缢杀。" },
+                    { dynasty: "隋朝", title: "恭帝", name: "杨侑", time: "617年－618年", era: "义宁", achievements: "李渊太原起兵攻占长安后，被拥立为傀儡皇帝，尊炀帝为太上皇。李渊称帝建唐后将其废黜，不久暴崩。" },
+                    { dynasty: "唐朝", title: "高祖", name: "李渊", time: "618年－626年", era: "武德", achievements: "太原起兵乘乱入关，建立唐朝。在位期间派遣次子李世民等消灭王世充、窦建德等群雄，统一全国。后在“玄武门之变”后被迫退位为太上皇。" },
+                    { dynasty: "唐朝", title: "太宗", name: "李世民", time: "626年－649年", era: "贞观", achievements: "通过玄武门之变继位。任人唯贤（房谋杜断、魏征直言），政治清明、海纳百川，开创“贞观之治”。对外大败突厥，被北方诸族尊称为“天可汗”。" },
+                    { dynasty: "唐朝", title: "高宗", name: "李治", time: "649年－683年", era: "永徽、显庆、龙朔、麟德、乾封、总章、咸亨、上元、仪凤、调露、永隆、开耀、永淳、弘道", achievements: "执政前期延续贞观遗风，消灭高句丽与百济，唐朝版图在其在位期间达到历史最高峰，史称“永徽之治”。后期因风眩病重，大权逐渐漏入皇后武则天之手。" },
+                    { dynasty: "唐朝", title: "中宗", name: "李显", time: "684年/705年－710年", era: "嗣圣、神龙、景龙", achievements: "两度称帝。第一次即位不久即被母亲武则天废黜。705年张柬之等人发动“神龙政变”助其复位，复辟后朝政由韦皇后与武三思把持，后被韦后毒杀。" },
+                    { dynasty: "唐朝", title: "睿宗", name: "李旦", time: "684年/710年－712年", era: "文明、景云、太极、延和", achievements: "唐高宗第八子，两度登基，一生三让天下（让母亲武则天、让兄长中宗、让儿子玄宗）。在儿子李隆基发动唐隆政变后被迎立复位，不久禅让。" },
+                    { dynasty: "武周", title: "武则天", name: "武曌", time: "690年－705年", era: "天授、如意、长寿、延载、证圣、天册万岁、万岁登封、万岁通天、神功、圣历、久视、大足、长安", achievements: "中国历史上唯一正统的女皇帝。改国号为周。在位期间大力革新科举，创立殿试与武举，严厉打击旧士族，经济持续发展，史称“政启开元，治宏贞观”。" },
+                    { dynasty: "唐朝", title: "玄宗", name: "李隆基", time: "712年－756年", era: "先天、开元、天宝", achievements: "通过唐隆政变与先天政变夺掌大权。统治前期励精图治，开创了唐朝全盛的顶峰“开元盛世”。后期沉溺于享乐，宠幸杨贵妃、重用李林甫安禄山，最终导致“安史之乱”爆发，唐朝由盛转衰。" },
+                    { dynasty: "唐朝", title: "肃宗", name: "李亨", time: "756年－762年", era: "至德、乾元、上元", achievements: "安史之乱爆发、玄宗逃蜀后，在灵武自行登基。在位期间起用名将郭子仪、李光弼，并在回纥兵援助下成功收复了两京（洛阳、长安）。" },
+                    { dynasty: "唐朝", title: "代宗", name: "李豫", time: "762年－779年", era: "宝应、广德、永泰、大历", achievements: "正式平定了长达八年的安史之乱。但由于为了安抚降将而大封节度使，导致中原彻底陷入了“藩镇割据”的被动局面，宦官势力也开始再度抬头。" },
+                    { dynasty: "唐朝", title: "德宗", name: "李适", time: "779年－805年", era: "建中、兴元、贞元", achievements: "前期尝试强硬削藩，结果引发了“泾原兵变”，被迫逃离长安。此后政策转向姑息，政治上开始信任宦官并任其执掌神策军，财务上改行两税法。" },
+                    { dynasty: "唐朝", title: "顺宗", name: "李诵", time: "805年", era: "永贞", achievements: "在位仅200余天。即位时已中风失语，但积极支持王叔文、王伾等人推行废除宫市、收回宦官兵权的“永贞革新”，因触动宦官利益迅速被逼退位。" },
+                    { dynasty: "唐朝", title: "宪宗", name: "李纯", time: "805年－820年", era: "元和", achievements: "极有作为的晚唐君主。政治上任用贤相裴度，重拳出击强硬削藩，先后平定西川、镇海、淮西藩镇叛乱，使得全国藩镇表面归顺，史称“元和中兴”。晚年死于宦官弑杀。" },
+                    { dynasty: "唐朝", title: "穆宗", name: "李恒", time: "820年－824年", era: "长庆", achievements: "极为沉湎于游乐宴饮。在位期间因处置不当，导致原本已经归顺的河北三镇再度叛乱叛离，“元和中兴”的成果在前功尽弃。" },
+                    { dynasty: "唐朝", title: "敬宗", name: "李湛", time: "824年－827年", era: "宝历", achievements: "年少即位，沉迷于打夜狐、蹴鞠和游乐，完全不理朝政。在位仅三年便被宦官刘克明等人在宫中刺杀身亡。" },
+                    { dynasty: "唐朝", title: "文帝", name: "李昂", time: "827年－840年", era: "太和、开成", achievements: "恭俭儒雅，一心想铲除宦官。联合李训、郑注精心密谋发动“甘露之变”，结果以失败告终，导致朝臣遭到宦官疯狂屠杀，自己一生被彻底软禁至死。" },
+                    { dynasty: "唐朝", title: "武宗", name: "李炎", time: "840年－846年", era: "会昌", achievements: "在宰相李德裕辅佐下颇有作为，史称“会昌之治”。对外击败回鹘，对内重手打击藩镇。他在位期间发动了中国佛教史上著名的“会昌法难”大规模灭佛运动。" },
+                    { dynasty: "唐朝", title: "宣宗", name: "李忱", time: "846年－859年", era: "大中", achievements: "早年装疯卖傻。即位后展现极高政治手腕，贬黜李德裕，明察秋毫、体恤百姓，使日薄西山的唐朝出现晚唐难得的治世，史称“大中之治”，被百姓誉为“小太宗”。" },
+                    { dynasty: "唐朝", title: "懿宗", name: "李漼", time: "859年－873年", era: "咸通", achievements: "昏庸骄奢至极，极度迷信佛教，沉迷游乐。在位期间浙东爆发裘甫起义，桂林爆发庞勋兵变，唐朝局势彻底走向失控的边缘。" },
+                    { dynasty: "唐朝", title: "僖宗", name: "李儇", time: "873年－888年", era: "乾符、广明、中和、光启、文德", achievements: "十二岁即位，政事全委委任给宦官田令孜，自己热衷于打马球。在位期间爆发了席卷全国、彻底摧毁唐朝统治根基的“黄巢之乱”。" },
+                    { dynasty: "唐朝", title: "昭宗", name: "李晔", time: "888年－904年", era: "龙纪、大顺、景福、乾宁、光化、天复、天祐", achievements: "曾试图恢复唐威，但无力回天。先后被李茂贞、朱温等地方军阀劫持，最终沦为宣武节度使朱温的完全傀儡，后被朱温派人刺杀于洛阳。" },
+                    { dynasty: "唐朝", title: "哀帝", name: "李柷", time: "904年－907年", era: "天祐", achievements: "唐朝末代皇帝。完全是朱温篡位过程中的过渡傀儡。公元907年被逼禅让于朱温，唐朝灭亡，中国进入五代十国时期。" },
+                    { dynasty: "北宋", title: "太祖", name: "赵匡胤", time: "960年－976年", era: "建隆、乾德、开宝", achievements: "后周大将，发动“陈桥兵变”黄袍加身建立宋朝。通过“杯酒释兵权”收回将领兵权，确立文人治国、重文轻武的国策，逐步实行局部统一。" },
+                    { dynasty: "北宋", title: "太宗", name: "赵炅(匡义)", time: "976年－997年", era: "太平兴国、雍熙、端拱、淳化、至道", achievements: "通过“烛影斧声”疑案继位。消灭北汉彻底结束五代割据。两次对辽发动北伐（高粱河、雍熙北伐）均遭惨败，从此宋朝对辽被迫转入全面防御。" },
+                    { dynasty: "北宋", title: "真宗", name: "赵恒", time: "997年－1022年", era: "咸平、景德、大中祥符、天禧、乾兴", achievements: "统治前期咸平之治。公元1004年辽军南下，在寇准力谏下御驾亲征，最终与辽朝达成“澶渊之盟”，换来宋辽百年和平。后期沉迷封禅。" },
+                    { dynasty: "北宋", title: "仁宗", name: "赵祯", time: "1022年－1063年", era: "天圣、明道、景祐、宝元、康定、庆历、皇祐、至和、嘉祐", achievements: "宋朝在位最长皇帝。为人仁慈宽厚。在位期间名臣辈出（包拯、范仲淹、苏轼等），推行“庆历新政”，开创了文治鼎盛的“仁宗盛世”。" },
+                    { dynasty: "北宋", title: "英宗", name: "赵曙", time: "1063年－1067年", era: "治平", achievements: "宋仁宗养子。在位仅四年，期间因为亲生父亲的称谓问题与朝臣爆发了旷日持久的“濮议”之争。任用司马光编纂《资治通鉴》。" },
+                    { dynasty: "北宋", title: "神宗", name: "赵顼", time: "1067年－1085年", era: "熙宁、元丰", achievements: "极具改革宏愿。不顾保守派反对，全权破格重用王安石推行“王安石变法”（熙宁变法），以期富国强兵，但中后期由于新旧党争导致朝廷严重分裂。" },
+                    { dynasty: "北宋", title: "哲宗", name: "赵煦", time: "1085年－1100年", era: "元祐、绍圣、元符", achievements: "少年即位，祖母高太后听政期间全面废除新法。亲政后重启新法，数次大败西夏，国势一度中兴。可惜24岁英年早逝。" },
+                    { dynasty: "北宋", title: "徽宗", name: "赵佶", time: "1100年－1125年", era: "建中靖国、崇宁、大观、政和、重和、宣和", achievements: "中国历史上著名的艺术天才，独创瘦金体书法。但政治上极端昏庸，重用蔡京等花石纲祸国。金军南下时惊慌传位，在靖康之耻中被金军俘虏。" },
+                    { dynasty: "北宋", title: "钦宗", name: "赵桓", time: "1125年－1127年", era: "靖康", achievements: "徽宗传位受封接手残局。在位仅一年有余，生性优柔寡断。公元1127年金军攻破开封，与父亲徽宗及大量宗室被掳往北方，北宋灭亡（靖康之耻）。" },
+                    { dynasty: "南宋", title: "高宗", name: "赵构", time: "1127年－1162年", era: "建炎、绍兴", achievements: "宋徽宗之子，靖康之变后在南方南京应天府称帝重建宋室。在位期间偏安江南，起用岳飞、韩世忠等抗金，但最终实行求和政策，联合秦桧杀害岳飞，签订《绍兴和议》。" },
+                    { dynasty: "南宋", title: "孝宗", name: "赵昚", time: "1162年－1189年", era: "隆兴、乾道、纯熙", achievements: "宋太祖赵匡胤后代，被视为南宋最有作为的皇帝。即位后立即为岳飞平反昭雪，重用主战派北伐（隆兴北伐）。平息党争、整顿吏治，史称“乾淳之治”。" },
+                    { dynasty: "南宋", title: "光宗", name: "赵惇", time: "1189年－1194年", era: "绍熙", achievements: "政治上少有建树，且患有精神疾病。其皇后李凤娘极其泼辣凶残，挑拨光宗与太上皇孝宗的关系，引发朝臣强烈不满，最终被逼退位。" },
+                    { dynasty: "南宋", title: "宁宗", name: "赵扩", time: "1194年－1224年", era: "庆元、嘉泰、开禧、嘉定", achievements: "在位期间大权一度由韩侂胄把持，发动了失败的“开禧北伐”。理学在这一时期重新获得承认并被定为官学。后期由权臣史弥远擅权。" },
+                    { dynasty: "南宋", title: "理宗", name: "赵昀", time: "1224年－1264年", era: "宝庆、绍定、端平、嘉熙、淳祐、宝祐、开庆、景定", achievements: "在位长达四十年。执政前期联合蒙古大军成功扫灭了世仇金朝（联蒙灭金）。后期不思进取，沉湎于声色，朝政完全委任于大奸臣贾似道。" },
+                    { dynasty: "南宋", title: "度宗", name: "赵禥", time: "1264年－1274年", era: "咸淳", achievements: "资质平庸。在位期间北方元朝（蒙古）军队已经大举全面南下围攻襄阳。度宗依然整日沉迷酒色，对军事危机不闻不问，南宋已危在旦夕。" },
+                    { dynasty: "南宋", title: "恭帝", name: "赵显", time: "1274年－1276年", era: "德祐", achievements: "四岁即位，谢太后临朝。1276年元朝大将伯颜率军攻占临安，恭帝年幼无力反抗，被迫出城投降，后被元军送往西藏出家。" },
+                    { dynasty: "南宋", title: "端宗", name: "赵昰", time: "1276年－1278年", era: "景炎", achievements: "临安沦陷后，被陆秀夫、文天祥等大臣护送在福州登基。沿海一路向南流亡以躲避元军追击。期间因遭遇飓风落水受到惊吓，不久病逝。" },
+                    { dynasty: "南宋", title: "幼主", name: "赵昺", time: "1278年－1279年", era: "祥兴", achievements: "南宋最后一位小皇帝。1279年宋元最后的“崖山海战”惨败，陆秀夫见大势已去，背着年仅八岁的赵昺纵身跳海殉国，南宋彻底宣告灭亡。" },
+                    { dynasty: "元朝", title: "世祖", name: "奇渥温·忽必烈", time: "1260年－1294年", era: "中统、至元", achievements: "成吉思汗之孙。1271年建国号为元。1279年完全消灭南宋统一全国。建立行省制度，积极推行汉法，开凿元代大运河。" },
+                    { dynasty: "元朝", title: "成宗", name: "铁穆耳", time: "1294年－1307年", era: "元贞、大德", achievements: "忽必烈之孙。在位期间成功平定了西北宗王海都之乱，使四大汗国在名义上承认元朝宗主国地位。由于连年征战，国库开始空虚。" },
+                    { dynasty: "元朝", title: "武宗", name: "海山", time: "1307年－1311年", era: "至大", achievements: "依靠军事实力夺位。在位期间过度滥发银钞导致通货膨胀，财政彻底陷入崩溃。大肆封赏功臣，导致元代冗官冗费严重。" },
+                    { dynasty: "元朝", title: "仁宗", name: "爱育黎拔力八达", time: "1311年－1320年", era: "皇庆、延祐", achievements: "汉化极深。在位期间正式确立并恢复了元朝的“科举制度”（延祐复科），规定以儒家经典朱熹集注为考试内容。" },
+                    { dynasty: "元朝", title: "英宗", name: "硕德八剌", time: "1320年－1323年", era: "至治", achievements: "推行新政以整顿吏治，打击保守的蒙古旧贵族。由于动作过大，1323年在南坡被保守派权臣铁失等人刺杀身亡（南坡之变）。" },
+                    { dynasty: "元朝", title: "泰定帝", name: "也孙铁木儿", time: "1323年－1328年", era: "泰定、致和", achievements: "南坡之变后被蒙古贵族推举为帝。在位期间尽力缓和汉蒙矛盾。死后元朝由于没有明确继承人，瞬间陷入两都内战。" },
+                    { dynasty: "元朝", title: "天顺帝", name: "阿速吉八", time: "1328年", era: "天顺", achievements: "在上都被权臣迎立。随后燕帖木儿在燕京倒戈另立元文宗。上都军全面战败后，天顺帝在战乱中失踪。" },
+                    { dynasty: "元朝", title: "文宗", name: "图帖睦尔", time: "1328年－1329年/1329年－1332年", era: "天历、至顺", achievements: "两度称帝。极力标榜文治，创建了奎章阁，编纂了《元大典》。在位期间政权完全由权臣燕帖木儿一手掌控。" },
+                    { dynasty: "元朝", title: "明宗", name: "和世㻋", time: "1329年", era: "天历", achievements: "元文宗长兄。在漠北被迎立，南下途中与弟弟文宗会面。在会面宴席上，仅当了180天皇帝的他离奇猝死（相传被燕帖木儿毒杀）。" },
+                    { dynasty: "元朝", title: "宁宗", name: "懿璘质班", time: "1332年", era: "至顺", achievements: "明宗次子。由权臣燕帖木儿遵照元文宗遗诏迎立，登基时年仅七岁，在位仅仅53天便突发疾病驾崩。" },
+                    { dynasty: "元朝", title: "顺帝", name: "妥懽贴睦尔", time: "1333年－1368年", era: "元统、至元、至正", achievements: "元朝在位最长、也是最后的皇帝。前期任用脱脱实行至正新政，但后期怠政。1368年朱元璋明军攻占大都，顺帝被迫北逃（元朝中原统治结束）。" },
+                    { dynasty: "明朝", title: "太祖", name: "朱元璋", time: "1368年－1398年", era: "洪武", achievements: "开国布衣皇帝，推翻元朝建立大明。政治上废除宰相制度，设立锦衣卫强化皇权。推行减免赋税、丈量田亩，开创“洪武之治”。" },
+                    { dynasty: "明朝", title: "惠宗", name: "朱允炆", time: "1398年－1402年", era: "建文", achievements: "朱元璋之孙。即位后急于强硬削藩，导致四叔燕王朱棣起兵反抗。爆发“靖难之役”，南京城破后建文帝纵火烧宫，自此不知下落。" },
+                    { dynasty: "明朝", title: "成祖", name: "朱棣", time: "1402年－1424年", era: "永乐", achievements: "通过靖难之役夺位。在位期间修筑北京城并将明朝首都正式迁都北京。五次亲征漠北，派遣郑和下西洋，修纂《永乐大典》，史称“永乐盛世”。" },
+                    { dynasty: "明朝", title: "仁宗", name: "朱高炽", time: "1424年－1425年", era: "洪熙", achievements: "生性宽厚。在位期间赦免了大量建文帝旧臣，停止了耗资巨大的下西洋活动，与民休息。虽然在位仅十个月，但与儿子宣宗合开“仁宣之治”。" },
+                    { dynasty: "明朝", title: "宣宗", name: "朱瞻基", time: "1425年－1435年", era: "宣德", achievements: "政治清明，妥善平定了汉王朱高煦的叛乱。在文治武功上均有极高造诣（尤擅画画）。与其父明仁宗共同缔造了明代黄金十年“仁宣之治”。" },
+                    { dynasty: "明朝", title: "英宗", name: "朱祁镇", time: "1435年－1449年 / 1457年－1464年", era: "正统、天顺", achievements: "两度称帝。第一次在位时宠信宦官王振，盲目亲征导致“土木堡之变”全军覆没被瓦剌俘虏。回国后被软禁，后通过“夺门之变”成功复辟复位。" },
+                    { dynasty: "明朝", title: "代宗", name: "朱祁钰", time: "1449年－1457年", era: "景泰", achievements: "英宗被俘后被于谦等大臣拥立。重用名将于谦坚守北京，成功击退瓦剌，保卫了明朝江山社稷。英宗复位后将其废黜，不久暴崩。" },
+                    { dynasty: "明朝", title: "宪宗", name: "朱见深", time: "1464年－1487年", era: "成化", achievements: "即位之初为于谦平反昭雪，恢复景泰帝帝号。设立西厂。在位中后期开始专宠比自己大17岁的万贵妃，任用汪直，朝政出现部分停滞。" },
+                    { dynasty: "明朝", title: "孝宗", name: "朱祐樘", time: "1487年－1505年", era: "弘治", achievements: "明代极具美德的贤君，一生坚守“一夫一妻制”。躬行节俭，罢黜奸佞，大力发展经济，史称“弘治中兴”。" },
+                    { dynasty: "明朝", title: "武宗", name: "朱厚照", time: "1505年－1521年", era: "正德", achievements: "个性极度叛逆自由，建造“豹房”纵情享乐，自封为“威武大将军朱寿”。但他曾在应州之战中亲临一线大败蒙古军队，死后因无子传位给堂弟。" },
+                    { dynasty: "明朝", title: "世宗", name: "朱厚熜", time: "1521年－1567年", era: "嘉靖", achievements: "因“大礼议”之争确立绝对权威。极其聪明绝顶，执政中后期因迷信道教炼丹长生，搬出皇宫二十余年不御正朝，但仍能牢牢掌控朝政大权。" },
+                    { dynasty: "明朝", title: "穆宗", name: "朱载坖", time: "1567年－1572年", era: "隆庆", achievements: "任用徐阶、高拱、张居正等名相。在位期间达成了开放海禁的“隆庆开关”和与蒙古和谈的“俺答封贡”，缓解了内忧外患。" },
+                    { dynasty: "明朝", title: "神宗", name: "朱翊钧", time: "1572年－1620年", era: "万历", achievements: "明代在位最长的皇帝。前期由张居正主持“万历大革新”。取得万历三大征的军事胜利。中后期因国本之争等原因，创下连续近30年不上朝的记录。" },
+                    { dynasty: "明朝", title: "光宗", name: "朱常洛", time: "1620年", era: "泰昌", achievements: "苦熬多年终于继位。即位后立即废除万历矿税，拨银赈济边防。但由于纵欲过度，因服用红丸案在位仅短短一个月便驾崩（红丸案）。" },
+                    { dynasty: "明朝", title: "熹宗", name: "朱由校", time: "1620年－1627年", era: "天启", achievements: "疯狂热衷于木工雕刻，手艺精湛，人称“木匠皇帝”。完全将朝政大权委任给大宦官魏忠贤，导致九千岁阉党专权，政治极度黑暗。" },
+                    { dynasty: "明朝", title: "思宗", name: "朱由检", time: "1627年－1644年", era: "崇祯", achievements: "明朝末代皇帝。即位后雷厉风行诛灭魏忠贤阉党。虽然勤政节俭，但生性多疑，频繁更换宰相、错杀袁崇焕。1644年李自成攻破北京，在煤山自缢殉国。" },
+                    { dynasty: "清朝", title: "太祖", name: "爱新觉罗·努尔哈赤", time: "1616年－1626年", era: "天命", achievements: "统一女真各部，建立后金政权。反明萨尔浒之战取得决定性大胜。开创八旗制度和满文。在宁远战役中被袁崇焕红夷大炮击伤后驾崩。" },
+                    { dynasty: "清朝", title: "太宗", name: "爱新觉罗·皇太极", time: "1626年－1643年", era: "天聪、崇德", achievements: "努尔哈赤之子。1636年改国号为大清。在位期间降服朝鲜、征讨漠南蒙古。在松锦之战中大败明军主力，为清军入关打下坚实基础。" },
+                    { dynasty: "清朝", title: "世祖", name: "爱新觉罗·福临", time: "1643年－1661年", era: "顺治", achievements: "六岁即位，由多尔衮摄政。1644年清军入关后迁都北京，正式成为清朝入主中原的首位皇帝。积极推行汉化、重用汉臣。" },
+                    { dynasty: "清朝", title: "圣祖", name: "爱新觉罗·玄烨", time: "1661年－1722年", era: "康熙", achievements: "中国历史上在位时间最长的皇帝（61年）。智擒鳌拜亲政，平定三藩之乱，统一台湾，驱逐沙俄，三征噶尔丹，奠定了清朝疆域，开创“康乾盛世”。" },
+                    { dynasty: "清朝", title: "世宗", name: "爱新觉罗·胤禛", time: "1722年－1735年", era: "雍正", achievements: "通过九子夺嫡登基。极度勤政。在位期间设立军机处，推行改土归流、摊丁入亩、火耗归公等一系列硬核改革，大大充实了清朝国库。" },
+                    { dynasty: "清朝", title: "高宗", name: "爱新觉罗·弘历", time: "1735年－1796年", era: "乾隆", achievements: "自封“十全老人”。巩固多民族国家统一，修纂《四库全书》。但执政后期极度宠信和珅，大兴文字狱，实行闭关锁国政策，清朝盛极而衰。" },
+                    { dynasty: "清朝", title: "仁宗", name: "爱新觉罗·颙琰", time: "1796年－1820年", era: "嘉庆", achievements: "乾隆驾崩后立即雷厉风行惩办权臣和珅，民间流传“和珅跌倒，嘉庆吃饱”。在位期间爆发白莲教大起义，清朝从此由盛转衰。" },
+                    { dynasty: "清朝", title: "宣宗", name: "爱新觉罗·旻宁", time: "1820年－1850年", era: "道光", achievements: "为人极其崇尚节俭（衣物常打补丁）。但执政时面临历史巨变，1840年爆发中英第一次鸦片战争，被迫签订中国首个不平等条约《南京条约》。" },
+                    { dynasty: "清朝", title: "文宗", name: "爱新觉罗·奕詝", time: "1850年－1861年", era: "咸丰", achievements: "在位期间遭遇内忧外患的全面爆发（太平天国运动与第二次鸦片战争）。英法联军攻入北京火烧圆明园，咸丰帝仓皇逃往热河行宫并病逝于此。" },
+                    { dynasty: "清朝", title: "穆宗", name: "爱新觉罗·载淳", time: "1861年－1875年", era: "同治", achievements: "咸丰之子。即位后爆发辛酉政变，生母慈禧太后开始“垂帘听政”。在其在位期间平定太平天国，开展洋务运动，史称“同治中兴”。" },
+                    { dynasty: "清朝", title: "德宗", name: "爱新觉罗·载湉", time: "1875年－1908年", era: "光绪", achievements: "一生基本沦为慈禧太后的政治傀儡。1898年试图依靠康有为、梁启超发动“戊戌变法”以图强，结果由于慈禧镇压失败，此后被终身软禁于瀛台直至离奇暴崩。" },
+                    { dynasty: "清朝", title: "末代皇帝", name: "爱新觉罗·溥仪", time: "1908年－1912年", era: "宣统", achievements: "中国历史上最后一位皇帝。三岁即位。1911年爆发辛亥革命。1912年2月12日由隆裕太后颁布退位诏书，正式终结了中国延续两千多年的君主封建帝制。" }
+                ];
+
+                // 朝代专属配色（传统色系）
+                const dynastyColors = {
+                    "秦朝": "#5f4b32", "西汉": "#8c4a2f", "新朝": "#6e6a5e", "更始": "#7d7461",
+                    "东汉": "#a0522d", "曹魏": "#2f4f6f", "蜀汉": "#a63a3a", "东吴": "#b4653a",
+                    "西晋": "#5b6d3a", "东晋": "#6d7d46", "隋朝": "#2e6e6a", "唐朝": "#a8762c",
+                    "武周": "#9e3c50", "北宋": "#3a5f8a", "南宋": "#4a6f9e", "元朝": "#555a66",
+                    "明朝": "#8f3b3b", "清朝": "#3f6e52"
+                };
+                const dynColor = (d) => dynastyColors[d] || "#8a7355";
+
+                // 动态获取有哪些不重复的朝代名
+                const dynasties = ["全部", ...new Set(rawData.map(item => item.dynasty))];
+                const selectedDynasty = ref("全部");
+                const searchQuery = ref("");
+                const currentEmperor = ref(rawData[0]); // 默认显示始皇帝
+                const detailRef = ref(null);
+
+                // 各朝代帝王数量
+                const dynastyCount = (d) => rawData.filter(e => e.dynasty === d).length;
+
+                // 核心过滤与联动检索逻辑
+                const filteredEmperors = computed(() => {
+                    return rawData.filter(emp => {
+                        const matchDynasty = selectedDynasty.value === "全部" || emp.dynasty === selectedDynasty.value;
+                        const matchQuery = !searchQuery.value.trim() ||
+                            emp.title.includes(searchQuery.value) ||
+                            emp.name.includes(searchQuery.value) ||
+                            // 兼容带括号的别名（如"赵炅(匡义)"），去掉括号后也能命中
+                            emp.name.replace(/[()（）]/g, '').includes(searchQuery.value) ||
+                            emp.era.includes(searchQuery.value) ||
+                            emp.dynasty.includes(searchQuery.value);
+                        return matchDynasty && matchQuery;
+                    });
+                });
+
+                // 当前帝王的年号列表（"无"开头的纪年说明不拆分为标签）
+                const eraList = computed(() => {
+                    if (!currentEmperor.value) return [];
+                    const e = currentEmperor.value.era || "";
+                    if (e.startsWith("无")) return [];
+                    return e.split("、").filter(Boolean);
+                });
+
+                // 选择朝代切换
+                const selectDynasty = (dynasty) => {
+                    selectedDynasty.value = dynasty;
+                };
+
+                // 选中帝王：移动端时平滑滚动到详情区
+                const choose = (emp) => {
+                    currentEmperor.value = emp;
+                    if (window.innerWidth < 768 && detailRef.value) {
+                        detailRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                };
+
+                // 随机抽览一位帝王（优先从当前筛选结果中抽取）
+                const pickRandom = () => {
+                    const pool = filteredEmperors.value.length ? filteredEmperors.value : rawData;
+                    let pick;
+                    do {
+                        pick = pool[Math.floor(Math.random() * pool.length)];
+                    } while (pool.length > 1 && pick === currentEmperor.value);
+                    choose(pick);
+                };
+
+                // 当过滤出来的列表发生变化时，默认将详情页锁定在当前列表的第一位，防止体验断层
+                watch(filteredEmperors, (newVal) => {
+                    if (newVal.length > 0) {
+                        // 如果当前选中的皇帝不在新列表中，才去自动切换
+                        if (!newVal.includes(currentEmperor.value)) {
+                            currentEmperor.value = newVal[0];
+                        }
+                    } else {
+                        currentEmperor.value = null;
+                    }
+                });
+
+                return {
+                    rawData,
+                    dynasties,
+                    selectedDynasty,
+                    searchQuery,
+                    currentEmperor,
+                    filteredEmperors,
+                    eraList,
+                    detailRef,
+                    dynColor,
+                    dynastyCount,
+                    selectDynasty,
+                    choose,
+                    pickRandom
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
