@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>华夏历代帝王年号谱 · 掌上历史速查</title>
+    <!-- 引入 Tailwind CSS 提供现代响应式设计 -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 Vue 3 提供流畅的动态数据联动 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+    <!-- 全量帝王事迹数据（字典结构），存于当前文件夹 -->
+    <script src="./emperors-data.js"></script>
+    <style>
+        :root {
+            --ink: #3d3229;          /* 墨色 */
+            --paper: #f5efe3;        /* 宣纸 */
+            --cinnabar: #b3342c;     /* 朱砂 */
+            --gold: #a8762c;         /* 赭金 */
+        }
+        * { -webkit-tap-highlight-color: transparent; }
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            color: var(--ink);
+            background-color: var(--paper);
+            /* 宣纸底纹：竖格 + 横格 + 顶部柔光 + 四角晕染 */
+            background-image:
+                radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255,255,255,.75), transparent 60%),
+                radial-gradient(ellipse 60% 40% at 0% 100%, rgba(168,118,44,.06), transparent 70%),
+                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(179,52,44,.05), transparent 70%),
+                repeating-linear-gradient(0deg, transparent 0 27px, rgba(120,90,50,.04) 27px 28px),
+                repeating-linear-gradient(90deg, transparent 0 27px, rgba(120,90,50,.03) 27px 28px);
+            min-height: 100vh;
+        }
+        [v-cloak] { display: none; }
+        .kai { font-family: 'STKaiti', 'KaiTi', 'FZKai-Z03S', 'Noto Serif SC', serif; }
+        .song { font-family: 'STSong', 'SimSun', 'Songti SC', serif; }
+
+        /* 印章 */
+        .seal {
+            width: 52px; height: 52px;
+            background: linear-gradient(135deg, #c0392f, #9e2b23);
+            color: #fdf6ec;
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'STKaiti', 'KaiTi', serif;
+            box-shadow: 0 3px 10px rgba(158,43,35,.35), inset 0 0 0 2px rgba(255,255,255,.35), inset 0 0 0 5px rgba(158,43,35,.9);
+            transform: rotate(-4deg);
+            letter-spacing: 2px;
+            text-shadow: 0 1px 2px rgba(0,0,0,.25);
+            flex-shrink: 0;
+        }
+        .seal-sm { width: 44px; height: 44px; font-size: 15px; line-height: 1.1; }
+
+        /* 云纹分隔线 */
+        .deco-line { display: flex; align-items: center; gap: 10px; }
+        .deco-line::before, .deco-line::after {
+            content: ''; flex: 1; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(120,90,50,.35), transparent);
+        }
+
+        /* 卡片 */
+        .paper-card {
+            background: rgba(255,253,247,.92);
+            border: 1px solid rgba(120,90,50,.14);
+            border-radius: 14px;
+            box-shadow: 0 1px 2px rgba(90,70,40,.06), 0 8px 24px -12px rgba(90,70,40,.18);
+            backdrop-filter: blur(2px);
+        }
+
+        /* 帝王列表项 */
+        .emp-item { transition: all .18s ease; border-left: 3px solid transparent; }
+        .emp-item:hover { background: rgba(168,118,44,.07); transform: translateX(2px); }
+        .emp-item.active {
+            background: rgba(168,118,44,.1);
+            border-left-color: var(--active-color, var(--gold));
+        }
+        .emp-item .idx {
+            font-family: 'STSong', 'SimSun', serif;
+            color: rgba(120,90,50,.4);
+            font-size: 11px; width: 22px; flex-shrink: 0;
+        }
+
+        /* 朝代按钮 */
+        .dyn-btn {
+            border: 1px solid rgba(120,90,50,.18);
+            background: rgba(255,253,247,.8);
+            transition: all .2s ease;
+            position: relative;
+        }
+        .dyn-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px -4px rgba(90,70,40,.3); }
+        .dyn-btn.active {
+            background: var(--c, var(--ink));
+            border-color: var(--c, var(--ink));
+            color: #fdf6ec !important;
+            box-shadow: 0 4px 12px -4px var(--c, rgba(90,70,40,.5));
+        }
+        .dyn-dot { width: 7px; height: 7px; border-radius: 9999px; display: inline-block; }
+
+        /* 年号标签 */
+        .era-chip {
+            background: rgba(168,118,44,.08);
+            border: 1px solid rgba(168,118,44,.22);
+            color: #7a5a24;
+            padding: 3px 10px;
+            border-radius: 9999px;
+            font-size: 12px;
+            transition: all .15s ease;
+            cursor: default;
+        }
+        .era-chip:hover { background: rgba(168,118,44,.16); transform: translateY(-1px); }
+
+        /* 动画 */
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-up { animation: fadeUp .45s ease both; }
+        .fade-in { animation: fadeIn .35s ease both; }
+        .list-anim { animation: fadeUp .4s ease both; }
+
+        .scroll-slim::-webkit-scrollbar { width: 5px; height: 5px; }
+        .scroll-slim::-webkit-scrollbar-thumb { background: rgba(120,90,50,.25); border-radius: 4px; }
+        .scroll-slim::-webkit-scrollbar-track { background: transparent; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+
+        /* 事迹引文装饰 */
+        .quote-box { position: relative; }
+        .quote-box::before {
+            content: '『';
+            position: absolute; top: -4px; left: 6px;
+            font-family: 'STKaiti','KaiTi',serif;
+            font-size: 30px; color: rgba(168,118,44,.25); line-height: 1;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div id="app" class="w-full max-w-5xl mx-auto px-4 py-6 md:py-10 flex-grow flex flex-col" v-cloak>
+
+        <!-- ═══════════ 页头：印章 + 题名 + 统计 ═══════════ -->
+        <header class="text-center mb-8">
+            <div class="flex items-center justify-center gap-4">
+                <div class="deco-line w-16 md:w-28">
+                    <span class="text-[10px] text-[#a8762c] opacity-60">☰</span>
+                </div>
+                <div class="seal kai text-xl">史</div>
+                <div class="deco-line w-16 md:w-28">
+                    <span class="text-[10px] text-[#a8762c] opacity-60">☰</span>
+                </div>
+            </div>
+            <h1 class="kai text-3xl md:text-5xl font-bold mt-4 tracking-[0.25em] text-[#3d3229]"
+                style="text-shadow: 0 2px 0 rgba(255,255,255,.8), 0 3px 8px rgba(90,70,40,.15);">
+                华夏历代帝王年号谱
+            </h1>
+            <p class="song text-xs md:text-sm text-[#8a7355] mt-3 tracking-[0.35em]">
+                秦皇汉武 · 唐宗宋祖 · 一卷在手 · 千年在目
+            </p>
+
+            <!-- 统计栏 -->
+            <div class="flex items-center justify-center gap-0 mt-6 fade-up">
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#b3342c]">{{ dynasties.length - 1 }}</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">朝 代</div>
+                </div>
+                <div class="w-px h-8 bg-[rgba(120,90,50,.2)]"></div>
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#a8762c]">{{ rawData.length }}</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">帝 王</div>
+                </div>
+                <div class="w-px h-8 bg-[rgba(120,90,50,.2)]"></div>
+                <div class="px-5 md:px-8 text-center">
+                    <div class="kai text-2xl md:text-3xl font-bold text-[#3d3229]">2133</div>
+                    <div class="text-[10px] md:text-xs text-[#8a7355] tracking-widest mt-1">载帝制</div>
+                </div>
+            </div>
+        </header>
+
+        <!-- ═══════════ 检索与筛选区 ═══════════ -->
+        <section class="paper-card p-4 md:p-5 mb-6 space-y-4">
+            <!-- 朝代快速选择 -->
+            <div>
+                <label class="kai block text-xs font-semibold text-[#8a7355] mb-2 tracking-widest">
+                    ◆ 卷首 · 择朝代
+                </label>
+                <div class="flex overflow-x-auto gap-2 pb-2 scrollbar-none snap-x">
+                    <button
+                        v-for="dynasty in dynasties"
+                        :key="dynasty"
+                        @click="selectDynasty(dynasty)"
+                        :class="['dyn-btn px-3.5 py-1.5 text-sm rounded-full whitespace-nowrap snap-center kai flex items-center gap-1.5', selectedDynasty === dynasty ? 'active' : 'text-[#5c4d3c]']"
+                        :style="selectedDynasty === dynasty ? {'--c': dynasty === '全部' ? '#3d3229' : dynColor(dynasty)} : {}"
+                    >
+                        <span v-if="dynasty !== '全部'" class="dyn-dot" :style="{background: dynColor(dynasty)}"></span>
+                        {{ dynasty }}
+                        <span class="text-[10px] opacity-60">{{ dynasty === '全部' ? rawData.length : dynastyCount(dynasty) }}</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 搜索框与快捷操作 -->
+            <div class="flex gap-2">
+                <div class="relative flex-grow">
+                    <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#a8762c]/50 text-sm">⌕</span>
+                    <input
+                        type="text"
+                        v-model="searchQuery"
+                        placeholder="输入名讳、庙号或年号搜索（如：刘彻 / 太宗 / 康熙）"
+                        class="w-full pl-9 pr-16 py-2.5 bg-[rgba(245,239,227,.6)] border border-[rgba(120,90,50,.18)] rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#a8762c]/40 focus:bg-white transition-all placeholder:text-[#b3a58c]"
+                    >
+                    <button
+                        v-if="searchQuery"
+                        @click="searchQuery = ''"
+                        class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-[#8a7355] hover:text-[#b3342c] bg-[rgba(120,90,50,.08)] px-2 py-0.5 rounded-full transition-colors"
+                    >
+                        清空
+                    </button>
+                </div>
+                <!-- 随机一位：探索历史上的今天主角 -->
+                <button
+                    @click="pickRandom"
+                    title="随机抽览一位帝王"
+                    class="kai px-4 py-2.5 rounded-lg text-sm whitespace-nowrap border border-[rgba(179,52,44,.3)] text-[#b3342c] bg-[rgba(179,52,44,.05)] hover:bg-[rgba(179,52,44,.12)] hover:-translate-y-0.5 transition-all"
+                >
+                    ⚄ 随机
+                </button>
+            </div>
+        </section>
+
+        <!-- ═══════════ 主体数据呈现层 ═══════════ -->
+        <main class="flex-grow grid grid-cols-1 md:grid-cols-5 gap-6">
+
+            <!-- 帝王名录（左/上） -->
+            <section class="md:col-span-2 flex flex-col">
+                <div class="flex justify-between items-center mb-2 px-1">
+                    <h2 class="kai text-sm font-bold text-[#3d3229] tracking-widest">
+                        {{ selectedDynasty }} · 帝王名录
+                    </h2>
+                    <span class="song text-xs text-[#8a7355]">共 {{ filteredEmperors.length }} 位</span>
+                </div>
+                <!-- 皇帝列表滚动盒 -->
+                <div class="paper-card overflow-hidden max-h-[320px] md:max-h-[560px] overflow-y-auto scroll-slim">
+                    <div
+                        v-for="(emp, index) in filteredEmperors"
+                        :key="emp.name + emp.title"
+                        @click="choose(emp)"
+                        :class="['emp-item list-anim p-3 pl-2.5 cursor-pointer flex items-center gap-1.5 text-sm', currentEmperor === emp ? 'active' : '']"
+                        :style="[
+                            {'--active-color': dynColor(emp.dynasty)},
+                            {'animation-delay': Math.min(index * 30, 400) + 'ms'}
+                        ]"
+                    >
+                        <span class="idx kai">{{ index + 1 }}</span>
+                        <div class="flex-grow min-w-0">
+                            <span class="kai font-semibold text-[#3d3229]">{{ emp.title }}</span>
+                            <span class="text-xs text-[#8a7355] ml-1.5">{{ emp.name }}</span>
+                        </div>
+                        <span class="song text-[11px] text-[#8a7355] bg-[rgba(168,118,44,.07)] px-2 py-0.5 rounded-full flex-shrink-0">
+                            {{ emp.time.split('－')[0].split('/')[0] }}
+                        </span>
+                    </div>
+                    <div v-if="filteredEmperors.length === 0" class="text-center py-14 text-[#8a7355] text-xs space-y-2">
+                        <div class="kai text-3xl opacity-30">空</div>
+                        <div>未寻得相关帝王，换个关键词试试</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 帝王志纪（右/下） -->
+            <section class="md:col-span-3" ref="detailRef">
+                <h2 class="kai text-sm font-bold text-[#3d3229] mb-2 px-1 tracking-widest">帝王志纪 · 年号纪元</h2>
+
+                <Transition name="swap" mode="out-in">
+                    <div v-if="currentEmperor" :key="currentEmperor.name + currentEmperor.title"
+                         class="paper-card p-5 md:p-7 md:sticky md:top-6 space-y-5 fade-up">
+
+                        <!-- 头部核心身份 -->
+                        <div class="flex justify-between items-start gap-4 border-b border-dashed border-[rgba(120,90,50,.25)] pb-5">
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <span class="text-xs text-[#fdf6ec] px-2.5 py-0.5 rounded-full kai"
+                                          :style="{background: dynColor(currentEmperor.dynasty)}">
+                                        {{ currentEmperor.dynasty }}
+                                    </span>
+                                    <span class="song text-xs text-[#8a7355]">⏱ 在位 {{ currentEmperor.time }}</span>
+                                </div>
+                                <h3 class="kai text-2xl md:text-3xl font-bold text-[#3d3229] mt-2.5 tracking-wider">
+                                    {{ currentEmperor.title }}
+                                </h3>
+                                <p class="song text-sm text-[#8a7355] mt-1">
+                                    讳 <span class="text-[#5c4d3c] font-semibold">{{ currentEmperor.name }}</span>
+                                </p>
+                            </div>
+                            <div class="seal seal-sm kai" :title="currentEmperor.dynasty">
+                                {{ currentEmperor.dynasty.replace('朝','') }}
+                            </div>
+                        </div>
+
+                        <!-- 年号标签墙 -->
+                        <div>
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 年号纪元</h4>
+                            <div v-if="eraList.length" class="flex flex-wrap gap-1.5">
+                                <span v-for="(era, i) in eraList" :key="i" class="era-chip song">{{ era }}</span>
+                            </div>
+                            <p v-else class="song text-sm text-[#8a7355] bg-[rgba(168,118,44,.06)] border border-[rgba(168,118,44,.15)] rounded-lg px-3 py-2">
+                                {{ currentEmperor.era }}
+                            </p>
+                        </div>
+
+                        <!-- 事迹标签 -->
+                        <div v-if="(currentEmperor.tags || []).length">
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 事迹标签</h4>
+                            <div class="flex flex-wrap gap-1.5">
+                                <span v-for="(tag, i) in (currentEmperor.tags || [])" :key="i"
+                                      class="kai text-xs px-2.5 py-0.5 rounded-full border transition-transform hover:-translate-y-0.5"
+                                      :style="{ color: dynColor(currentEmperor.dynasty), borderColor: dynColor(currentEmperor.dynasty) + '44', background: dynColor(currentEmperor.dynasty) + '10' }">
+                                    # {{ tag }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- 白话文详传（分段呈现，滚动阅读） -->
+                        <div>
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 帝王详传 · 白话通说</h4>
+                            <div class="bg-[rgba(245,239,227,.72)] rounded-lg p-4 md:p-5 pt-5 border border-[rgba(120,90,50,.1)] quote-box space-y-3.5 max-h-[46vh] md:max-h-[420px] overflow-y-auto scroll-slim">
+                                <p v-for="(para, i) in (currentEmperor.bio || [])" :key="i"
+                                   class="song text-sm leading-loose text-[#5c4d3c]" style="text-indent: 2em;">
+                                    {{ para }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 史册原文（文言文选句） -->
+                        <div v-if="currentEmperor.quote">
+                            <h4 class="kai text-xs font-bold text-[#8a7355] mb-2 tracking-widest">◆ 史册原文 · 文言</h4>
+                            <div class="rounded-r-lg px-4 py-3.5 border border-l-[3px] border-[rgba(120,90,50,.12)]"
+                                 :style="{ borderColor: dynColor(currentEmperor.dynasty), background: dynColor(currentEmperor.dynasty) + '0a' }">
+                                <p class="kai text-base leading-relaxed text-[#6b3a3a]">“{{ currentEmperor.quote }}”</p>
+                                <p class="song text-xs text-[#8a7355] mt-2 text-right">—— {{ currentEmperor.quoteSrc }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 空状态 -->
+                    <div v-else key="empty" class="paper-card p-14 text-center fade-in">
+                        <div class="kai text-5xl opacity-15 mb-3">朕</div>
+                        <p class="song text-sm text-[#8a7355]">请在左侧或上方择一位帝王，览其年号与生平</p>
+                    </div>
+                </Transition>
+            </section>
+        </main>
+
+        <!-- ═══════════ 页脚 ═══════════ -->
+        <footer class="text-center mt-12 py-5 border-t border-[rgba(120,90,50,.15)]">
+            <div class="deco-line mb-3 px-20">
+                <span class="text-[10px] text-[#a8762c]/50">❖</span>
+            </div>
+            <p class="song text-xs text-[#8a7355]/80 tracking-wider">
+                数据据二十四史及《资治通鉴》正统编排 · 帝王庙号谥号以史书通称为准
+            </p>
+        </footer>
+    </div>
+
+    <!-- 详情切换过渡 -->
+    <style>
+        .swap-enter-active, .swap-leave-active { transition: all .28s ease; }
+        .swap-enter-from { opacity: 0; transform: translateY(14px); }
+        .swap-leave-to { opacity: 0; transform: translateY(-8px); }
+    </style>
+
+    <!-- 逻辑与全量数据脚本 -->
+    <script>
+        const { createApp, ref, computed, watch } = Vue;
+
+        createApp({
+            setup() {
+                // 全量事迹数据来自 ./emperors-data.js（Python 字典式结构，键为帝王名讳）
+                const rawData = Object.values(EMPEROR_DATA);
+
+                // 朝代专属配色（传统色系）
+                const dynastyColors = {
+                    "秦朝": "#5f4b32", "西汉": "#8c4a2f", "新朝": "#6e6a5e", "更始": "#7d7461",
+                    "东汉": "#a0522d", "曹魏": "#2f4f6f", "蜀汉": "#a63a3a", "东吴": "#b4653a",
+                    "西晋": "#5b6d3a", "东晋": "#6d7d46", "隋朝": "#2e6e6a", "唐朝": "#a8762c",
+                    "武周": "#9e3c50", "北宋": "#3a5f8a", "南宋": "#4a6f9e", "元朝": "#555a66",
+                    "明朝": "#8f3b3b", "清朝": "#3f6e52"
+                };
+                const dynColor = (d) => dynastyColors[d] || "#8a7355";
+
+                // 动态获取有哪些不重复的朝代名
+                const dynasties = ["全部", ...new Set(rawData.map(item => item.dynasty))];
+                const selectedDynasty = ref("全部");
+                const searchQuery = ref("");
+                const currentEmperor = ref(rawData[0]); // 默认显示始皇帝
+                const detailRef = ref(null);
+
+                // 各朝代帝王数量
+                const dynastyCount = (d) => rawData.filter(e => e.dynasty === d).length;
+
+                // 核心过滤与联动检索逻辑
+                const filteredEmperors = computed(() => {
+                    return rawData.filter(emp => {
+                        const matchDynasty = selectedDynasty.value === "全部" || emp.dynasty === selectedDynasty.value;
+                        const matchQuery = !searchQuery.value.trim() ||
+                            emp.title.includes(searchQuery.value) ||
+                            emp.name.includes(searchQuery.value) ||
+                            // 兼容带括号的别名（如"赵炅(匡义)"），去掉括号后也能命中
+                            emp.name.replace(/[()（）]/g, '').includes(searchQuery.value) ||
+                            emp.era.includes(searchQuery.value) ||
+                            emp.dynasty.includes(searchQuery.value) ||
+                            // 事迹标签与详传全文也可检索
+                            (emp.tags || []).some(t => t.includes(searchQuery.value)) ||
+                            (emp.bio || []).some(par => par.includes(searchQuery.value)) ||
+                            (emp.quote || '').includes(searchQuery.value);
+                        return matchDynasty && matchQuery;
+                    });
+                });
+
+                // 当前帝王的年号列表（"无"开头的纪年说明不拆分为标签）
+                const eraList = computed(() => {
+                    if (!currentEmperor.value) return [];
+                    const e = currentEmperor.value.era || "";
+                    if (e.startsWith("无")) return [];
+                    return e.split("、").filter(Boolean);
+                });
+
+                // 选择朝代切换
+                const selectDynasty = (dynasty) => {
+                    selectedDynasty.value = dynasty;
+                };
+
+                // 选中帝王：移动端时平滑滚动到详情区
+                const choose = (emp) => {
+                    currentEmperor.value = emp;
+                    if (window.innerWidth < 768 && detailRef.value) {
+                        detailRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
+                    }
+                };
+
+                // 随机抽览一位帝王（优先从当前筛选结果中抽取）
+                const pickRandom = () => {
+                    const pool = filteredEmperors.value.length ? filteredEmperors.value : rawData;
+                    let pick;
+                    do {
+                        pick = pool[Math.floor(Math.random() * pool.length)];
+                    } while (pool.length > 1 && pick === currentEmperor.value);
+                    choose(pick);
+                };
+
+                // 当过滤出来的列表发生变化时，默认将详情页锁定在当前列表的第一位，防止体验断层
+                watch(filteredEmperors, (newVal) => {
+                    if (newVal.length > 0) {
+                        // 如果当前选中的皇帝不在新列表中，才去自动切换
+                        if (!newVal.includes(currentEmperor.value)) {
+                            currentEmperor.value = newVal[0];
+                        }
+                    } else {
+                        currentEmperor.value = null;
+                    }
+                });
+
+                return {
+                    rawData,
+                    dynasties,
+                    selectedDynasty,
+                    searchQuery,
+                    currentEmperor,
+                    filteredEmperors,
+                    eraList,
+                    detailRef,
+                    dynColor,
+                    dynastyCount,
+                    selectDynasty,
+                    choose,
+                    pickRandom
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
