@@ -1,567 +1,885 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>华夏历代帝王年号谱 · 掌上历史速查</title>
-    <!-- 引入 Tailwind CSS 提供现代响应式设计 -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- 引入 Vue 3 提供流畅的动态数据联动 -->
-    <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
-    <!-- 全量帝王事迹数据（字典结构），存于当前文件夹 -->
-    <script src="./emperors-data.js"></script>
-    <style>
-        :root {
-            --ink: #3d3229;          /* 墨色 */
-            --paper: #f5efe3;        /* 宣纸 */
-            --cinnabar: #b3342c;     /* 朱砂 */
-            --gold: #a8762c;         /* 赭金 */
-            --line: rgba(120,90,50,.14);
-        }
-        * { -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; }
-        body {
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            color: var(--ink);
-            background-color: var(--paper);
-            background-image:
-                radial-gradient(ellipse 120% 60% at 50% -10%, rgba(255,255,255,.75), transparent 60%),
-                radial-gradient(ellipse 60% 40% at 0% 100%, rgba(168,118,44,.06), transparent 70%),
-                radial-gradient(ellipse 60% 40% at 100% 100%, rgba(179,52,44,.05), transparent 70%),
-                repeating-linear-gradient(0deg, transparent 0 27px, rgba(120,90,50,.04) 27px 28px),
-                repeating-linear-gradient(90deg, transparent 0 27px, rgba(120,90,50,.03) 27px 28px);
-            background-attachment: fixed;
-            min-height: 100vh;
-        }
-        /* 桌面端固定视口高度，双栏各自内部滚动 —— 保证左右两栏同顶同底 */
-        @media (min-width: 1024px) {
-            body { overflow: hidden; }
-            #app { height: 100vh; height: 100dvh; }
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>华夏历代帝王谱 · 一卷在手 千年在目</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="./emperors-data.js"></script>
+<script src="./emperors-extra.js"></script>
+<style>
+:root{
+  --paper:#f6f1e6;
+  --paper-2:#fffdf8;
+  --ink:#2b241e;
+  --ink-2:#3a3128;
+  --muted:#8a7a63;
+  --line:rgba(90,70,45,.15);
+  --cinnabar:#b3342c;
+  --gold:#a8762c;
+  --kai:'STKaiti','KaiTi','Kaiti SC','Kaiti TC','Noto Serif SC',serif;
+  --song:'Songti SC','STSong','SimSun','Noto Serif SC',serif;
+  --sans:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:var(--sans);color:var(--ink-2);background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+}
+body.lock{overflow:hidden}
+[v-cloak]{display:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+input{font:inherit}
+img{display:block}
 
-        [v-cloak] { display: none; }
-        .kai { font-family: 'STKaiti', 'KaiTi', 'FZKai-Z03S', 'Noto Serif SC', serif; }
-        .song { font-family: 'STSong', 'SimSun', 'Songti SC', serif; }
+/* ══════════════ 第一屏 · 大屏 ══════════════ */
+.hero{
+  position:relative;height:100svh;min-height:600px;overflow:hidden;
+  background:#0a0807;isolation:isolate;
+}
+.hero-media{position:absolute;inset:0}
+.hero-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 26%;transform:scale(1.03);
+}
+.hero-veil{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(to top, rgba(8,6,5,.94) 0%, rgba(8,6,5,.8) 15%, rgba(8,6,5,.34) 42%, rgba(8,6,5,.04) 68%, rgba(8,6,5,.26) 100%),
+    linear-gradient(to right, rgba(8,6,5,.7) 0%, rgba(8,6,5,.24) 46%, rgba(8,6,5,0) 76%),
+    radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(0,0,0,.45) 100%);
+}
+.hero-top{
+  position:absolute;left:0;right:0;top:0;z-index:3;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  padding:clamp(16px,2.6vw,30px) clamp(18px,4vw,54px);
+}
+.brand{display:flex;align-items:center;gap:12px;color:#f4ecdd;text-decoration:none}
+.seal{
+  width:42px;height:42px;flex:none;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#c0392f,#8f231c);color:#fff5e8;
+  font-family:var(--kai);font-size:20px;letter-spacing:2px;
+  box-shadow:inset 0 0 0 1.5px rgba(255,235,210,.45),0 6px 18px -6px rgba(0,0,0,.8);
+  transform:rotate(-4deg)
+}
+.brand h1{font-family:var(--kai);font-size:clamp(15px,1.5vw,19px);letter-spacing:.26em;margin:0;font-weight:600}
+.brand p{margin:5px 0 0;font-size:10.5px;letter-spacing:.3em;color:rgba(244,236,221,.5);font-family:var(--song)}
+.hero-tools{display:flex;align-items:center;gap:8px}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 15px;border-radius:999px;font-size:12.5px;letter-spacing:.1em;
+  color:rgba(248,240,226,.92);border:1px solid rgba(248,240,226,.26);
+  background:rgba(20,15,12,.3);backdrop-filter:blur(10px);
+  transition:.2s;white-space:nowrap
+}
+.pill:hover{background:rgba(248,240,226,.16);border-color:rgba(248,240,226,.5)}
+.pill.solid{background:rgba(179,52,44,.85);border-color:rgba(255,220,200,.3)}
+.pill.solid:hover{background:rgba(196,62,52,.95)}
+.pill .cnt{font-size:10px;opacity:.75;font-variant-numeric:tabular-nums}
 
-        /* 印章 */
-        .seal {
-            width: 52px; height: 52px;
-            background: linear-gradient(135deg, #c0392f, #9e2b23);
-            color: #fdf6ec;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            font-family: 'STKaiti', 'KaiTi', serif;
-            box-shadow: 0 3px 10px rgba(158,43,35,.35), inset 0 0 0 2px rgba(255,255,255,.35), inset 0 0 0 5px rgba(158,43,35,.9);
-            transform: rotate(-4deg);
-            letter-spacing: 2px;
-            text-shadow: 0 1px 2px rgba(0,0,0,.25);
-            flex-shrink: 0;
-        }
-        .seal-sm { width: 44px; height: 44px; font-size: 15px; line-height: 1.1; }
+.hero-copy{
+  position:absolute;z-index:3;
+  left:clamp(18px,4.5vw,64px);right:clamp(18px,4.5vw,64px);
+  bottom:clamp(52px,10vh,104px);
+  max-width:min(820px,86vw);
+}
+.dyn-tag{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--kai);font-size:13px;letter-spacing:.32em;
+  color:rgba(248,240,226,.88);margin-bottom:18px
+}
+.dyn-tag::before{content:'';width:26px;height:1px;background:currentColor;opacity:.6}
+.dyn-tag .dot{width:6px;height:6px;border-radius:50%}
+.temple{
+  font-family:var(--kai);font-weight:700;
+  font-size:clamp(48px,7.2vw,124px);line-height:.98;letter-spacing:.06em;
+  color:#f8f2e6;margin:0;
+  text-shadow:0 4px 26px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.08)
+}
+.name-line{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px;
+  margin-top:20px;color:rgba(240,230,212,.9)
+}
+.name-line .lb{font-size:11.5px;letter-spacing:.3em;color:rgba(240,230,212,.5)}
+.name-line .val{font-family:var(--kai);font-size:clamp(20px,2vw,26px);color:#f8f2e6;letter-spacing:.06em}
+.name-line .sep{width:1px;height:14px;background:rgba(240,230,212,.22);align-self:center}
+.era-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.era-pill{
+  font-family:var(--song);font-size:12px;letter-spacing:.1em;
+  padding:5px 11px;border-radius:2px;color:rgba(248,240,226,.85);
+  background:rgba(248,240,226,.1);border:1px solid rgba(248,240,226,.16)
+}
+.hero-quote{
+  margin:22px 0 0;padding-left:14px;border-left:2px solid rgba(179,52,44,.75);
+  font-family:var(--song);font-size:13.5px;line-height:1.9;
+  color:rgba(240,230,212,.72);max-width:600px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
 
-        /* 云纹分隔线 */
-        .deco-line { display: flex; align-items: center; gap: 10px; }
-        .deco-line::before, .deco-line::after {
-            content: ''; flex: 1; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(120,90,50,.35), transparent);
-        }
+.hero-side{
+  position:absolute;right:clamp(16px,3vw,40px);top:50%;transform:translateY(-50%);
+  z-index:3;display:flex;flex-direction:column;gap:8px
+}
+.hero-arrow{
+  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  color:rgba(248,240,226,.8);border:1px solid rgba(248,240,226,.24);
+  background:rgba(18,13,10,.28);backdrop-filter:blur(8px);
+  font-size:18px;transition:.2s
+}
+.hero-arrow:hover:not(:disabled){background:rgba(248,240,226,.18);color:#fff}
+.hero-arrow:disabled{opacity:.22;cursor:not-allowed}
 
-        /* 卡片 */
-        .paper-card {
-            background: rgba(255,253,247,.94);
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            box-shadow: 0 1px 2px rgba(90,70,40,.06), 0 10px 28px -16px rgba(90,70,40,.28);
-        }
+.hero-foot{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:0 clamp(18px,4vw,54px) clamp(16px,3vh,26px);
+  color:rgba(240,230,212,.5);font-size:11px;letter-spacing:.22em
+}
+.hero-index{font-family:var(--song);font-variant-numeric:tabular-nums;letter-spacing:.14em}
+.hero-index b{color:#f0e4cd;font-size:15px;font-family:var(--kai);letter-spacing:.05em}
+.scroll-cue{display:flex;align-items:center;gap:9px;animation:float 2.4s ease-in-out infinite}
+.scroll-cue .bar{width:1px;height:26px;background:linear-gradient(to bottom,rgba(240,230,212,.7),transparent)}
+@keyframes float{0%,100%{transform:translateY(0);opacity:.75}50%{transform:translateY(5px);opacity:1}}
 
-        /* 帝王列表项 */
-        .emp-item { transition: background .16s ease, transform .16s ease, border-color .16s ease; border-left: 3px solid transparent; }
-        .emp-item:hover { background: rgba(168,118,44,.07); }
-        .emp-item.active {
-            background: rgba(168,118,44,.11);
-            border-left-color: var(--active-color, var(--gold));
-        }
-        .emp-item .idx {
-            font-family: 'STSong', 'SimSun', serif;
-            color: rgba(120,90,50,.38);
-            font-size: 11px; width: 20px; flex-shrink: 0; text-align: right;
-        }
+/* 交叉淡入 */
+.xfade-enter-active,.xfade-leave-active{transition:opacity .7s ease}
+.xfade-enter-from,.xfade-leave-to{opacity:0}
 
-        /* 朝代按钮 */
-        .dyn-btn {
-            border: 1px solid rgba(120,90,50,.18);
-            background: rgba(255,253,247,.8);
-            transition: all .2s ease;
-            position: relative;
-        }
-        .dyn-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 10px -4px rgba(90,70,40,.3); }
-        .dyn-btn.active {
-            background: var(--c, var(--ink));
-            border-color: var(--c, var(--ink));
-            color: #fdf6ec !important;
-            box-shadow: 0 4px 12px -4px var(--c, rgba(90,70,40,.5));
-        }
-        .dyn-dot { width: 6px; height: 6px; border-radius: 9999px; display: inline-block; }
+/* ══════════════ 第二屏 · 阅读 ══════════════ */
+.read{position:relative;background:var(--paper)}
+.read::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(70% 40% at 50% 0%, rgba(255,255,255,.9), transparent 70%),
+    repeating-linear-gradient(0deg,transparent 0 27px,rgba(120,90,50,.028) 27px 28px);
+}
+.toolbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(246,241,230,.93);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.toolbar-in{
+  max-width:1240px;margin:0 auto;padding:10px clamp(14px,3vw,32px);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap
+}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1 1 320px;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;display:inline-flex;align-items:center;gap:6px;
+  padding:7px 13px;border-radius:999px;font-family:var(--kai);font-size:13px;
+  letter-spacing:.08em;color:#5c4d3c;border:1px solid rgba(90,70,45,.16);
+  background:rgba(255,253,248,.8);transition:.18s;white-space:nowrap
+}
+.chip:hover{border-color:rgba(90,70,45,.36);transform:translateY(-1px)}
+.chip.on{background:var(--c,#2b241e);border-color:var(--c,#2b241e);color:#fdf8ee}
+.chip .n{font-size:10px;opacity:.6;font-family:var(--sans)}
+.tools{display:flex;align-items:center;gap:8px;flex:none}
+.search{position:relative}
+.search input{
+  width:200px;padding:8px 30px 8px 32px;border-radius:8px;font-size:13.5px;
+  border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9);
+  color:var(--ink);outline:none;transition:.18s
+}
+.search input:focus{border-color:rgba(168,118,44,.6);box-shadow:0 0 0 3px rgba(168,118,44,.12);width:230px}
+.search .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#b3a58c;font-size:15px}
+.search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#8a7355}
+.tbtn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:8px;
+  font-size:13px;border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9);
+  color:#5c4d3c;transition:.18s
+}
+.tbtn:hover{border-color:rgba(90,70,45,.4)}
+.tbtn.on{background:rgba(43,36,30,.9);color:#fdf8ee;border-color:transparent}
+.tbtn.red{color:var(--cinnabar);border-color:rgba(179,52,44,.28);background:rgba(179,52,44,.05)}
+.tbtn .badge{
+  min-width:15px;height:15px;padding:0 4px;border-radius:999px;font-size:9.5px;
+  display:inline-grid;place-items:center;color:#fff;background:var(--cinnabar);font-variant-numeric:tabular-nums
+}
+.tbtn .badge.zero{background:#a9a090}
 
-        /* 朝代横向滚动：右缘渐隐，提示还能往右滑 */
-        .chips-fade {
-            -webkit-mask-image: linear-gradient(to right, #000 0, #000 90%, transparent 100%);
-            mask-image: linear-gradient(to right, #000 0, #000 90%, transparent 100%);
-        }
-        @media (min-width: 1024px) {
-            .chips-fade { -webkit-mask-image: none; mask-image: none; }
-        }
+/* 名录抽屉 */
+.namelist{border-bottom:1px solid var(--line);background:rgba(255,253,248,.7)}
+.namelist-in{max-width:1240px;margin:0 auto;padding:12px clamp(14px,3vw,32px)}
+.nl-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:6px;
+  max-height:44vh;overflow-y:auto
+}
+.nl-cell{
+  display:flex;flex-direction:column;gap:2px;text-align:left;
+  padding:7px 10px;border:1px solid transparent;border-radius:6px;transition:.15s
+}
+.nl-cell:hover{background:rgba(168,118,44,.09)}
+.nl-cell.on{background:rgba(168,118,44,.14);border-color:rgba(168,118,44,.32)}
+.nl-cell .t{font-family:var(--kai);font-size:14px;color:#3a3128;line-height:1.2}
+.nl-cell.on .t{color:var(--c,var(--gold))}
+.nl-cell .n{font-family:var(--song);font-size:11px;color:#8a7a63;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
-        /* 年号标签 */
-        .era-chip {
-            background: rgba(168,118,44,.08);
-            border: 1px solid rgba(168,118,44,.22);
-            color: #7a5a24;
-            padding: 3px 10px;
-            border-radius: 9999px;
-            font-size: 12px;
-            transition: all .15s ease;
-            cursor: default;
-        }
-        .era-chip:hover { background: rgba(168,118,44,.16); transform: translateY(-1px); }
+/* 正文 */
+.wrap{position:relative;max-width:920px;margin:0 auto;padding:clamp(26px,4.4vw,56px) clamp(18px,4vw,40px) 24px}
+@media (min-width:1440px){.wrap{max-width:1040px}}
+@media (min-width:1700px){.wrap{max-width:1120px}}
+.crumb{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:11.5px;letter-spacing:.26em;color:var(--muted);font-family:var(--song)
+}
+.crumb .d{color:var(--dc,var(--gold));font-weight:600}
+.crumb .bar{width:20px;height:1px;background:var(--line)}
+.art-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-top:14px}
+.art-title{
+  font-family:var(--kai);font-weight:700;margin:0;
+  font-size:clamp(34px,4.6vw,54px);line-height:1.06;letter-spacing:.05em;color:#241e19
+}
+.art-sub{margin:12px 0 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.art-sub .lb{font-size:11px;letter-spacing:.3em;color:var(--muted)}
+.art-sub .nm{font-family:var(--kai);font-size:22px;color:#241e19;letter-spacing:.04em}
+.art-sub .alias{font-size:12px;color:#9c8b73}
+.thumb{
+  flex:none;width:172px;height:97px;border-radius:3px;overflow:hidden;
+  border:1px solid rgba(90,70,45,.2);box-shadow:0 10px 26px -16px rgba(60,40,20,.8);
+  position:relative
+}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:center 26%}
+.thumb::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 0 3px rgba(255,255,255,.12)}
 
-        /* 上下切换按钮 */
-        .nav-btn {
-            width: 26px; height: 26px; border-radius: 7px;
-            border: 1px solid rgba(120,90,50,.2);
-            color: #8a7355; background: rgba(255,253,247,.7);
-            display: inline-flex; align-items: center; justify-content: center;
-            font-size: 15px; line-height: 1; transition: all .16s ease;
-        }
-        .nav-btn:hover { background: rgba(168,118,44,.12); color: #3d3229; border-color: rgba(120,90,50,.35); }
+.facts{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin:26px 0 30px
+}
+.facts>div{padding:15px 16px 15px 0;border-right:1px dashed rgba(90,70,45,.14)}
+.facts>div:last-child{border-right:none}
+.facts dt{font-size:10.5px;letter-spacing:.3em;color:var(--muted);margin-bottom:7px}
+.facts dd{margin:0;font-family:var(--kai);font-size:16.5px;color:#241e19;letter-spacing:.03em;line-height:1.45}
 
-        /* 动画 */
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .fade-up { animation: fadeUp .4s ease both; }
-        .fade-in { animation: fadeIn .3s ease both; }
-        .list-anim { animation: fadeUp .35s ease both; }
+.blk{margin:0 0 28px}
+.blk-h{
+  display:flex;align-items:center;gap:9px;margin-bottom:14px;
+  font-size:13px;letter-spacing:.18em;color:#6b5a44;font-family:var(--song);font-weight:600
+}
+.blk-h::before{content:'';width:5px;height:5px;background:var(--dc,var(--gold));transform:rotate(45deg);flex:none}
+.blk-h::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(90,70,45,.22),transparent)}
+.era-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.era{
+  font-family:var(--song);font-size:13px;letter-spacing:.06em;padding:5px 13px;
+  border-radius:2px;color:#6f5426;background:rgba(168,118,44,.07);
+  border:1px solid rgba(168,118,44,.22)
+}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{
+  font-family:var(--kai);font-size:13px;letter-spacing:.06em;
+  padding:5px 13px;border-radius:999px;
+  color:#7d5a22;border:1px solid rgba(168,118,44,.42);
+  background:rgba(168,118,44,.08)
+}
+.era-note{
+  display:inline-block;font-family:var(--song);font-size:14px;color:#6f6152;
+  padding:4px 0;letter-spacing:.04em
+}
 
-        .scroll-slim::-webkit-scrollbar { width: 6px; height: 6px; }
-        .scroll-slim::-webkit-scrollbar-thumb { background: rgba(120,90,50,.22); border-radius: 4px; }
-        .scroll-slim::-webkit-scrollbar-thumb:hover { background: rgba(120,90,50,.35); }
-        .scroll-slim::-webkit-scrollbar-track { background: transparent; }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
+.prose p{
+  font-family:var(--song);font-size:clamp(17px,1.42vw,20.5px);line-height:2.02;
+  color:#2f2823;margin:0 0 1.05em;text-indent:2em;letter-spacing:.015em
+}
+.prose p:last-child{margin-bottom:0}
 
-        /* 事迹引文装饰 */
-        .quote-box { position: relative; }
-        .quote-box::before {
-            content: '『';
-            position: absolute; top: -2px; left: 6px;
-            font-family: 'STKaiti','KaiTi',serif;
-            font-size: 28px; color: rgba(168,118,44,.22); line-height: 1;
-        }
-    </style>
+.quote{
+  margin:34px 0 0;padding:24px 26px;position:relative;
+  background:rgba(255,253,248,.8);border:1px solid var(--line);
+  border-left:3px solid var(--dc,var(--gold))
+}
+.quote .q-mark{
+  position:absolute;top:6px;right:16px;font-family:var(--kai);font-size:52px;
+  color:rgba(168,118,44,.14);line-height:1
+}
+.quote p{
+  margin:0;font-family:var(--kai);font-size:clamp(17px,1.5vw,20px);line-height:1.95;
+  color:#5c3a34;letter-spacing:.04em
+}
+.quote cite{display:block;margin-top:12px;text-align:right;font-style:normal;font-size:12px;color:var(--muted);font-family:var(--song)}
+
+.end-mark{display:flex;align-items:center;gap:14px;margin:40px 0 0;color:rgba(168,118,44,.85)}
+.end-mark .l{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(120,90,50,.28))}
+.end-mark .l.r{background:linear-gradient(270deg,transparent,rgba(120,90,50,.28))}
+.end-mark span{font-family:var(--kai);font-size:11.5px;letter-spacing:.5em;padding-left:.5em}
+
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:34px}
+.pg{
+  display:flex;flex-direction:column;gap:5px;padding:16px 18px;
+  border:1px solid var(--line);background:rgba(255,253,248,.86);
+  border-radius:3px;transition:.2s;text-align:left
+}
+.pg:hover:not(:disabled){border-color:rgba(90,70,45,.36);transform:translateY(-2px);box-shadow:0 12px 26px -18px rgba(60,40,20,.7)}
+.pg:disabled{opacity:.35;cursor:not-allowed}
+.pg .k{font-size:10.5px;letter-spacing:.28em;color:var(--muted)}
+.pg .v{font-family:var(--kai);font-size:18px;color:#241e19;letter-spacing:.05em}
+.pg .m{font-size:12px;color:#9c8b73;font-family:var(--song)}
+.pg.next{text-align:right;align-items:flex-end}
+.pg.mid{align-items:center;justify-content:center;text-align:center}
+.pager-sub{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:18px;font-size:11.5px;color:var(--muted);letter-spacing:.14em
+}
+.to-top{display:inline-flex;align-items:center;gap:6px;color:#7a6a54;font-size:11.5px;letter-spacing:.14em}
+.to-top:hover{color:var(--cinnabar)}
+
+footer{
+  border-top:1px solid var(--line);margin-top:20px;padding:22px 18px 34px;
+  text-align:center;font-size:11px;letter-spacing:.14em;color:#9c8b73;line-height:2
+}
+
+/* PC 右侧悬浮翻页（≥1024px 显示） */
+.side-nav{
+  position:fixed;right:clamp(10px,1.8vw,28px);top:50%;transform:translateY(-50%);
+  z-index:46;display:none;flex-direction:column;gap:12px;
+}
+@media (min-width:1024px){.side-nav{display:flex}}
+.sn-btn{
+  position:relative;width:44px;height:44px;border-radius:50%;
+  display:grid;place-items:center;
+  color:#3f3428;border:1px solid rgba(90,70,45,.26);
+  background:rgba(255,253,248,.94);backdrop-filter:blur(8px);
+  box-shadow:0 10px 26px -14px rgba(60,40,20,.7),inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform .18s,background .18s,color .18s,border-color .18s;
+}
+.sn-btn svg{display:block;width:19px;height:19px}
+.sn-btn:hover:not(:disabled){
+  background:var(--dc,#2b241e);color:#fdf8ee;border-color:transparent;
+  transform:scale(1.08);box-shadow:0 12px 28px -12px rgba(60,40,20,.85)
+}
+.sn-btn:active:not(:disabled){transform:scale(.96)}
+.sn-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:0 6px 16px -14px rgba(60,40,20,.5)}
+.sn-btn .tip{
+  position:absolute;right:calc(100% + 13px);top:50%;
+  transform:translateY(-50%) translateX(5px);
+  white-space:nowrap;font-family:var(--kai);font-size:12.5px;letter-spacing:.08em;
+  color:#fdf8ee;background:rgba(43,36,30,.92);padding:6px 12px;border-radius:4px;
+  opacity:0;pointer-events:none;transition:.18s;
+  box-shadow:0 6px 18px -8px rgba(0,0,0,.5)
+}
+.sn-btn .tip::after{
+  content:'';position:absolute;left:100%;top:50%;transform:translateY(-50%);
+  border:5px solid transparent;border-left-color:rgba(43,36,30,.92)
+}
+.sn-btn:hover:not(:disabled) .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+.sn-btn .tip .d{color:#e8c48a;margin-right:4px}
+@media (max-width:1279px){
+  .sn-btn{width:38px;height:38px}
+  .sn-btn svg{width:17px;height:17px}
+  .side-nav{right:8px;gap:10px}
+}
+
+/* 移动端底部操作条（<1024px 显示，手机端原样） */
+.mbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
+  gap:8px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(246,241,230,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line)
+}
+@media (min-width:1024px){.mbar{display:none}}
+.mbar button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 0;border-radius:8px;font-size:13px;letter-spacing:.08em;
+  border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9)
+}
+.mbar button:disabled{opacity:.35}
+.mbar button.red{color:var(--cinnabar);border-color:rgba(179,52,44,.26);background:rgba(179,52,44,.05)}
+
+/* 进度 */
+.progress{position:fixed;top:0;left:0;height:2px;z-index:70;background:linear-gradient(90deg,#b3342c,#d8a24a);border-radius:0 2px 2px 0;transition:width .12s linear}
+
+/* ── 响应式 ── */
+@media (max-width:1023px){
+  .thumb{width:132px;height:74px}
+  .toolbar-in{padding:9px 14px;gap:10px}
+  .search input{width:100%}
+  .search{flex:1 1 140px}
+  .tools{flex:1 1 100%;justify-content:flex-end}
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facts>div:nth-child(2){border-right:none}
+  .facts>div:nth-child(1),.facts>div:nth-child(2){border-bottom:1px dashed rgba(90,70,45,.14)}
+}
+@media (max-width:767px){
+  .hero{min-height:520px}
+  .hero-img{object-position:center 22%}
+  .hero-copy{bottom:clamp(40px,8vh,72px);max-width:none}
+  .hero-veil{background:
+    linear-gradient(to top, rgba(8,6,5,.98) 0%, rgba(8,6,5,.9) 22%, rgba(8,6,5,.35) 52%, rgba(8,6,5,.05) 72%, rgba(8,6,5,.35) 100%),
+    radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(0,0,0,.5) 100%)}
+  .hero-side{display:none}
+  .hero-quote{-webkit-line-clamp:2;font-size:12.5px}
+  .brand p{display:none}
+  .hero-tools .pill{padding:8px 12px;font-size:11.5px}
+  .hero-tools .pill .lbl{display:none}
+  .hero-foot{padding:0 16px 16px}
+  .art-head{gap:14px}
+  .thumb{width:104px;height:58px}
+  .pager{grid-template-columns:1fr 1fr}
+  .pg.mid{grid-column:1/-1}
+  .mbar{display:flex}
+  .wrap{padding-bottom:20px}
+  .read{padding-bottom:64px}
+}
+@media (max-width:480px){
+  .brand{gap:9px}
+  .seal{width:34px;height:34px;font-size:16px;border-radius:5px}
+  .brand h1{font-size:13.5px;letter-spacing:.12em;white-space:nowrap}
+  .hero-tools{gap:6px}
+  .hero-tools .pill{padding:7px 11px;font-size:11px;gap:4px}
+  .hero-tools .pill.solid{padding:7px 12px;letter-spacing:.06em}
+}
+@media (min-width:1280px){
+  .temple{font-size:124px}
+}
+</style>
 </head>
-<body class="antialiased">
+<body>
 
-    <div id="app" class="w-full max-w-[1280px] mx-auto px-4 md:px-6 flex flex-col min-h-screen md:min-h-0 md:h-[100dvh]" v-cloak>
+<div id="app" v-cloak>
+  <div class="progress" :style="{width: progress + '%'}"></div>
 
-        <!-- ═══════════ 页头：印章 + 题名 + 统计（单行紧凑） ═══════════ -->
-        <header class="shrink-0 flex items-center gap-3 md:gap-4 pt-4 pb-3 md:pt-5 md:pb-4">
-            <div class="seal kai text-lg md:text-xl">史</div>
-            <div class="min-w-0 flex-grow">
-                <h1 class="kai text-lg md:text-[26px] font-bold tracking-[0.14em] md:tracking-[0.18em] leading-tight text-[#3d3229]">
-                    华夏历代帝王年号谱
-                </h1>
-                <p class="song text-[10px] md:text-[11px] text-[#8a7355] tracking-[0.22em] md:tracking-[0.3em] mt-1 truncate">
-                    秦皇汉武 · 唐宗宋祖 · 一卷在手 · 千年在目
-                </p>
-            </div>
+  <!-- ═════════════ 第一屏 ═════════════ -->
+  <section class="hero">
+    <div class="hero-media">
+      <transition name="xfade">
+        <img :key="heroImg" :src="heroImg" class="hero-img" alt="">
+      </transition>
+    </div>
+    <div class="hero-veil"></div>
 
-            <!-- 统计栏 -->
-            <div class="hidden sm:flex items-center shrink-0 fade-up">
-                <div class="px-3 md:px-4 text-center">
-                    <div class="kai text-lg md:text-xl font-bold text-[#b3342c] leading-none">{{ dynasties.length - 1 }}</div>
-                    <div class="text-[10px] text-[#8a7355] tracking-widest mt-1">朝代</div>
-                </div>
-                <div class="w-px h-7 bg-[rgba(120,90,50,.18)]"></div>
-                <div class="px-3 md:px-4 text-center">
-                    <div class="kai text-lg md:text-xl font-bold text-[#a8762c] leading-none">{{ rawData.length }}</div>
-                    <div class="text-[10px] text-[#8a7355] tracking-widest mt-1">帝王</div>
-                </div>
-                <div class="w-px h-7 bg-[rgba(120,90,50,.18)]"></div>
-                <div class="px-3 md:px-4 text-center">
-                    <div class="kai text-lg md:text-xl font-bold text-[#3d3229] leading-none">2133</div>
-                    <div class="text-[10px] text-[#8a7355] tracking-widest mt-1">载帝制</div>
-                </div>
-            </div>
-        </header>
+    <header class="hero-top">
+      <div class="brand">
+        <div class="seal">史</div>
+        <div>
+          <h1>华夏历代帝王谱</h1>
+          <p>二十四史 · {{ rawData.length }} 位帝王 · 二千一百三十三年</p>
+        </div>
+      </div>
+      <div class="hero-tools">
+        <button class="pill" @click="pickRandom" :title="'从未读的帝王中随机抽取，还剩 ' + remainCount + ' 位'">
+          <span>⚄</span><span class="lbl">随机览</span><span class="cnt">{{ remainCount }}</span>
+        </button>
+        <button class="pill solid" @click="goRead">
+          <span>阅览详传</span><span>↓</span>
+        </button>
+      </div>
+    </header>
 
-        <!-- ═══════════ 检索与筛选区 ═══════════ -->
-        <section class="shrink-0 paper-card p-3 md:p-4 mb-3 md:mb-4 space-y-2.5">
-            <!-- 朝代快速选择 -->
-            <div class="flex items-start gap-2.5">
-                <span class="kai shrink-0 text-[11px] font-semibold text-[#8a7355] tracking-widest mt-1.5">◆ 择朝代</span>
-                <div class="flex-grow min-w-0 flex overflow-x-auto gap-1.5 pb-1 scrollbar-none chips-fade lg:flex-wrap lg:overflow-visible lg:pb-0">
-                    <button
-                        v-for="dynasty in dynasties"
-                        :key="dynasty"
-                        @click="selectDynasty(dynasty)"
-                        :class="['dyn-btn px-3 py-1 text-xs rounded-full whitespace-nowrap kai flex items-center gap-1.5', selectedDynasty === dynasty ? 'active' : 'text-[#5c4d3c]']"
-                        :style="selectedDynasty === dynasty ? {'--c': dynasty === '全部' ? '#3d3229' : dynColor(dynasty)} : {}"
-                    >
-                        <span v-if="dynasty !== '全部'" class="dyn-dot" :style="{background: dynColor(dynasty)}"></span>
-                        {{ dynasty }}
-                        <span class="text-[10px] opacity-60">{{ dynasty === '全部' ? rawData.length : dynastyCount(dynasty) }}</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- 搜索框与快捷操作 -->
-            <div class="flex gap-2">
-                <div class="relative flex-grow">
-                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[#a8762c]/50 text-sm">⌕</span>
-                    <input
-                        type="text"
-                        v-model="searchQuery"
-                        placeholder="输入名讳、庙号、年号或事迹关键词（如：刘彻 / 太宗 / 贞观 / 靖难）"
-                        class="w-full pl-8 pr-16 py-2 bg-[rgba(245,239,227,.6)] border border-[rgba(120,90,50,.18)] rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-[#a8762c]/40 focus:bg-white transition-all placeholder:text-[#b3a58c]"
-                    >
-                    <button
-                        v-if="searchQuery"
-                        @click="searchQuery = ''"
-                        class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[11px] text-[#8a7355] hover:text-[#b3342c] bg-[rgba(120,90,50,.08)] px-2 py-0.5 rounded-full transition-colors"
-                    >
-                        清空
-                    </button>
-                </div>
-                <button
-                    @click="pickRandom"
-                    title="随机抽览一位帝王"
-                    class="kai px-3.5 py-2 rounded-lg text-xs whitespace-nowrap border border-[rgba(179,52,44,.3)] text-[#b3342c] bg-[rgba(179,52,44,.05)] hover:bg-[rgba(179,52,44,.12)] transition-all"
-                >
-                    ⚄ 随机
-                </button>
-            </div>
-        </section>
-
-        <!-- ═══════════ 主体：左名录 / 右志纪（等高对称） ═══════════ -->
-        <main class="flex-grow grid grid-cols-1 lg:grid-cols-[288px_minmax(0,1fr)] gap-4 md:gap-5 min-h-0 pb-3">
-
-            <!-- 左：帝王名录 -->
-            <section class="flex flex-col min-h-0">
-                <div class="shrink-0 h-7 flex items-center justify-between gap-2 mb-2 px-1">
-                    <h2 class="kai text-[13px] font-bold text-[#3d3229] tracking-widest truncate">
-                        {{ selectedDynasty }} · 帝王名录
-                    </h2>
-                    <span class="song text-[11px] text-[#8a7355] shrink-0">共 {{ filteredEmperors.length }} 位</span>
-                </div>
-
-                <div class="paper-card flex-1 min-h-0 overflow-y-auto scroll-slim max-h-[340px] lg:max-h-none">
-                    <div
-                        v-for="(emp, index) in filteredEmperors"
-                        :key="emp.name + emp.title"
-                        @click="choose(emp)"
-                        :class="['emp-item list-anim px-2.5 py-2.5 cursor-pointer flex items-center gap-2', currentEmperor === emp ? 'active' : '']"
-                        :style="[
-                            {'--active-color': dynColor(emp.dynasty)},
-                            {'animation-delay': Math.min(index * 24, 300) + 'ms'}
-                        ]"
-                    >
-                        <span class="idx kai">{{ index + 1 }}</span>
-                        <div class="flex-grow min-w-0 flex items-baseline gap-1.5">
-                            <span class="kai text-[13px] font-semibold text-[#3d3229] whitespace-nowrap shrink-0">{{ emp.title }}</span>
-                            <span class="song text-[11px] text-[#8a7355] truncate">{{ emp.name }}</span>
-                        </div>
-                        <span class="song text-[10px] text-[#8a7355] bg-[rgba(168,118,44,.07)] px-1.5 py-0.5 rounded-full flex-shrink-0 tabular-nums">
-                            {{ emp.time.split('－')[0].split('/')[0] }}
-                        </span>
-                    </div>
-
-                    <div v-if="filteredEmperors.length === 0" class="text-center py-12 text-[#8a7355] text-xs space-y-2">
-                        <div class="kai text-3xl opacity-25">空</div>
-                        <div>未寻得相关帝王，换个关键词试试</div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- 右：帝王志纪 -->
-            <section class="flex flex-col min-h-0" ref="detailRef">
-                <div class="shrink-0 h-7 flex items-center justify-between gap-2 mb-2 px-1">
-                    <h2 class="kai text-[13px] font-bold text-[#3d3229] tracking-widest">帝王志纪 · 年号纪元</h2>
-                    <div class="flex items-center gap-1.5">
-                        <span class="song text-[10px] text-[#8a7355] hidden lg:inline tracking-wide">← → 切换帝王</span>
-                        <button class="nav-btn" @click="step(-1)" :disabled="!canStep(-1)" title="上一位">‹</button>
-                        <button class="nav-btn" @click="step(1)" :disabled="!canStep(1)" title="下一位">›</button>
-                    </div>
-                </div>
-
-                <div class="relative flex-1 min-h-0">
-                    <div ref="detailScroll" @scroll.passive="updateScrollHint"
-                         class="paper-card h-full overflow-y-auto scroll-slim">
-                    <Transition name="swap" mode="out-in">
-                        <div v-if="currentEmperor" :key="currentEmperor.name + currentEmperor.title"
-                             class="p-5 md:p-7 space-y-5">
-
-                            <!-- 头部核心身份 -->
-                            <div class="flex justify-between items-start gap-4 border-b border-dashed border-[rgba(120,90,50,.25)] pb-5">
-                                <div class="min-w-0">
-                                    <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-[11px] text-[#fdf6ec] px-2.5 py-0.5 rounded-full kai"
-                                              :style="{background: dynColor(currentEmperor.dynasty)}">
-                                            {{ currentEmperor.dynasty }}
-                                        </span>
-                                        <span class="song text-[11px] text-[#8a7355]">⏱ 在位 {{ currentEmperor.time }}</span>
-                                    </div>
-                                    <h3 class="kai text-2xl md:text-[30px] font-bold text-[#3d3229] mt-2 tracking-wider leading-tight">
-                                        {{ currentEmperor.title }}
-                                    </h3>
-                                    <p class="song text-[13px] text-[#8a7355] mt-1">
-                                        讳 <span class="text-[#5c4d3c] font-semibold">{{ currentEmperor.name }}</span>
-                                    </p>
-                                </div>
-                                <div class="seal seal-sm kai" :title="currentEmperor.dynasty">
-                                    {{ currentEmperor.dynasty.replace('朝','') }}
-                                </div>
-                            </div>
-
-                            <!-- 年号标签墙 -->
-                            <div>
-                                <h4 class="kai text-[11px] font-bold text-[#8a7355] mb-2 tracking-widest">◆ 年号纪元</h4>
-                                <div v-if="eraList.length" class="flex flex-wrap gap-1.5">
-                                    <span v-for="(era, i) in eraList" :key="i" class="era-chip song">{{ era }}</span>
-                                </div>
-                                <p v-else class="song text-[13px] text-[#8a7355] bg-[rgba(168,118,44,.06)] border border-[rgba(168,118,44,.15)] rounded-lg px-3 py-2">
-                                    {{ currentEmperor.era }}
-                                </p>
-                            </div>
-
-                            <!-- 事迹标签 -->
-                            <div v-if="(currentEmperor.tags || []).length">
-                                <h4 class="kai text-[11px] font-bold text-[#8a7355] mb-2 tracking-widest">◆ 事迹标签</h4>
-                                <div class="flex flex-wrap gap-1.5">
-                                    <span v-for="(tag, i) in (currentEmperor.tags || [])" :key="i"
-                                          class="kai text-[11px] px-2.5 py-0.5 rounded-full border transition-transform hover:-translate-y-0.5"
-                                          :style="{ color: dynColor(currentEmperor.dynasty), borderColor: dynColor(currentEmperor.dynasty) + '44', background: dynColor(currentEmperor.dynasty) + '10' }">
-                                        # {{ tag }}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <!-- 白话文详传（分段呈现） -->
-                            <div>
-                                <h4 class="kai text-[11px] font-bold text-[#8a7355] mb-2 tracking-widest">◆ 帝王详传 · 白话通说</h4>
-                                <div class="bg-[rgba(245,239,227,.72)] rounded-lg p-4 md:p-5 pt-5 border border-[rgba(120,90,50,.1)] quote-box space-y-3.5">
-                                    <p v-for="(para, i) in (currentEmperor.bio || [])" :key="i"
-                                       class="song text-[13.5px] leading-[1.95] text-[#5c4d3c]" style="text-indent: 2em;">
-                                        {{ para }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <!-- 史册原文（文言文选句） -->
-                            <div v-if="currentEmperor.quote">
-                                <h4 class="kai text-[11px] font-bold text-[#8a7355] mb-2 tracking-widest">◆ 史册原文 · 文言</h4>
-                                <div class="rounded-r-lg px-4 py-3.5 border border-l-[3px] border-[rgba(120,90,50,.12)]"
-                                     :style="{ borderColor: dynColor(currentEmperor.dynasty), background: dynColor(currentEmperor.dynasty) + '0a' }">
-                                    <p class="kai text-[15px] leading-relaxed text-[#6b3a3a]">“{{ currentEmperor.quote }}”</p>
-                                    <p class="song text-[11px] text-[#8a7355] mt-2 text-right">—— {{ currentEmperor.quoteSrc }}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- 空状态 -->
-                        <div v-else key="empty" class="p-14 text-center fade-in">
-                            <div class="kai text-5xl opacity-15 mb-3">朕</div>
-                            <p class="song text-[13px] text-[#8a7355]">请在左侧择一位帝王，览其年号与生平</p>
-                        </div>
-                    </Transition>
-                    </div>
-
-                    <!-- 底部渐隐：提示下方仍有内容，滚到底自动消失 -->
-                    <div v-show="hasMoreBelow"
-                         class="pointer-events-none absolute inset-x-px bottom-px h-12 rounded-b-[13px] transition-opacity duration-300"
-                         style="background: linear-gradient(to top, rgba(255,253,247,.97) 18%, rgba(255,253,247,0));"></div>
-                </div>
-            </section>
-        </main>
-
-        <!-- ═══════════ 页脚 ═══════════ -->
-        <footer class="shrink-0 hidden md:flex items-center justify-center gap-3 pb-2.5 text-[10px] text-[#8a7355]/80 tracking-wider">
-            <span class="text-[#a8762c]/40">❖</span>
-            <span class="song">数据据二十四史及《资治通鉴》正统编排 · 帝王庙号谥号以史书通称为准</span>
-            <span class="text-[#a8762c]/40">❖</span>
-        </footer>
+    <div class="hero-copy" v-if="currentEmperor">
+      <div class="dyn-tag">
+        <span class="dot" :style="{background: dynColor(currentEmperor.dynasty)}"></span>
+        {{ currentEmperor.dynasty }} · 第 {{ curNo }} 位
+      </div>
+      <h2 class="temple">{{ currentEmperor.title }}</h2>
+      <div class="name-line">
+        <span class="lb">姓名</span>
+        <span class="val">{{ currentEmperor.name }}</span>
+        <span class="sep"></span>
+        <span class="lb">在位</span>
+        <span class="val" style="font-size:clamp(15px,1.5vw,19px)">{{ currentEmperor.time }}</span>
+      </div>
+      <div class="era-row" v-if="eraList.length">
+        <span class="era-pill" v-for="(e,i) in eraList.slice(0,4)" :key="i">年号 · {{ e }}</span>
+      </div>
+      <p class="hero-quote" v-if="currentEmperor.quote">“{{ currentEmperor.quote }}”</p>
     </div>
 
-    <!-- 详情切换过渡 -->
-    <style>
-        .swap-enter-active, .swap-leave-active { transition: all .22s ease; }
-        .swap-enter-from { opacity: 0; transform: translateY(8px); }
-        .swap-leave-to { opacity: 0; transform: translateY(-6px); }
-    </style>
+    <div class="hero-side">
+      <button class="hero-arrow" @click="step(-1)" :disabled="!canStep(-1)" title="上一位">‹</button>
+      <button class="hero-arrow" @click="step(1)" :disabled="!canStep(1)" title="下一位">›</button>
+    </div>
 
-    <!-- 逻辑与全量数据脚本 -->
-    <script>
-        const { createApp, ref, computed, watch, nextTick, onMounted, onBeforeUnmount } = Vue;
+    <div class="hero-foot">
+      <div class="hero-index"><b>{{ curNo }}</b> / {{ rawData.length }}</div>
+      <button class="scroll-cue" @click="goRead">
+        <span>下滑 · 阅览详传</span><span class="bar"></span>
+      </button>
+    </div>
+  </section>
 
-        createApp({
-            setup() {
-                // 全量事迹数据来自 ./emperors-data.js（Python 字典式结构，键为帝王名讳）
-                const rawData = Object.values(EMPEROR_DATA);
+  <!-- ═════════════ 第二屏 ═════════════ -->
+  <section class="read" id="read" ref="readRef">
 
-                // 朝代专属配色（传统色系）
-                const dynastyColors = {
-                    "秦朝": "#5f4b32", "西汉": "#8c4a2f", "新朝": "#6e6a5e", "更始": "#7d7461",
-                    "东汉": "#a0522d", "曹魏": "#2f4f6f", "蜀汉": "#a63a3a", "东吴": "#b4653a",
-                    "西晋": "#5b6d3a", "东晋": "#6d7d46", "隋朝": "#2e6e6a", "唐朝": "#a8762c",
-                    "武周": "#9e3c50", "北宋": "#3a5f8a", "南宋": "#4a6f9e", "元朝": "#555a66",
-                    "明朝": "#8f3b3b", "清朝": "#3f6e52"
-                };
-                const dynColor = (d) => dynastyColors[d] || "#8a7355";
+    <div class="toolbar">
+      <div class="toolbar-in">
+        <div class="chips">
+          <button v-for="d in dynasties" :key="d" @click="selectDynasty(d)"
+                  :class="['chip', selectedDynasty === d ? 'on' : '']"
+                  :style="selectedDynasty === d ? {'--c': d === '全部' ? '#2b241e' : dynColor(d)} : {}">
+            <span v-if="d !== '全部'" class="dot" :style="{width:'5px',height:'5px',borderRadius:'50%',background:dynColor(d)}"></span>
+            {{ d }}<span class="n">{{ d === '全部' ? rawData.length : dynastyCount(d) }}</span>
+          </button>
+        </div>
+        <div class="tools">
+          <div class="search">
+            <span class="ico">⌕</span>
+            <input v-model="searchQuery" type="text" placeholder="搜名讳·庙号">
+            <button class="clr" v-if="searchQuery" @click="searchQuery=''">清空</button>
+          </div>
+          <button class="tbtn" :class="{on:listOpen}" @click="toggleList">
+            <span>名录</span><span style="font-size:10px">{{ filteredEmperors.length }}</span>
+          </button>
+          <button class="tbtn red" @click="pickRandom">
+            <span>⚄ 随机</span>
+            <span class="badge" :class="{zero: remainCount <= 0}">{{ remainCount }}</span>
+          </button>
+        </div>
+      </div>
 
-                // 动态获取有哪些不重复的朝代名
-                const dynasties = ["全部", ...new Set(rawData.map(item => item.dynasty))];
-                const selectedDynasty = ref("全部");
-                const searchQuery = ref("");
-                const currentEmperor = ref(rawData[0]); // 默认显示始皇帝
-                const detailRef = ref(null);
-                const detailScroll = ref(null);
-                // 右栏是否还有未读内容（用于底部渐隐提示）
-                const hasMoreBelow = ref(false);
-                const updateScrollHint = () => {
-                    const el = detailScroll.value;
-                    if (!el) return;
-                    hasMoreBelow.value = el.scrollTop + el.clientHeight < el.scrollHeight - 6;
-                };
+      <div class="namelist" v-show="listOpen">
+        <div class="namelist-in">
+          <div class="nl-grid" ref="nlRef">
+            <button v-for="emp in filteredEmperors" :key="emp.dynasty+emp.title+emp.name"
+                    :class="['nl-cell', isCurrent(emp) ? 'on' : '']"
+                    :style="{'--c': dynColor(emp.dynasty)}"
+                    @click="choose(emp)">
+              <span class="t">{{ emp.title }}</span>
+              <span class="n">{{ emp.name }}</span>
+            </button>
+          </div>
+          <p v-if="!filteredEmperors.length" style="margin:14px 0;color:#8a7a63;font-size:13px">未寻得相关帝王，换个关键词试试。</p>
+        </div>
+      </div>
+    </div>
 
-                // 各朝代帝王数量
-                const dynastyCount = (d) => rawData.filter(e => e.dynasty === d).length;
+    <transition name="swap" mode="out-in">
+      <article class="wrap" v-if="currentEmperor" :key="currentEmperor.dynasty + currentEmperor.title + currentEmperor.name"
+               :style="{'--dc': dynColor(currentEmperor.dynasty)}">
+        <div class="crumb">
+          <span class="d">{{ currentEmperor.dynasty }}</span>
+          <span class="bar"></span>
+          <span>第 {{ curNo }} 位</span>
+          <span class="bar"></span>
+          <span>{{ currentEmperor.time }}</span>
+        </div>
 
-                // 核心过滤与联动检索逻辑
-                const filteredEmperors = computed(() => {
-                    return rawData.filter(emp => {
-                        const matchDynasty = selectedDynasty.value === "全部" || emp.dynasty === selectedDynasty.value;
-                        const matchQuery = !searchQuery.value.trim() ||
-                            emp.title.includes(searchQuery.value) ||
-                            emp.name.includes(searchQuery.value) ||
-                            // 兼容带括号的别名（如"赵炅(匡义)"），去掉括号后也能命中
-                            emp.name.replace(/[()（）]/g, '').includes(searchQuery.value) ||
-                            emp.era.includes(searchQuery.value) ||
-                            emp.dynasty.includes(searchQuery.value) ||
-                            // 事迹标签与详传全文也可检索
-                            (emp.tags || []).some(t => t.includes(searchQuery.value)) ||
-                            (emp.bio || []).some(par => par.includes(searchQuery.value)) ||
-                            (emp.quote || '').includes(searchQuery.value);
-                        return matchDynasty && matchQuery;
-                    });
-                });
+        <div class="art-head">
+          <div>
+            <h2 class="art-title">{{ currentEmperor.title }}</h2>
+            <p class="art-sub">
+              <span class="lb">姓名</span>
+              <span class="nm">{{ currentEmperor.name }}</span>
+            </p>
+          </div>
+          <div class="thumb" v-if="portrait">
+            <img :src="portrait" :alt="currentEmperor.title">
+          </div>
+        </div>
 
-                // 当前帝王的年号列表（"无"开头的纪年说明不拆分为标签）
-                const eraList = computed(() => {
-                    if (!currentEmperor.value) return [];
-                    const e = currentEmperor.value.era || "";
-                    if (e.startsWith("无")) return [];
-                    return e.split("、").filter(Boolean);
-                });
+        <dl class="facts">
+          <div><dt>朝代</dt><dd>{{ currentEmperor.dynasty }}</dd></div>
+          <div><dt>庙号 / 史称</dt><dd>{{ currentEmperor.title }}</dd></div>
+          <div><dt>姓名</dt><dd>{{ currentEmperor.name }}</dd></div>
+          <div><dt>在位时间</dt><dd>{{ currentEmperor.time }}</dd></div>
+        </dl>
 
-                // 选择朝代切换
-                const selectDynasty = (dynasty) => {
-                    selectedDynasty.value = dynasty;
-                };
+        <div class="blk">
+          <div class="blk-h">年号纪元</div>
+          <div class="era-wrap" v-if="eraList.length">
+            <span class="era" v-for="(e,i) in eraList" :key="i">{{ e }}</span>
+          </div>
+          <p class="era-note" v-else>{{ currentEmperor.era }}</p>
+        </div>
 
-                // 选中帝王：移动端时平滑滚动到详情区
-                const choose = (emp) => {
-                    currentEmperor.value = emp;
-                    if (window.innerWidth < 1024 && detailRef.value) {
-                        detailRef.value.scrollIntoView({ behavior: "smooth", block: "start" });
-                    }
-                };
+        <div class="blk" v-if="(currentEmperor.tags || []).length">
+          <div class="blk-h">事迹标签</div>
+          <div class="tags">
+            <span class="tag" v-for="(t,i) in currentEmperor.tags" :key="i">{{ t }}</span>
+          </div>
+        </div>
 
-                // 当前帝王在筛选结果中的位置
-                const currentIndex = computed(() => {
-                    if (!currentEmperor.value) return -1;
-                    return filteredEmperors.value.indexOf(currentEmperor.value);
-                });
+        <div class="blk">
+          <div class="blk-h">帝王详传 · 白话</div>
+          <div class="prose">
+            <p v-for="(para,i) in (currentEmperor.bio || [])" :key="i">{{ para }}</p>
+          </div>
+        </div>
 
-                const canStep = (delta) => {
-                    const i = currentIndex.value;
-                    if (i < 0) return false;
-                    const t = i + delta;
-                    return t >= 0 && t < filteredEmperors.value.length;
-                };
+        <blockquote class="quote" v-if="currentEmperor.quote">
+          <span class="q-mark">”</span>
+          <p>{{ currentEmperor.quote }}</p>
+          <cite>—— {{ currentEmperor.quoteSrc }}</cite>
+        </blockquote>
 
-                // 上一位 / 下一位
-                const step = (delta) => {
-                    if (!canStep(delta)) return;
-                    currentEmperor.value = filteredEmperors.value[currentIndex.value + delta];
-                };
+        <div class="end-mark"><span class="l"></span><span>卷 终</span><span class="l r"></span></div>
 
-                // 随机抽览一位帝王（优先从当前筛选结果中抽取）
-                const pickRandom = () => {
-                    const pool = filteredEmperors.value.length ? filteredEmperors.value : rawData;
-                    let pick;
-                    do {
-                        pick = pool[Math.floor(Math.random() * pool.length)];
-                    } while (pool.length > 1 && pick === currentEmperor.value);
-                    choose(pick);
-                };
+        <nav class="pager">
+          <button class="pg" :disabled="!canStep(-1)" @click="step(-1)">
+            <span class="k">上一位</span>
+            <span class="v">{{ prevName || '已至卷首' }}</span>
+            <span class="m" v-if="prevEmp">{{ prevEmp.title }}</span>
+          </button>
+          <button class="pg next" :disabled="!canStep(1)" @click="step(1)">
+            <span class="k">下一位</span>
+            <span class="v">{{ nextName || '已至卷末' }}</span>
+            <span class="m" v-if="nextEmp">{{ nextEmp.title }}</span>
+          </button>
+        </nav>
 
-                // 键盘 ← → 快速翻阅
-                const onKeydown = (e) => {
-                    const tag = (e.target && e.target.tagName) || "";
-                    if (tag === "INPUT" || tag === "TEXTAREA") return;
-                    if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
-                    if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
-                };
-                onMounted(() => {
-                    window.addEventListener("keydown", onKeydown);
-                    window.addEventListener("resize", updateScrollHint);
-                    nextTick(updateScrollHint);
-                });
-                onBeforeUnmount(() => {
-                    window.removeEventListener("keydown", onKeydown);
-                    window.removeEventListener("resize", updateScrollHint);
-                });
+        <div class="pager-sub">
+          <button class="to-top" @click="goHero">↑ 回到大屏</button>
+          <span>{{ filteredEmperors.length }} 位之中 · 第 {{ curNoInList }} 位</span>
+          <span style="letter-spacing:.2em">← → 键翻阅</span>
+        </div>
 
-                // 当过滤出来的列表发生变化时，默认将详情页锁定在当前列表的第一位，防止体验断层
-                watch(filteredEmperors, (newVal) => {
-                    if (newVal.length > 0) {
-                        // 如果当前选中的皇帝不在新列表中，才去自动切换
-                        if (!newVal.includes(currentEmperor.value)) {
-                            currentEmperor.value = newVal[0];
-                        }
-                    } else {
-                        currentEmperor.value = null;
-                    }
-                });
+        <footer>
+          据《史记》《汉书》《后汉书》《三国志》《晋书》《隋书》《旧唐书》《新唐书》<br>
+          《宋史》《元史》《明史》《清史稿》及《资治通鉴》等正史整理 · 庙号谥号以史书通称为准
+        </footer>
+      </article>
 
-                // 切换帝王时，右栏详情回到顶部
-                watch(currentEmperor, () => {
-                    nextTick(() => {
-                        if (detailScroll.value) detailScroll.value.scrollTop = 0;
-                        updateScrollHint();
-                    });
-                });
+      <div class="wrap" v-else key="empty" style="text-align:center;padding:80px 20px">
+        <div style="font-family:var(--kai);font-size:52px;opacity:.14">朕</div>
+        <p style="color:#8a7a63;font-size:14px;margin-top:12px">未找到匹配的帝王，请调整筛选或关键词。</p>
+      </div>
+    </transition>
+  </section>
 
-                return {
-                    rawData,
-                    dynasties,
-                    selectedDynasty,
-                    searchQuery,
-                    currentEmperor,
-                    filteredEmperors,
-                    eraList,
-                    detailRef,
-                    detailScroll,
-                    hasMoreBelow,
-                    updateScrollHint,
-                    dynColor,
-                    dynastyCount,
-                    selectDynasty,
-                    choose,
-                    step,
-                    canStep,
-                    pickRandom
-                };
-            }
-        }).mount('#app');
-    </script>
+  <!-- PC 右侧悬浮翻页 -->
+  <nav class="side-nav" v-show="inReading" aria-label="上下翻页"
+       :style="{'--dc': currentEmperor ? dynColor(currentEmperor.dynasty) : '#a8762c'}">
+    <button class="sn-btn" @click="step(-1)" :disabled="!canStep(-1)" title="上一位（←）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 7.5 12l7 7"/></svg>
+      <span class="tip" v-if="prevEmp"><span class="d">{{ prevEmp.dynasty }}</span>{{ prevEmp.title }} · {{ prevEmp.name }}</span>
+      <span class="tip" v-else>已是第一位</span>
+    </button>
+    <button class="sn-btn" @click="step(1)" :disabled="!canStep(1)" title="下一位（→）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5l7 7-7 7"/></svg>
+      <span class="tip" v-if="nextEmp"><span class="d">{{ nextEmp.dynasty }}</span>{{ nextEmp.title }} · {{ nextEmp.name }}</span>
+      <span class="tip" v-else>已是最后一位</span>
+    </button>
+  </nav>
+
+  <!-- 移动端/平板底部操作条 -->
+  <div class="mbar" v-show="inReading">
+    <button @click="step(-1)" :disabled="!canStep(-1)">‹ 上一位</button>
+    <button class="red" @click="pickRandom">⚄ 随机</button>
+    <button @click="step(1)" :disabled="!canStep(1)">下一位 ›</button>
+  </div>
+</div>
+
+<style>
+.swap-enter-active,.swap-leave-active{transition:opacity .2s ease,transform .2s ease}
+.swap-enter-from{opacity:0;transform:translateY(10px)}
+.swap-leave-to{opacity:0;transform:translateY(-6px)}
+</style>
+
+<script>
+const { createApp, ref, computed, watch, nextTick, onMounted, onBeforeUnmount } = Vue;
+
+createApp({
+  setup() {
+    // ── 数据合并：长传与画像覆盖短传 ──
+    const DATA = window.EMPEROR_DATA || {};
+    const EXTRA = window.EMPEROR_EXTRA || {};
+    Object.keys(EXTRA).forEach(k => { if (DATA[k]) Object.assign(DATA[k], EXTRA[k]); });
+    const PORTRAIT = window.EMPEROR_PORTRAIT || {};
+    const DYN_BG = window.DYNASTY_BG || {};
+    Object.keys(PORTRAIT).forEach(k => { if (DATA[k]) DATA[k].__portrait = PORTRAIT[k]; });
+
+    const rawData = Object.values(DATA);
+
+    const dynastyColors = {
+      "秦朝":"#6b4a2c","西汉":"#8c4a2f","新朝":"#6e6a5e","更始":"#7d7461",
+      "东汉":"#a0522d","曹魏":"#2f4f6f","蜀汉":"#a63a3a","东吴":"#b4653a",
+      "西晋":"#5b6d3a","东晋":"#6d7d46","隋朝":"#2e6e6a","唐朝":"#a8762c",
+      "武周":"#9e3c50","北宋":"#3a5f8a","南宋":"#4a6f9e","元朝":"#555a66",
+      "明朝":"#8f3b3b","清朝":"#3f6e52"
+    };
+    const dynColor = d => dynastyColors[d] || "#8a7355";
+
+    const dynasties = ["全部", ...new Set(rawData.map(i => i.dynasty))];
+    const selectedDynasty = ref("全部");
+    const searchQuery = ref("");
+    const currentEmperor = ref(rawData[0]);
+    const listOpen = ref(false);
+    const progress = ref(0);
+    const inReading = ref(false);
+    const readRef = ref(null);
+    const nlRef = ref(null);
+
+    const emperorKey = e => e ? (e.dynasty + '|' + e.name + '|' + e.title) : '';
+    const isCurrent = e => !!currentEmperor.value && emperorKey(e) === emperorKey(currentEmperor.value);
+
+    const filteredEmperors = computed(() => rawData.filter(emp => {
+      const q = searchQuery.value.trim();
+      const matchD = selectedDynasty.value === "全部" || emp.dynasty === selectedDynasty.value;
+      const matchQ = !q ||
+        emp.title.includes(q) || emp.name.includes(q) ||
+        emp.name.replace(/[()（）]/g, '').includes(q) ||
+        emp.era.includes(q) || emp.dynasty.includes(q) ||
+        (emp.tags || []).some(t => t.includes(q)) ||
+        (emp.bio || []).some(p => p.includes(q)) ||
+        (emp.quote || '').includes(q);
+      return matchD && matchQ;
+    }));
+
+    const dynastyCount = d => rawData.filter(e => e.dynasty === d).length;
+
+    const eraList = computed(() => {
+      const e = (currentEmperor.value || {}).era || "";
+      if (!e || e.startsWith("无")) return [];
+      return e.split("、").filter(Boolean);
+    });
+
+    const heroImg = computed(() => {
+      const e = currentEmperor.value;
+      if (!e) return "";
+      return e.__portrait || DYN_BG[e.dynasty] || "";
+    });
+    const portrait = computed(() => (currentEmperor.value || {}).__portrait || "");
+
+    const curNo = computed(() => {
+      const e = currentEmperor.value;
+      if (!e) return 0;
+      return rawData.findIndex(x => emperorKey(x) === emperorKey(e)) + 1;
+    });
+
+    const currentIndex = computed(() => {
+      if (!currentEmperor.value) return -1;
+      const k = emperorKey(currentEmperor.value);
+      return filteredEmperors.value.findIndex(e => emperorKey(e) === k);
+    });
+    const curNoInList = computed(() => currentIndex.value + 1);
+
+    const canStep = d => {
+      const i = currentIndex.value;
+      if (i < 0) return false;
+      const t = i + d;
+      return t >= 0 && t < filteredEmperors.value.length;
+    };
+    const prevEmp = computed(() => {
+      const i = currentIndex.value;
+      return i > 0 ? filteredEmperors.value[i - 1] : null;
+    });
+    const nextEmp = computed(() => {
+      const i = currentIndex.value;
+      return i >= 0 && i < filteredEmperors.value.length - 1 ? filteredEmperors.value[i + 1] : null;
+    });
+    const prevName = computed(() => prevEmp.value ? prevEmp.value.name : '');
+    const nextName = computed(() => nextEmp.value ? nextEmp.value.name : '');
+
+    // ── 看过标记 ──
+    const viewed = new Set();
+    const viewedCount = ref(0);
+    const markViewed = e => { if (e) { viewed.add(emperorKey(e)); viewedCount.value = viewed.size; } };
+    markViewed(currentEmperor.value);
+
+    const randomPool = computed(() => filteredEmperors.value.length ? filteredEmperors.value : rawData);
+    const remainCount = computed(() => {
+      void viewedCount.value;
+      return randomPool.value.filter(e => !viewed.has(emperorKey(e))).length;
+    });
+
+    // ── 滚动位置：换人后停留在“第二屏”，不弹回大屏 ──
+    const sectionTop = () => {
+      const el = readRef.value;
+      if (el) return el.getBoundingClientRect().top + window.scrollY;
+      return window.innerHeight;
+    };
+    const stayInReading = () => {
+      nextTick(() => {
+        const top = sectionTop();
+        if (window.scrollY > top + 6) window.scrollTo({ top: top, behavior: 'smooth' });
+      });
+    };
+
+    const selectDynasty = d => { selectedDynasty.value = d; };
+    const choose = emp => {
+      currentEmperor.value = emp;
+      markViewed(emp);            // 同步登记，连点随机也不会重复
+      stayInReading();
+      nextTick(() => scrollListToActive());
+    };
+    const step = d => {
+      if (!canStep(d)) return;
+      choose(filteredEmperors.value[currentIndex.value + d]);
+    };
+    const pickRandom = () => {
+      const pool = randomPool.value;
+      let unseen = pool.filter(e => !viewed.has(emperorKey(e)));
+      if (!unseen.length) {
+        viewed.clear();
+        markViewed(currentEmperor.value);
+        unseen = pool.filter(e => emperorKey(e) !== emperorKey(currentEmperor.value));
+      }
+      const finalPool = unseen.length ? unseen : pool;
+      choose(finalPool[Math.floor(Math.random() * finalPool.length)]);
+    };
+
+    const toggleList = () => {
+      listOpen.value = !listOpen.value;
+      if (listOpen.value) nextTick(() => scrollListToActive());
+    };
+    const scrollListToActive = () => {
+      const box = nlRef.value;
+      if (!box) return;
+      const el = box.querySelector('.nl-cell.on');
+      if (!el) return;
+      const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+      if (r.top < b.top) box.scrollTop -= (b.top - r.top) + 8;
+      else if (r.bottom > b.bottom) box.scrollTop += (r.bottom - b.bottom) + 8;
+    };
+
+    const goRead = () => window.scrollTo({ top: sectionTop(), behavior: 'smooth' });
+    const goHero = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      inReading.value = y > window.innerHeight * 0.55;
+      const el = readRef.value;
+      if (el) {
+        const top = el.getBoundingClientRect().top + y;
+        const h = el.offsetHeight - window.innerHeight;
+        const p = h > 0 ? (y - top) / h : 0;
+        progress.value = Math.min(100, Math.max(0, p * 100));
+      }
+    };
+
+    const onKeydown = e => {
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
+    };
+
+    onMounted(() => {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('keydown', onKeydown);
+      window.addEventListener('resize', onScroll);
+      nextTick(onScroll);
+    });
+    onBeforeUnmount(() => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('keydown', onKeydown);
+      window.removeEventListener('resize', onScroll);
+    });
+
+    watch(filteredEmperors, list => {
+      if (!list.length) { currentEmperor.value = null; return; }
+      const k = emperorKey(currentEmperor.value);
+      if (!list.some(e => emperorKey(e) === k)) currentEmperor.value = list[0];
+    });
+    watch(currentEmperor, v => markViewed(v));
+
+    // 预取相邻帝王的画像，翻页时不闪白
+    const preload = e => {
+      if (!e) return;
+      const src = e.__portrait || DYN_BG[e.dynasty];
+      if (src) { const im = new Image(); im.src = src; }
+    };
+    watch([currentIndex, filteredEmperors], () => { preload(prevEmp.value); preload(nextEmp.value); });
+
+    return {
+      rawData, dynasties, selectedDynasty, searchQuery, currentEmperor,
+      filteredEmperors, eraList, progress, inReading, listOpen,
+      readRef, nlRef, heroImg, portrait, curNo, curNoInList,
+      prevEmp, nextEmp, prevName, nextName, remainCount,
+      dynColor, dynastyCount, isCurrent, canStep,
+      selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero
+    };
+  }
+}).mount('#app');
+</script>
 </body>
 </html>
