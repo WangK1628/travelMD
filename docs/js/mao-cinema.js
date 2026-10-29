@@ -171,20 +171,20 @@
     'background:radial-gradient(60% 64% at 60% 42%,#cf321d 0%,#9e180e 30%,#5a0d08 62%,#200403 100%);',
     'opacity:0;transition:opacity 2.6s ease}',
     '.mc-bg.on{opacity:1}',
+    /* 诗词底：只动 opacity，不再做 9 秒 scale（大图逐帧栅格化是掉帧源头） */
     '.mc-poem{position:absolute;inset:0;z-index:1;background:url(' + IMGS.poem + ') center/contain no-repeat;',
-    'opacity:0;transform:scale(1.06);',
-    'transition:opacity 3s ease,transform 9s cubic-bezier(.16,.55,.3,1);will-change:transform,opacity}',
-    '.mc-poem.on{opacity:.17;transform:scale(1)}',
-    '.mc-poem.dim{opacity:.08;transition:opacity 2.6s ease}',
+    'opacity:0;transition:opacity 2.8s ease}',
+    '.mc-poem.on{opacity:.17}',
+    '.mc-poem.dim{opacity:.08;transition:opacity 2.4s ease}',
     '.mc-veil{position:absolute;inset:0;pointer-events:none;z-index:2;',
     'background:radial-gradient(72% 72% at 50% 46%,rgba(20,3,2,0) 34%,rgba(16,3,2,.38) 74%,rgba(10,2,1,.82) 100%)}',
     '.mc-ghost{position:absolute;left:50%;top:50%;height:98vh;width:auto;max-width:none;',
-    'transform:translate(-50%,-50%) scale(1.18);opacity:0;',
+    'transform:translate(-50%,-50%) scale3d(1.14,1.14,1);opacity:0;',
     'transition:opacity 2.2s ease,transform 6s cubic-bezier(.16,.6,.3,1);will-change:transform,opacity}',
-    '.mc-ghost.in{opacity:.92;transform:translate(-50%,-50%) scale(1.02)}',
-    '.mc-ghost.away{opacity:0;transform:translate(-50%,-50%) scale(1.1)}',
+    '.mc-ghost.in{opacity:.92;transform:translate(-50%,-50%) scale3d(1.02,1.02,1)}',
+    '.mc-ghost.away{opacity:0;transform:translate(-50%,-50%) scale3d(1.06,1.06,1)}',
     '.mc-subject{position:absolute;left:50%;top:50%;height:74vh;width:auto;max-width:none;z-index:5;',
-    'transform:translate(-50%,-50%) translate3d(var(--dx,0px),0,0) scale(var(--s,.92));',
+    'transform:translate(-50%,-50%) translate3d(var(--dx,0px),0,0) scale3d(var(--s,.92),var(--s,.92),1);',
     'opacity:0;transition:opacity 1.5s ease,transform 3s cubic-bezier(.19,.9,.26,1);will-change:transform,opacity}',
     '.mc-subject.in{opacity:1;--s:1}',
     '.mc-subject.zoom{--s:1.27;transition:opacity 1.2s ease,transform 4.2s cubic-bezier(.32,.02,.28,1)}',
@@ -193,17 +193,17 @@
     /* 弹幕层：整块在画像之下，飘过人脸时被人物遮住 */
     '.mc-dm{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:3;contain:paint}',
     '.mc-dm canvas{display:block;width:100%;height:100%}',
-    /* 「人民万岁」题款：与弹幕同屏 */
+    /* 「人民万岁」题款：与弹幕同屏，竖排单列 */
     '.mc-word{position:absolute;left:7.5%;top:50%;z-index:8;pointer-events:none;',
     'transform:translateY(-50%) translateX(-16px);opacity:0;',
     'writing-mode:vertical-rl;white-space:nowrap;height:max-content;min-height:0;max-height:none;',
     'font-family:var(--kai,"STKaiti",serif);font-weight:600;',
-    'font-size:clamp(38px,4.2vw,68px);letter-spacing:.26em;line-height:1.05;',
+    'font-size:clamp(34px,3.6vw,62px);letter-spacing:.24em;line-height:1.05;',
     'color:#ffe8c2;text-shadow:0 0 5px #000,0 0 12px #000,0 0 26px rgba(0,0,0,.92),0 0 46px rgba(214,64,38,.6);',
+    'transition:opacity 1.4s ease,transform 1.8s cubic-bezier(.2,.9,.3,1)}',
     '.mc-word::before{content:"";position:absolute;left:-46%;top:-10%;width:200%;height:120%;z-index:-1;',
     'background:radial-gradient(closest-side,rgba(14,2,1,.86),rgba(14,2,1,.46) 58%,transparent 100%);',
     'filter:blur(8px);pointer-events:none}',
-    'transition:opacity 1.4s ease,transform 1.8s cubic-bezier(.2,.9,.3,1)}',
     '.mc-word.on{opacity:1;transform:translateY(-50%) translateX(0)}',
     '.mc-word::after{content:"";position:absolute;right:-26px;top:6px;bottom:6px;width:1px;',
     'background:linear-gradient(180deg,transparent,rgba(238,186,128,.55) 18%,rgba(238,186,128,.55) 82%,transparent)}',
@@ -222,19 +222,25 @@
     '.mc-cap.on{opacity:1;transform:none}',
     '.mc-cap b{display:block;font-family:var(--kai,serif);font-size:clamp(15px,1.5vw,19px);',
     'letter-spacing:.34em;color:rgba(248,232,206,.88);font-weight:600;margin-bottom:2px}',
+    /* ── 竖屏 / 手机 ── */
     '@media (max-width:767px){',
-    '.mc-ghost{height:76vh}.mc-subject{height:50vh}',
-    '.mc-subject.zoom{--s:1.3}',
-    '.mc-subject.settle,.mc-subject.out{--s:.96;--dx:0px}',
-    '.mc-poem{background-size:auto 74%;background-position:center 42%}',
-    '.mc-poem.on{opacity:.17}',
-    '.mc-word{left:8%;top:auto;bottom:15%;transform:none;writing-mode:horizontal-tb;',
-    'font-size:32px;letter-spacing:.2em}',
+    '.mc-bg{inset:-10%;background:radial-gradient(76% 54% at 58% 38%,#cf321d 0%,#a01a0f 32%,#5a0d08 64%,#1c0403 100%)}',
+    '.mc-poem{background-size:auto 58%;background-position:center 30%}',
+    '.mc-ghost{height:74vh}',
+    '.mc-subject{height:50vh;top:47%}',
+    '.mc-subject.zoom{--s:1.26}',
+    '.mc-subject.settle{--s:.99;--dx:4vw}',
+    '.mc-subject.out{--s:.9;--dx:4vw}',
+    '.mc-word{left:5.5%;top:auto;bottom:16%;transform:translateX(-12px);',
+    'font-size:clamp(30px,8.6vw,40px);letter-spacing:.16em;line-height:1.02}',
     '.mc-word.on{transform:none}',
-    '.mc-word::after{right:auto;left:0;top:-12px;bottom:auto;width:100%;height:1px;',
-    'background:linear-gradient(90deg,transparent,rgba(238,186,128,.5),transparent)}',
-    '.mc-word b{right:auto;left:-6px;bottom:-38px}',
-    '.mc-cap{bottom:12px;letter-spacing:.2em;font-size:10px}',
+    '.mc-word::before{left:-58%;top:-12%;width:216%;height:124%;',
+    'background:radial-gradient(closest-side,rgba(10,2,1,.94),rgba(10,2,1,.62) 56%,transparent 100%)}',
+    '.mc-word::after{right:-18px;top:4px;bottom:4px}',
+    '.mc-word b{right:auto;left:-2px;bottom:-38px;width:26px;height:26px;font-size:11px}',
+    '.mc-cap{left:16px;bottom:14px;letter-spacing:.22em;font-size:9.5px}',
+    '.mc-cap b{font-size:13px;letter-spacing:.26em}',
+    '.mc-skip{right:12px;top:12px;padding:6px 12px;font-size:10.5px}',
     '}'
   ].join('');
 
@@ -267,91 +273,143 @@
      - 文字预渲染成位图，只做 drawImage，几乎不吃 CPU
      ──────────────────────────────────────────────── */
   function Danmaku(layer) {
+    var MOBILE = window.matchMedia('(max-width: 767px)').matches;
+
     var cv = document.createElement('canvas');
     layer.appendChild(cv);
-    // dpr 固定 1：位图与 CSS 像素 1:1，drawImage 变成纯 blit，
-    // 不再每帧对大位图做重采样（1.5x 时有 2.25 倍填充开销）
     var ctx = cv.getContext('2d', { alpha: true });
-    ctx.imageSmoothingEnabled = false;
-    var dpr = 1;
+
+    // 位图缩放：手机 1.5（字够清楚），桌面 1（1 CSS px = 1 位图像素，drawImage 是纯 blit）
+    var SCALE = 1;
     var W = 1, H = 1;
+
+    // 长句在窄画面上必然压成一团，也最吃填充率：手机上只留 ≤14 字，桌面 ≤18 字
+    var POOL = QUOTES.filter(function (q) { return q.length <= (MOBILE ? 14 : 18); });
 
     var FONT = '"STKaiti","KaiTi","Songti SC",serif';
     var sprites = {}, spriteKeys = 0;
+    var CACHE_MAX = MOBILE ? 340 : 660;
+    var measure = document.createElement('canvas').getContext('2d');
 
     function sprite(text, size, color) {
       size = Math.round(size);
       var key = text + '|' + size + '|' + color;
       var s = sprites[key];
       if (s) return s;
-      var m = document.createElement('canvas').getContext('2d');
-      m.font = '600 ' + size + 'px ' + FONT;
-      var tw = Math.ceil(m.measureText(text).width);
-      var pad = Math.ceil(size * 0.3);
-      var w = tw + pad * 2, h = Math.ceil(size * 1.56) + pad;
+
+      measure.font = '600 ' + size + 'px ' + FONT;
+      var tw = Math.ceil(measure.measureText(text).width);
+      var pad = Math.ceil(size * 0.28);
+      var w = tw + pad * 2;
+      var h = Math.ceil(size * 1.46) + pad;
+
       var c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(w * dpr));
-      c.height = Math.max(1, Math.round(h * dpr));
+      c.width = Math.max(1, Math.round(w * SCALE));
+      c.height = Math.max(1, Math.round(h * SCALE));
       var g = c.getContext('2d');
+      g.setTransform(SCALE, 0, 0, SCALE, 0, 0);
       g.font = '600 ' + size + 'px ' + FONT;
       g.textBaseline = 'middle';
       g.textAlign = 'left';
       g.lineJoin = 'round';
-      g.strokeStyle = 'rgba(26,3,2,.92)';
-      g.lineWidth = Math.max(2, size * 0.17);
-      g.shadowColor = 'rgba(0,0,0,.95)';
-      g.shadowBlur = size * 0.34;
-      g.shadowOffsetY = Math.ceil(size * 0.05);
-      g.strokeText(text, pad, h * 0.48);
-      g.shadowBlur = 0;
+      g.miterLimit = 2;
+
+      var bx = pad, by = h * 0.5;
+      // 两层描边替代 shadowBlur：创建快 3~5 倍，视觉几乎一致
+      g.strokeStyle = 'rgba(36,7,4,.42)';
+      g.lineWidth = size * 0.36;
+      g.strokeText(text, bx, by);
+      g.strokeStyle = 'rgba(22,3,2,.95)';
+      g.lineWidth = size * 0.16;
+      g.strokeText(text, bx, by);
       g.fillStyle = color;
-      g.fillText(text, pad, h * 0.48);
-      s = { c: c, w: w, h: h, tw: tw, pad: pad };
-      if (spriteKeys < 420) { sprites[key] = s; spriteKeys++; }
+      g.fillText(text, bx, by);
+
+      s = { c: c, w: w, h: h };
+      if (spriteKeys < CACHE_MAX) { sprites[key] = s; spriteKeys++; }
       return s;
+    }
+
+    var TIERS = null;
+
+    function tiers() {
+      if (TIERS) return TIERS;
+      var base = MOBILE
+        ? Math.min(13, Math.max(11, W * 0.0305))
+        : Math.min(19, Math.max(14, W * 0.0106));
+      TIERS = MOBILE ? [
+        { s: base * 1.34, c: '#ffd792' },
+        { s: base * 1.00, c: '#fdf1de' }
+      ] : [
+        { s: base * 1.55, c: '#ffd792' },
+        { s: base * 1.16, c: '#ffd792' },
+        { s: base * 1.02, c: '#ff9b82' },
+        { s: base * 0.92, c: '#fdf1de' }
+      ];
+      return TIERS;
+    }
+
+    /* 像素预算：弹幕的开销 ≈ 画布面积 × 条数。
+       分辨率按窗口面积反推，条数同步缩放，大屏小屏负载基本一致。 */
+    function budget() { return 1.28e6 / Math.max(1, W * H); }
+
+    function autoScale() {
+      if (MOBILE) return Math.min(1.5, Math.max(1, window.devicePixelRatio || 1));
+      return Math.min(1, Math.max(0.68, 0.77 * Math.sqrt(Math.min(1.6, budget()))));
+    }
+
+    function autoCount() {
+      if (MOBILE) return 180;
+      return Math.round(300 * Math.min(1.15, Math.max(0.62, budget())));
     }
 
     function resize() {
       W = layer.clientWidth || window.innerWidth;
       H = layer.clientHeight || window.innerHeight;
-      cv.width = Math.round(W * dpr);
-      cv.height = Math.round(H * dpr);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      SCALE = autoScale();
+      cv.width = Math.round(W * SCALE);
+      cv.height = Math.round(H * SCALE);
       ctx.imageSmoothingEnabled = false;   // 重设画布尺寸会重置上下文状态
+      TIERS = null;
     }
     resize();
 
     var items = [];
     var raf = 0, last = 0, alive = false;
 
-    function sizeTier() {
-      var base = Math.max(15, Math.min(21, W * 0.0118));
-      var r = Math.random();
-      if (r < 0.06) return { s: base * 1.55, c: '#ffd792', big: true };   // 少量大字
-      if (r < 0.30) return { s: base * 1.16, c: '#ffd792' };              // 金色
-      if (r < 0.44) return { s: base * 1.02, c: '#ff9b82' };              // 朱红
-      return { s: base * 0.92, c: '#fdf1de' };                            // 米白
+    function speed() {
+      return MOBILE ? W * 0.15 + Math.random() * W * 0.17
+                    : 190 + Math.random() * 210;      // px/s
     }
 
     // 生成一批弹幕实例，x 分布在屏外到屏内，保证一开场就满屏
+    var laneSeed = 0;
+
     function seed(count) {
-      var laneH = Math.max(26, H / 34);
-      var lanes = Math.max(8, Math.floor((H - laneH * 0.6) / laneH));
+      var tl = tiers();
+      var maxH = 0, t;
+      for (t = 0; t < tl.length; t++) {
+        maxH = Math.max(maxH, Math.ceil(tl[t].s * 1.46) + Math.ceil(tl[t].s * 0.28));
+      }
+      // 行距按字高算，绝不小于单条精灵高度，避免上下行叠字
+      var laneH = Math.max(maxH * 1.1, H / (MOBILE ? 26 : 34));
+      var lanes = Math.max(6, Math.floor((H - laneH * 0.35) / laneH));
+
       for (var i = 0; i < count; i++) {
-        var q = QUOTES[(Math.random() * QUOTES.length) | 0];
-        var t = sizeTier();
-        var sp = sprite(q, Math.round(t.s), t.c);
-        // 起始位置：一半已在屏内，一半还在右侧排队入场
+        var tier = tl[(Math.random() * tl.length) | 0];
+        var q = POOL[(Math.random() * POOL.length) | 0];
+        var sp = sprite(q, Math.round(tier.s), tier.c);
+        // 起始位置：一多半已在屏内，其余在右侧排队入场
         var x = Math.random() < 0.62
           ? -sp.w + Math.random() * (W + sp.w)
-          : W + 10 + Math.random() * W * 0.42;
-        var lane = (Math.random() * lanes) | 0;
+          : W + 8 + Math.random() * W * 0.5;
+        var lane = (i + laneSeed++) % lanes;
         items.push({
           x: x,
-          y: laneH * 0.7 + lane * laneH + (Math.random() - 0.5) * laneH * 0.35,
-          v: 190 + Math.random() * 210,      // px/s
+          y: laneH * 0.6 + lane * laneH + (Math.random() - 0.5) * laneH * 0.14,
+          v: speed(),
           spr: sp,
-          alpha: 0.74 + Math.random() * 0.26
+          alpha: 0.72 + Math.random() * 0.28
         });
       }
       // 按出场顺序画：靠右的后画，避免压住已在屏内的
@@ -373,35 +431,56 @@
       var dt = Math.min(0.05, raw);
       last = ts;
 
-      // 帧耗时监控（只统计真正在播的帧）
-      accT += raw; accN++;
-      if (accN >= 45) {
-        var fps = accN / accT;
-        if (fps < 44 && thinned < 2) { thin(); thinned++; }
+      accT += Math.min(0.25, raw); accN++;
+      if (accN >= 40) {
+        if (accN / accT < 48 && thinned < 3) { thin(); thinned++; }
         accT = 0; accN = 0;
       }
 
-      ctx.clearRect(0, 0, W, H);
+      var cw = cv.width, ch = cv.height;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, cw, ch);
+
       var keep = 0, n = items.length;
       for (var i = 0; i < n; i++) {
         var it = items[i];
         it.x -= it.v * dt;
-        if (it.x + it.spr.w < -8) continue;       // 已滑出左侧，回收
+        if (it.x + it.spr.w < -6) continue;         // 已滑出左侧，回收
         items[keep++] = it;
         if (it.x > W + 2) continue;
         ctx.globalAlpha = it.alpha;
-        // 整数落点：避免每帧双线性重采样
-        ctx.drawImage(it.spr.c, it.x | 0, (it.y - it.spr.h * 0.5) | 0, it.spr.w, it.spr.h);
+        // 位图与画布同为设备像素，1:1 落点、三参数绘制（不缩放），纯 blit
+        ctx.drawImage(it.spr.c, (it.x * SCALE) | 0, ((it.y - it.spr.h * 0.5) * SCALE) | 0);
       }
       items.length = keep;
       ctx.globalAlpha = 1;
       raf = requestAnimationFrame(frame);
     }
 
+    /* 预烘焙：把用到的「语录 × 字号」全部提前画成位图。
+       放在开场前空闲时段分片做，避免播到一半才创建画布造成顿挫。 */
+    function prewarm() {
+      var tl = tiers(), jobs = [], i, j;
+      for (i = 0; i < POOL.length; i++) {
+        for (j = 0; j < tl.length; j++) jobs.push([POOL[i], Math.round(tl[j].s), tl[j].c]);
+      }
+      var k = 0;
+      (function step() {
+        var t0 = performance.now();
+        while (k < jobs.length && performance.now() - t0 < 6) {
+          var job = jobs[k++];
+          sprite(job[0], job[1], job[2]);
+        }
+        if (k < jobs.length) setTimeout(step, 26);
+      })();
+    }
+
     return {
+      prewarm: prewarm,
       start: function (count) {
-        // 二次铺量：先撒一批，接下来 2 秒内继续补，形成"越滚越密"的瀑布
-        seed(Math.round(count * 0.55));
+        count = count || autoCount();
+        // 二次铺量：先撒一批，接下来几秒内继续补，形成"越滚越密"的瀑布
+        seed(Math.round(count * 0.58));
         var t0 = Date.now();
         var timer = setInterval(function () {
           if (!alive) { clearInterval(timer); return; }
@@ -418,12 +497,12 @@
         alive = false;
         cancelAnimationFrame(raf);
         items = [];
-        ctx.clearRect(0, 0, W, H);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, cv.width, cv.height);
       },
       count: function () { return items.length; }
     };
   }
-
   function finish(immediate) {
     if (!root) return;
     running = false;
@@ -449,7 +528,11 @@
     var go = function () { if (!done && --left <= 0) { done = true; cb(); } };
     keys.forEach(function (k) {
       var im = new Image();
-      im.onload = go; im.onerror = go;
+      // 解码也提前做掉：否则第一帧出现时主线程要同步解码上百万像素的 PNG，正好卡在动画中段
+      im.onload = function () {
+        if (im.decode) im.decode().then(go, go); else go();
+      };
+      im.onerror = go;
       im.src = IMGS[k];
     });
     setTimeout(function () { if (!done) { done = true; cb(); } }, 2600);
@@ -476,6 +559,7 @@
     var dmLayer = root.querySelector('.mc-dm');
     var dm = Danmaku(dmLayer);
     root.__dm = dm;
+    dm.prewarm();          // 趁开场这几秒把文字位图烘焙好，播到一半不再临时创建
 
     root.querySelector('.mc-skip').addEventListener('click', function (e) {
       e.stopPropagation();
@@ -498,12 +582,15 @@
     at(3200, function () { subj.classList.add('in'); });
     // ⑤ 缓缓放大到最大
     at(4600, function () { subj.classList.add('zoom'); poem.classList.add('dim'); });
+    // 用完就撤层：留在合成树里的大图即使 opacity 0 仍占显存、仍参与合成
+    at(4400, function () { ghost.style.display = 'none'; });
+    at(6700, function () { poem.style.display = 'none'; });
     // ⑥ 画像收到右侧，让出左半场
     at(7000, function () { subj.classList.remove('zoom'); subj.classList.add('settle'); });
     // ⑦ 「人民万岁」题款 + 上千条弹幕同屏开始
     at(7500, function () { word.classList.add('on'); cap.classList.remove('on'); });
     at(7900, function () {
-      dm.start(window.innerWidth < 768 ? 340 : 820);
+      dm.start(0);   // 0 = 按窗口面积自动定条数
     });
     // ⑧ 弹幕滑尽（约 10 秒）→ 收束回红底首屏
     at(17800, function () { word.classList.remove('on'); });
