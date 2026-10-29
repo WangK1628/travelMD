@@ -36,9 +36,34 @@ img{display:block}
 /* ══════════════ 第一屏 · 大屏 ══════════════ */
 .hero{
   position:relative;height:100svh;min-height:600px;overflow:hidden;
-  background:#0a0807;isolation:isolate;
+  background:#0a0807;isolation:isolate;touch-action:pan-y pinch-zoom;
 }
-.hero-media{position:absolute;inset:0}
+.hero-media{position:absolute;inset:0;transition:transform .38s cubic-bezier(.22,.8,.36,1)}
+.hero-img{transition:transform .34s cubic-bezier(.22,.8,.36,1)}
+.hero.is-drag .hero-img{transform:scale(1.1)}
+.hero-copy{transition:transform .38s cubic-bezier(.22,.8,.36,1)}
+.hero.is-drag .hero-media,.hero.is-drag .hero-copy{transition:none}
+
+/* 移动端滑动提示 */
+.swipe-tip{
+  display:none;align-items:center;gap:9px;margin-top:20px;
+  font-family:var(--song);font-size:11px;letter-spacing:.24em;
+  color:rgba(240,230,212,.58)
+}
+.swipe-tip .ln{width:24px;height:1px;background:currentColor;opacity:.5}
+@media (max-width:767px){.swipe-tip{display:flex}}
+
+/* 边界提示 */
+.hero-toast{
+  position:absolute;left:50%;top:calc(clamp(16px,2.6vw,30px) + 58px);
+  transform:translate(-50%,-8px);z-index:5;
+  padding:7px 16px;border-radius:999px;white-space:nowrap;
+  font-size:12px;letter-spacing:.14em;color:#f6eede;
+  background:rgba(20,15,12,.68);border:1px solid rgba(248,240,226,.2);
+  backdrop-filter:blur(8px);opacity:0;pointer-events:none;
+  transition:opacity .24s,transform .24s
+}
+.hero-toast.on{opacity:1;transform:translate(-50%,0)}
 .hero-img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
   object-position:center 26%;transform:scale(1.03);
@@ -439,8 +464,10 @@ footer{
   <div class="progress" :style="{width: progress + '%'}"></div>
 
   <!-- ═════════════ 第一屏 ═════════════ -->
-  <section class="hero">
-    <div class="hero-media">
+  <section class="hero" :class="{'is-drag': dragging}"
+           @touchstart="onTouchStart" @touchmove="onTouchMove"
+           @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+    <div class="hero-media" :style="dragStyle(0.12)">
       <transition name="xfade">
         <img :key="heroImg" :src="heroImg" class="hero-img" alt="">
       </transition>
@@ -465,7 +492,7 @@ footer{
       </div>
     </header>
 
-    <div class="hero-copy" v-if="currentEmperor">
+    <div class="hero-copy" v-if="currentEmperor" :style="dragStyle(0.2)">
       <div class="dyn-tag">
         <span class="dot" :style="{background: dynColor(currentEmperor.dynasty)}"></span>
         {{ currentEmperor.dynasty }} · 第 {{ curNo }} 位
@@ -482,7 +509,10 @@ footer{
         <span class="era-pill" v-for="(e,i) in eraList.slice(0,4)" :key="i">年号 · {{ e }}</span>
       </div>
       <p class="hero-quote" v-if="currentEmperor.quote">“{{ currentEmperor.quote }}”</p>
+      <div class="swipe-tip"><span class="ln"></span>左右滑动 · 换帝王<span class="ln"></span></div>
     </div>
+
+    <div class="hero-toast" :class="{on: !!toast}">{{ toast }}</div>
 
     <div class="hero-side">
       <button class="hero-arrow" @click="step(-1)" :disabled="!canStep(-1)" title="上一位">‹</button>
@@ -824,6 +854,70 @@ createApp({
     const goRead = () => window.scrollTo({ top: sectionTop(), behavior: 'smooth' });
     const goHero = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+    // ── 移动端大屏：左右滑动换帝王 ──
+    const dragging = ref(false);
+    const dragX = ref(0);
+    const toast = ref('');
+    let toastTimer = null;
+    let tX = 0, tY = 0, tT = 0, axis = '', lastDx = 0;
+
+    const flash = msg => {
+      toast.value = msg;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.value = ''; }, 1200);
+    };
+
+    const dragStyle = k => (dragging.value && dragX.value)
+      ? { transform: `translate3d(${(dragX.value * k).toFixed(1)}px,0,0)` }
+      : {};
+
+    const onTouchStart = e => {
+      axis = ''; lastDx = 0; dragX.value = 0;
+      if (e.touches.length !== 1) { dragging.value = false; return; }
+      const el = e.target;
+      if (el && el.closest && el.closest('button,a,input,.hero-tools,.hero-toast')) {
+        dragging.value = false; return;
+      }
+      const t = e.touches[0];
+      tX = t.clientX; tY = t.clientY; tT = Date.now();
+      dragging.value = true;
+    };
+
+    const onTouchMove = e => {
+      if (!dragging.value || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - tX, dy = t.clientY - tY;
+      if (!axis) {
+        if (Math.abs(dx) < 9 && Math.abs(dy) < 9) return;
+        axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y';
+        if (axis === 'y') { dragging.value = false; dragX.value = 0; return; }  // 纵向：交还给页面滚动
+      }
+      if (axis !== 'x') return;
+      if (e.cancelable) e.preventDefault();
+      lastDx = dx;
+      const blocked = (dx < 0 && !canStep(1)) || (dx > 0 && !canStep(-1));
+      dragX.value = Math.max(-130, Math.min(130, blocked ? dx * 0.16 : dx * 0.62));
+    };
+
+    const onTouchEnd = () => {
+      if (!dragging.value) { axis = ''; return; }
+      const dx = lastDx;
+      const dt = Math.max(1, Date.now() - tT);
+      const speed = Math.abs(dx) / dt;                       // px/ms
+      const need = Math.min(72, Math.max(46, window.innerWidth * 0.15));
+      const commit = axis === 'x' && (Math.abs(dx) > need || (Math.abs(dx) > 34 && speed > 0.5));
+      if (commit) {
+        if (dx < 0) {
+          if (canStep(1)) { step(1); if (navigator.vibrate) navigator.vibrate(8); }
+          else flash('已是卷末 · 再无下一位');
+        } else {
+          if (canStep(-1)) { step(-1); if (navigator.vibrate) navigator.vibrate(8); }
+          else flash('已是卷首 · 再无上一位');
+        }
+      }
+      dragging.value = false; dragX.value = 0; lastDx = 0; axis = '';
+    };
+
     const onScroll = () => {
       const y = window.scrollY;
       inReading.value = y > window.innerHeight * 0.55;
@@ -853,6 +947,7 @@ createApp({
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('resize', onScroll);
+      clearTimeout(toastTimer);
     });
 
     watch(filteredEmperors, list => {
@@ -876,7 +971,8 @@ createApp({
       readRef, nlRef, heroImg, portrait, curNo, curNoInList,
       prevEmp, nextEmp, prevName, nextName, remainCount,
       dynColor, dynastyCount, isCurrent, canStep,
-      selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero
+      selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero,
+      dragging, dragX, toast, dragStyle, onTouchStart, onTouchMove, onTouchEnd
     };
   }
 }).mount('#app');
