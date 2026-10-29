@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>帝王奇闻录 · 实录之外的荒唐与奇诡</title>
+<style>
+:root{
+  --paper:#f6f1e6;--paper-2:#fffdf8;--ink:#2b241e;--ink-2:#3a3128;--muted:#8a7a63;
+  --line:rgba(90,70,45,.15);--cinnabar:#b3342c;--gold:#a8762c;--jade:#3f6e52;
+  --kai:'STKaiti','KaiTi','Kaiti SC','Noto Serif SC',serif;
+  --song:'Songti SC','STSong','SimSun','Noto Serif SC',serif;
+  --sans:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:var(--sans);color:var(--ink-2);
+  background:var(--paper);
+  background-image:repeating-linear-gradient(0deg,transparent 0 27px,rgba(120,90,50,.028) 27px 28px);
+}
+a{color:inherit;text-decoration:none}
+
+/* 页头 */
+.wk-head{position:relative;padding:clamp(20px,4vw,34px) clamp(18px,5vw,56px) 0;overflow:hidden}
+.wk-head::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(80% 60% at 20% 0%,rgba(179,52,44,.08),transparent 65%)
+}
+.wk-bar{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative}
+.back{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;color:#7a6a54;letter-spacing:.1em}
+.back:hover{color:var(--cinnabar)}
+.back span{font-size:15px}
+.wk-title{position:relative;margin:clamp(18px,3vw,28px) 0 0;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.wk-title h1{
+  font-family:var(--kai);margin:0;font-size:clamp(34px,6vw,62px);line-height:1;letter-spacing:.08em;color:#241e19
+}
+.wk-title .seal{
+  flex:none;width:46px;height:46px;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#c0392f,#8f231c);color:#fff5e8;font-family:var(--kai);
+  font-size:19px;letter-spacing:1px;transform:rotate(-4deg);
+  box-shadow:inset 0 0 0 1.5px rgba(255,235,210,.45),0 8px 20px -10px rgba(0,0,0,.5)
+}
+.wk-lead{
+  margin:16px 0 0;max-width:640px;font-family:var(--song);font-size:14.5px;line-height:2;
+  color:#6b5a45
+}
+.wk-lead em{font-style:normal;color:var(--cinnabar)}
+
+/* 工具条 */
+.wk-tools{
+  position:sticky;top:0;z-index:20;margin-top:clamp(16px,2.6vw,24px);
+  background:rgba(246,241,230,.94);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)
+}
+.wk-tools-in{
+  max-width:1180px;margin:0 auto;padding:10px clamp(14px,4vw,40px);
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap
+}
+.cats{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1 1 300px;padding-bottom:2px}
+.cats::-webkit-scrollbar{display:none}
+.cat{
+  flex:none;padding:7px 14px;border-radius:999px;font-family:var(--kai);font-size:13.5px;
+  letter-spacing:.08em;color:#5c4d3c;border:1px solid rgba(90,70,45,.16);
+  background:rgba(255,253,248,.8);transition:.18s;cursor:pointer
+}
+.cat:hover{border-color:rgba(90,70,45,.36)}
+.cat.on{background:#2b241e;color:#fdf8ee;border-color:#2b241e}
+.cat .n{font-size:10px;opacity:.6;margin-left:5px;font-family:var(--sans)}
+.wk-search{position:relative;flex:none}
+.wk-search input{
+  width:200px;padding:8px 30px 8px 32px;border-radius:8px;font:inherit;font-size:13.5px;
+  border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9);color:var(--ink);outline:none;transition:.18s
+}
+.wk-search input:focus{border-color:rgba(168,118,44,.6);box-shadow:0 0 0 3px rgba(168,118,44,.12);width:230px}
+.wk-search .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#b3a58c}
+.wk-search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#8a7355;cursor:pointer}
+.dice{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:8px;font-size:13px;
+  color:var(--cinnabar);border:1px solid rgba(179,52,44,.28);background:rgba(179,52,44,.05);cursor:pointer
+}
+.dice:hover{background:rgba(179,52,44,.1)}
+
+/* 卡片流 */
+.wk-main{max-width:1180px;margin:0 auto;padding:clamp(20px,3.4vw,34px) clamp(14px,4vw,40px) 40px}
+.wk-count{font-size:11.5px;letter-spacing:.22em;color:var(--muted);margin:0 0 16px;font-family:var(--song)}
+.grid{column-width:320px;column-gap:14px}
+.card{break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 14px;display:inline-block;width:100%}
+.card{
+  position:relative;background:rgba(255,253,248,.88);border:1px solid var(--line);
+  padding:20px 20px 18px;border-radius:3px;transition:.22s;overflow:hidden
+}
+.card::before{
+  content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--cc,var(--gold));opacity:.75
+}
+.card:hover{transform:translateY(-3px);box-shadow:0 18px 34px -26px rgba(60,40,20,.85);border-color:rgba(90,70,45,.3)}
+.card.flash{animation:flash 1.6s ease}
+@keyframes flash{0%,100%{box-shadow:none}20%,60%{box-shadow:0 0 0 3px rgba(179,52,44,.28)}}
+.card-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.who{font-family:var(--kai);font-size:17px;color:#241e19;letter-spacing:.04em}
+.dyn{font-family:var(--song);font-size:11.5px;color:#8a7a63;letter-spacing:.1em}
+.kind{
+  margin-left:auto;font-size:10.5px;letter-spacing:.14em;padding:3px 9px;border-radius:999px;
+  color:var(--cc,var(--gold));border:1px solid currentColor;opacity:.9
+}
+.card h3{
+  margin:0 0 10px;font-family:var(--kai);font-size:19px;line-height:1.45;color:#2b241e;letter-spacing:.03em
+}
+.card p{
+  margin:0 0 .7em;font-family:var(--song);font-size:14.5px;line-height:1.95;color:#46392c;text-indent:2em
+}
+.card p:last-child{margin-bottom:0}
+.card .src{
+  display:block;margin-top:12px;padding-top:10px;border-top:1px dashed rgba(90,70,45,.16);
+  font-size:11.5px;color:#9c8b73;font-family:var(--song);letter-spacing:.04em
+}
+.empty{padding:60px 20px;text-align:center;color:#8a7a63;font-size:14px}
+.wk-foot{
+  border-top:1px solid var(--line);padding:26px 20px 40px;text-align:center;
+  font-size:11.5px;letter-spacing:.12em;color:#9c8b73;line-height:2
+}
+.wk-foot a{color:var(--cinnabar)}
+
+@media (max-width:640px){
+  .grid{column-width:auto}
+  .cats{flex-wrap:wrap;overflow:visible;flex:1 1 100%}
+  .cat{padding:6px 11px;font-size:12.5px}
+  .wk-search{flex:1 1 100%}
+  .wk-search input,.wk-search input:focus{width:100%}
+  .card{padding:17px 16px}
+  .card h3{font-size:17.5px}
+  .card p{font-size:14px;line-height:1.92}
+  .kind{margin-left:0}
+  .wk-title .seal{width:38px;height:38px;font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<header class="wk-head">
+  <div class="wk-bar">
+    <a class="back" href="./history.html"><span>←</span>返回帝王谱</a>
+    <a class="back" href="./republic.html">民国沙盘 <span>→</span></a>
+  </div>
+  <div class="wk-title">
+    <h1>帝王奇闻录</h1>
+    <div class="seal">奇</div>
+  </div>
+  <p class="wk-lead">
+    正史写他们的功业，野史记他们的荒唐。此卷专收历代帝王与诸侯的<em>奇葩死法、荒唐政事、荒淫奢靡与奇人奇行</em>——
+    有掉进粪坑淹死的国君，有自封将军的皇帝，有把宠妃腿骨做成琵琶的疯子，也有装傻三十六年才登基的“傻子”。
+    皆有所本，非凭空杜撰。
+  </p>
+</header>
+
+<div class="wk-tools">
+  <div class="wk-tools-in">
+    <div class="cats" id="cats"></div>
+    <div class="wk-search">
+      <span class="ico">⌕</span>
+      <input id="q" type="text" placeholder="搜人物 / 朝代 / 关键词">
+      <span class="clr" id="clr" style="display:none">清空</span>
+    </div>
+    <button class="dice" id="dice">⚄ 随机一条</button>
+  </div>
+</div>
+
+<main class="wk-main">
+  <p class="wk-count" id="count"></p>
+  <div class="grid" id="grid"></div>
+  <div class="empty" id="empty" style="display:none">没找到相关条目，换个词试试。</div>
+</main>
+
+<footer class="wk-foot">
+  所录多出《史记》《汉书》《晋书》《魏书》《北齐书》《旧唐书》《新唐书》《宋史》《明史》《清史稿》<br>
+  及《世说新语》《朝野佥载》《酉阳杂俎》等笔记杂史 · 传说与史实并存处已另作说明<br>
+  <a href="./history.html">← 回到华夏历代帝王谱</a>
+</footer>
+
+<script>
+const CATS = [
+  {id:'all',   name:'全部',     color:'#a8762c'},
+  {id:'death', name:'奇葩死法', color:'#b3342c'},
+  {id:'absurd',name:'荒唐政事', color:'#a8762c'},
+  {id:'lust',  name:'荒淫奢靡', color:'#9e3c50'},
+  {id:'odd',   name:'奇人奇行', color:'#3f6e52'},
+  {id:'fall',  name:'亡国之君', color:'#555a66'},
+  {id:'vassal',name:'诸侯奇闻', color:'#8c4a2f'}
+];
+
+const W = [
+/* ── 奇葩死法 ── */
+{c:'death',n:'晋景公',d:'春秋·晋',t:'掉进粪坑淹死的国君',x:[
+'晋景公生了重病，夜里梦见两个小孩商量着躲到“肓之上、膏之下”，醒来请来名医医缓，医缓说病已在膏肓之间，针药都到不了——成语“病入膏肓”由此而来。',
+'景公心里发慌，某日想吃新麦，命人献麦、命厨人烹好，又把曾说他吃不到新麦的桑田巫叫来，杀了以示其言不验。正要进食，忽觉腹胀，如厕，结果失足跌入粪坑，溺死其中。'],
+src:'《左传·成公十年》'},
+{c:'death',n:'秦武王',d:'战国·秦',t:'举鼎绝膑，二十三岁而亡',x:[
+'秦武王嬴荡力大善武，喜与力士任鄙、乌获、孟说比试。前307年，他攻入洛阳，见到周王室所藏的九鼎，执意要举“龙文赤鼎”。',
+'鼎重不可胜，武王勉强举起，力尽失手，鼎砸断胫骨（“绝膑”），当夜气绝。力士孟说因之被灭族。一个能扛起天下的君王，被一口鼎压断了性命。'],
+src:'《史记·秦本纪》'},
+{c:'death',n:'武乙',d:'商',t:'射天射到雷劈死',x:[
+'商王武乙不信天命，命人雕木偶为“天神”，与之博戏，令旁人代神掷箸；天神不胜，他便当众羞辱。又以皮革为囊、盛血其中，悬于高处射之，名为“射天”。',
+'后来他在河渭之间打猎，遇暴雷震死。史书说“武乙无道，暴雷震死”，此事成为后世“慢神者遭天谴”的著名注脚。'],
+src:'《史记·殷本纪》'},
+{c:'death',n:'齐桓公',d:'春秋·齐',t:'一代霸主，饿死六十七日尸虫出户',x:[
+'齐桓公晚年宠信易牙、竖刁、开方。管仲临终告诫此三人“非人情”，不可用，桓公不听。三人专权，五公子各树党争立。',
+'桓公病重，宫门被封锁，无人进食；他死后诸子相攻，无人收敛，尸体在床上停六十七日，蛆虫爬出门外，方才入殓。“九合诸侯、一匡天下”的霸主，死时竟无人送终。'],
+src:'《史记·齐太公世家》'},
+{c:'death',n:'赵武灵王',d:'战国·赵',t:'胡服骑射之主，活活饿死沙丘宫',x:[
+'赵武灵王废长立幼，传位于幼子何（惠文王），自称“主父”，本欲让儿子主政、自己专事征伐。长子章不服，兄弟相争。',
+'前295年沙丘宫变，公子章被杀，主父被困宫中，食尽，据树掏雀卵为食，三月余饿死。他以“胡服骑射”改写战国格局，却死在儿子的宫殿里。'],
+src:'《史记·赵世家》'},
+{c:'death',n:'齐湣王',d:'战国·齐',t:'被抽筋悬梁，三日而死',x:[
+'齐湣王灭宋、割楚淮北、侵三晋，欲并周室为天子。燕昭王使乐毅合五国之兵伐齐，齐师溃，湣王出奔。',
+'楚将淖齿以救齐为名入齐，弑湣王，“擢其筋，悬之庙梁”，三日乃死。骄横至极者，死法亦极惨。'],
+src:'《战国策·齐策六》'},
+{c:'death',n:'晋孝武帝',d:'东晋',t:'一句醉话，被宠妃用被子闷死',x:[
+'晋孝武帝司马曜嗜酒。396年秋，他在清暑殿与宠姬张贵人饮酒，醉后戏言：“汝年亦长矣，吾将择少者。”张贵人怒不可遏。',
+'待帝醉卧，她唤来心腹宫女，以被蒙帝面，俄而帝崩，谎称“魇崩”。堂堂天子，因一句玩笑话死于妇人之手。'],
+src:'《晋书·孝武帝纪》'},
+{c:'death',n:'唐中宗',d:'唐',t:'被妻女毒死在一张饼上',x:[
+'唐中宗李显两度登基，复位后纵容韦皇后与女儿安乐公主干政。母女二人谋效武则天临朝，遂合谋在汤饼中下毒。',
+'710年六月，中宗食饼中毒，暴崩于神龙殿。李隆基旋即发动政变，诛韦后、安乐公主。一朝天子的性命，终止于一口酥饼。'],
+src:'《旧唐书·中宗本纪》'},
+{c:'death',n:'明光宗',d:'明',t:'登基29天，死于“红丸”',x:[
+'泰昌帝朱常洛登基仅十日即病倒，鸿胪寺丞李可灼进献“红丸”，称仙方。帝服一丸觉暖，再服一丸，次日凌晨暴亡，距登基仅二十九天，史称“红丸案”。',
+'此案牵连数十年党争，成为明末三大案之一。一颗红色药丸，送走了一个皇帝，也撕开了晚明政局的裂缝。'],
+src:'《明史·光宗本纪》'},
+{c:'death',n:'晋景公·另说',d:'春秋·晋',t:'巫师预言“吃不到新麦”',x:[
+'桑田巫预言景公“不食新矣”。景公不信，新麦登场，特地烹好端到面前，杀巫以证其妄。',
+'结果他举箸前腹胀如厕，坠坑而死，那碗新麦终究没吃上。预言与荒诞在这一刻合为一体。'],
+src:'《左传·成公十年》'},
+{c:'death',n:'北魏道武帝',d:'北魏',t:'死于亲生儿子之手',x:[
+'道武帝拓跋珪晚年服食寒食散，性情暴戾，动辄手刃宫人，朝野人人自危。',
+'409年，其子拓跋绍夜入宫禁，弑父于天安殿，帝年仅三十九。开创北魏基业的一代雄主，死于自己逼出来的恐惧。'],
+src:'《魏书·太祖纪》'},
+{c:'death',n:'北齐文宣帝',d:'北齐',t:'酗酒暴亡，年仅三十一',x:[
+'高洋代东魏建北齐，前期英武果决，后期酗酒发狂，日夜饮宴，杀人取乐，“或肢解，或焚之”。',
+'559年，他饮酒过量暴卒，年仅三十一。北齐六帝多荒暴短命，后世称之为“禽兽王朝”。'],
+src:'《北齐书·文宣帝纪》'},
+{c:'death',n:'宋徽宗',d:'北宋',t:'五国城里冻饿而终',x:[
+'靖康之变，徽、钦二帝被金人掳北，押至五国城（今黑龙江依兰）。徽宗被封“昏德公”，衣不蔽体、食不果腹。',
+'1135年，徽宗死于五国城，年五十四。传说死后尸体被投入土坑焚化，其子钦宗亦客死异乡。',
+],
+src:'《宋史·徽宗本纪》'},
+
+/* ── 荒唐政事 ── */
+{c:'absurd',n:'刘贺',d:'西汉·昌邑王',t:'当皇帝27天，干了1127件荒唐事',x:[
+'汉昭帝崩而无嗣，大将军霍光迎昌邑王刘贺入京即位。这位新君在服丧期间就“游猎无度”，把昌邑旧部二百余人尽数召入长安封官。',
+'霍光与群臣奏请太后废之，列其罪状一千一百二十七事——平均每天四十余件。在位二十七日被废，回昌邑时仍带走了皇帝玺绶。2016年海昏侯墓的发掘，让这位“荒唐皇帝”的真实生活重见天日。'],
+src:'《汉书·武五子传》'},
+{c:'absurd',n:'明武宗',d:'明',t:'自封“总督军务威武大将军总兵官朱寿”',x:[
+'正德帝朱厚照嫌皇帝身份束缚，索性化名“朱寿”，自封威武大将军、镇国公，还给自己发俸禄、写敕书。',
+'他不住皇宫住“豹房”，宫中开市集、扮商贾；1517年应州之战亲自上阵，回朝后以“大将军朱寿”的名义向自己报捷。荒诞之中，也透着对皇权束缚的逃避。'],
+src:'《明史·武宗本纪》'},
+{c:'absurd',n:'晋惠帝',d:'西晋',t:'“何不食肉糜？”',x:[
+'晋惠帝司马衷在位时天下饥荒，百姓饿死。他把奏报看了半天，认真地问：“何不食肉糜？”（为什么不吃肉粥呢？）',
+'又曾在华林园听到蛤蟆叫，问左右：“此鸣者为官乎，私乎？”——这位智力有缺陷的皇帝，成了后世“何不食肉糜”的永恒典故，也成了西晋乱亡的象征。'],
+src:'《晋书·惠帝纪》'},
+{c:'absurd',n:'汉灵帝',d:'东汉',t:'卖官鬻爵，明码标价',x:[
+'汉灵帝在西园设“卖官所”，二千石官价二千万钱，四百石官价四百万钱，按缺之肥瘠议价，可先赊后付。三公九卿亦可买，司徒崔烈以五百万买得，灵帝还嫌卖便宜了。',
+'他又造“裸游馆”，令宫女裸浴于渠中；好胡服、胡帐、胡床，京城贵戚争相效仿。卖官之钱入私库，天下由此大乱。'],
+src:'《后汉书·灵帝纪》'},
+{c:'absurd',n:'明神宗',d:'明',t:'二十八年不上朝',x:[
+'万历帝因“国本之争”与群臣僵持：他要立宠妃之子为太子，群臣坚持立长子。争执十余年，皇帝索性“怠政”——不批奏疏、不补官员、不上朝。',
+'从1589年起近二十八年，中枢几近停摆，朝中缺官至“部院空虚”。后世评万历：“明之亡，实亡于神宗。”'],
+src:'《明史·神宗本纪》'},
+{c:'absurd',n:'明世宗',d:'明',t:'炼丹二十年，差点被宫女勒死',x:[
+'嘉靖帝崇道炼丹，二十余年不上朝，宠信方士陶仲文，取童女经血炼“先天丹铅”。1542年，以杨金英为首的十几名宫女不堪折磨，趁其熟睡以绳勒颈，慌乱中绳打成死结，嘉靖未死。',
+'此即“壬寅宫变”。此后他更迁居西苑，与朝臣隔绝，直至1566年因丹毒发作而亡。'],
+src:'《明史·世宗本纪》'},
+{c:'absurd',n:'北齐后主',d:'北齐',t:'“无愁天子”，宫中扮乞丐',x:[
+'高纬即位后不理政事，置“贫儿村”于华林园，自己穿破衣扮乞丐行乞取乐；又作“无愁曲”，亲弹琵琶自唱，人称“无愁天子”。',
+'北周兵临城下，他仍在打猎，说“急则自去”，最终国灭被俘，赐死。无愁者，终有大愁。'],
+src:'《北齐书·后主纪》'},
+{c:'absurd',n:'陈后主',d:'南朝·陈',t:'国破时躲进枯井',x:[
+'陈叔宝在位时大建宫室，与宠妃张丽华、孔贵嫔日夜宴饮，作《玉树后庭花》。隋军渡江，他仍在醉中。',
+'589年城破，他带着两妃躲入景阳宫枯井，隋军喊话不应，扬言填井，才出声被吊上来。后人讥《玉树后庭花》为“亡国之音”。'],
+src:'《陈书·后主纪》'},
+{c:'absurd',n:'宋徽宗',d:'北宋',t:'皇帝当得好好的，偏要做“道君”',x:[
+'徽宗自封“教主道君皇帝”，宠信道士林灵素，全国建宫观、改僧为道；又设应奉局搜罗花石纲，一块太湖石运抵汴京，沿途拆桥毁屋。',
+'他精于书画，创“瘦金体”，画院之盛冠绝古今——一个艺术天才坐在了需要政治家的位置上。'],
+src:'《宋史·徽宗本纪》'},
+{c:'absurd',n:'汉灵帝·卖官',d:'东汉',t:'三公之位也能打折',x:[
+'灵帝卖官，司徒崔烈以五百万得之，交割时灵帝懊悔：“悔不少靳，可至千万。”程夫人在旁说：“崔公冀州名士，岂肯买官？赖我得是，反不知好耶！”',
+'朝堂之上，卖官如市；官爵既成商品，吏治随之崩坏。'],
+src:'《后汉书·崔骃传》'},
+{c:'absurd',n:'卫懿公',d:'春秋·卫',t:'好鹤亡国，鹤有俸禄有车乘',x:[
+'卫懿公爱鹤成癖，给鹤封官位、发俸禄，出门让鹤乘轩车。国人怨声载道。',
+'北狄来攻，懿公命国人出战，众人说：“使鹤！鹤实有禄位，余焉能战？”卫军溃散，懿公被杀，卫国几亡。'],
+src:'《左传·闵公二年》'},
+{c:'absurd',n:'楚灵王',d:'春秋·楚',t:'好细腰，宫中多饿死',x:[
+'楚灵王偏爱腰身纤细者，“楚王好细腰，宫中多饿死”。大臣们为讨欢心，每日只吃一顿，束腰至不能弯腰，扶墙乃起。',
+'这位以审美定生死标准的国君，最终众叛亲离，自缢于申亥氏家中。'],
+src:'《墨子·兼爱中》'},
+{c:'absurd',n:'晋武帝',d:'西晋',t:'羊车望幸，嫔妃争着给羊喂盐',x:[
+'晋武帝司马炎后宫万人，不知所幸，遂乘羊车随意而行，羊停处即留宿。宫人争相在门前洒盐水、插竹叶引羊。',
+'开国之君即如此荒怠，西晋的短命由此埋下伏笔。'],
+src:'《晋书·后妃传》'},
+{c:'absurd',n:'隋炀帝',d:'隋',t:'三下江都，龙舟千里',x:[
+'大业年间，炀帝乘龙舟下江都，船队前后二百余里，挽船壮丁八万余人，两岸骑兵护卫，所过州县五百里内皆令献食，吃不完就地埋之。',
+'民力竭而天下反。618年，他在江都被宇文化及缢杀，隋朝二世而亡。'],
+src:'《隋书·炀帝纪》'},
+
+/* ── 荒淫奢靡 ── */
+{c:'lust',n:'北齐文宣帝',d:'北齐',t:'杀宠妃，以其腿骨做琵琶',x:[
+'高洋宠爱薛嫔，一日忽疑其与人有私，手刃之，藏尸于怀。宴会上忽然取出人头投于盘，满座惊骇；又命人取尸肢解，以其髀骨为琵琶，自弹自唱“佳人难再得”。',
+'这不是传说，而是《北齐书》明载之事。北齐宫廷之酷，为中国帝王史所罕见。'],
+src:'《北齐书·文宣帝纪》'},
+{c:'lust',n:'汉成帝',d:'西汉',t:'死于“温柔乡”',x:[
+'汉成帝宠赵飞燕、赵合德姐妹。合德所居昭阳殿，中庭彤朱、殿上髹漆，槛皆铜镀黄金。成帝曾言：“吾老是乡矣，不能效武皇帝求白云乡也。”',
+'绥和二年，成帝晨起未起，暴崩于赵合德怀中。太后追究，合德自杀。“温柔乡”三字，从此成了纵欲亡身的代称。'],
+src:'《汉书·外戚传》'},
+{c:'lust',n:'晋武帝',d:'西晋',t:'后宫万人，羊车选寝',x:[
+'平吴之后，武帝尽收孙皓宫女五千，后宫逾万。他常乘羊车游宫中，任羊所之。',
+'妃嫔争宠，以盐水洒地、竹叶插门，引羊驻足。一个王朝的衰象，从羊车的方向开始。'],
+src:'《晋书·后妃传》'},
+{c:'lust',n:'汉灵帝·裸游馆',d:'东汉',t:'让宫女裸浴渠中',x:[
+'灵帝于西园起裸游馆千间，引渠水绕之，命宫女十四岁以上者裸浴其中，盛夏与之内游，谓“此景可当仙”。',
+'他又好用西域香料煮汤沐浴，浴水倒入渠中称“流香渠”。天下旱蝗、民相食，宫中却在流香。'],
+src:'《拾遗记》'},
+{c:'lust',n:'完颜亮',d:'金',t:'“欲为天下第一人”，淫乱宗室',x:[
+'金海陵王完颜亮自立后，大杀宗室，尽收其妻女入宫；又命百官献妻女，不从者杀。他自言平生三志：“国家大事皆自我出，一也；帅师伐国执其君长问罪于前，二也；得天下绝色而妻之，三也。”',
+'南侵途中，部将完颜元宜等发动兵变，将其缢杀。'],
+src:'《金史·海陵纪》'},
+{c:'lust',n:'隋炀帝·迷楼',d:'隋',t:'造迷楼，误入者终日不得出',x:[
+'炀帝命项升造“迷楼”，楼中千门万户、回环曲折，误入者终日走不出去。选良家女数千居之，帝每游幸，经月不出。',
+'他亦营建显仁宫、西苑，周二百里，秋冬剪彩为花。天下财力，尽于一人之欲。'],
+src:'《隋书·炀帝纪》'},
+
+/* ── 奇人奇行 ── */
+{c:'odd',n:'梁武帝',d:'南朝·梁',t:'四次舍身同泰寺，逼大臣用钱赎他',x:[
+'梁武帝萧衍笃信佛教，曾四次“舍身”同泰寺为奴，每次群臣都要凑钱一亿赎“皇帝菩萨”回宫。他一日一食、不饮酒、不近女色，亲讲《涅槃经》。',
+'然而侯景之乱起，他被困台城，忧愤成疾，饿死宫中，年八十六。菩萨皇帝，终未得解脱。'],
+src:'《梁书·武帝纪》'},
+{c:'odd',n:'唐太宗',d:'唐',t:'放390名死囚回家，约定秋后自归',x:[
+'贞观六年，太宗亲录死囚，悯其将死，下令放归家，约以明年秋来就刑。次年九月，死囚皆至，无一亡匿。太宗感其信义，尽赦之。',
+'欧阳修作《纵囚论》斥之为“上下交相贼”，然此事仍成贞观之治最温柔的注脚。'],
+src:'《旧唐书·太宗纪》'},
+{c:'odd',n:'王莽',d:'新朝',t:'“穿越式”改制的皇帝',x:[
+'王莽代汉建新，改天下田为“王田”、奴婢为“私属”，禁止买卖；改币制四次，发行大钱、契刀、错刀；改官名、地名，追慕《周礼》。',
+'他推行“六筦”专卖，又赐匈奴单于“降奴服于”之印，四夷皆叛。天凤四年天下大乱，绿林、赤眉并起，新朝十五年而亡。',
+],
+src:'《汉书·王莽传》'},
+{c:'odd',n:'唐宣宗',d:'唐',t:'装傻三十六年，一登基便雷厉风行',x:[
+'宣宗李忱是宪宗第十三子，母为宫女，自幼被视为“不慧”，宫中皆以为痴。文宗、武宗宴饮时，常逼他说话取乐，他始终默然。',
+'会昌六年武宗崩，宦官马元贽等以为易制，拥立为帝。谁知他一登基便洞察政务、裁抑宦官、收复河湟，史称“小太宗”。三十六年的沉默，是一场漫长的自保。'],
+src:'《旧唐书·宣宗纪》'},
+{c:'odd',n:'雍正帝',d:'清',t:'朱批“朕就是这样的汉子”',x:[
+'雍正批阅奏折极勤，十三年间批语逾千万字，常与臣下如友交谈。批石文焯折：“朕就是这样汉子，就是这样秉性，就是这样皇帝。”批年羹尧：“朕实不知如何疼你。”',
+'他亦刻薄：“朕一生得力处，只在‘不欺’二字。”朱批之中，可见一个既严酷又性情的帝王。'],
+src:'《雍正朱批谕旨》'},
+{c:'odd',n:'隋文帝',d:'隋',t:'惧内出宫，叹“吾贵为天子，不得自由”',x:[
+'独孤皇后性妒，文帝“六宫虚设”，百官有妾者多遭贬斥。文帝曾在宫中私幸尉迟迥之孙女，皇后闻讯杀之。',
+'文帝大怒，单骑出走山谷二十余里，高颎、杨素追及，叩马苦谏。帝叹曰：“吾贵为天子，而不得自由！”良久方还。'],
+src:'《隋书·后妃传》'},
+{c:'odd',n:'明孝宗',d:'明',t:'一生只娶一人',x:[
+'弘治帝朱祐樘终身只有张皇后一位后妃，不设嫔御，同起居如民间夫妇。有大臣请其选妃以广嗣，他婉拒。',
+'在拥有三宫六院的帝制时代，这是极罕见的特例。他勤政节俭，史称“弘治中兴”。'],
+src:'《明史·孝宗本纪》'},
+{c:'odd',n:'明太祖',d:'明',t:'删《孟子》，只因“民为贵”太刺眼',x:[
+'朱元璋读《孟子》至“君之视臣如土芥，则臣视君如寇仇”，大怒曰：“使此老在今日，宁得免耶！”命撤孟子配享孔庙。',
+'后又命刘三吾删《孟子》八十五条“不逊”之语，成《孟子节文》，只许士子读删本。皇权对思想的挤压，于此可见。'],
+src:'《明史·钱唐传》'},
+{c:'odd',n:'宋仁宗',d:'北宋',t:'夜里想吃羊肉，忍到天亮没说',x:[
+'仁宗某夜饥，思食烧羊，却终夜不言。近臣问其故，帝曰：“朕若一言，左右必夜夜宰羊以备，一年害生无数，故忍之。”',
+'又一次夜半口渴，不愿唤人取水，恐内侍因此受罚。这位“百事不会，只会做官家”的皇帝，以克制成就了仁宗盛治。'],
+src:'《宋史·仁宗本纪》'},
+{c:'odd',n:'汉文帝',d:'西汉',t:'想修个露台，一算要十户人家的钱，罢了',x:[
+'文帝欲建露台，召匠计之，直百金。帝曰：“百金，中人十家之产也。吾奉先帝宫室，常恐羞之，何以台为！”遂罢。',
+'他身着弋绨，所幸慎夫人衣不曳地，帷帐无文绣。文景之治的底子，正是这样一分一厘省出来的。'],
+src:'《史记·孝文本纪》'},
+{c:'odd',n:'光武帝',d:'东汉',t:'与老同学同榻，被压住肚子也不恼',x:[
+'严光与光武帝刘秀少时同游学，及帝即位，严光隐居。帝遣使三聘乃至，与之同榻卧，严光以足加帝腹上。次日太史奏“客星犯御座甚急”，帝笑曰：“朕故人严子陵共卧耳。”',
+'帝欲授谏议大夫，严光不受，归耕富春山。后人建“严子陵钓台”，为此一段故人之谊。'],
+src:'《后汉书·严光传》'},
+{c:'odd',n:'赵武灵王',d:'战国·赵',t:'让位给儿子，自称“主父”',x:[
+'武灵王传位幼子何，自号“主父”，穿胡服率士大夫西北略胡地，欲从云中、九原南下袭秦，并亲入秦廷观察地形。',
+'秦昭王初不知其为赵主父，后惊觉，已去。以国君之身行间谍之事，古今罕有。'],
+src:'《史记·赵世家》'},
+{c:'odd',n:'汉高祖',d:'西汉',t:'拿儒生的帽子当尿壶',x:[
+'刘邦不好儒，诸客冠儒冠来者，他辄解其冠，溲溺其中；与人言常大骂。陆贾时时称《诗》《书》，刘邦骂曰：“乃公居马上而得之，安事《诗》《书》！”',
+'陆贾反问：“居马上得之，宁可以马上治之乎？”刘邦乃命其著《新语》。从溺儒冠到用儒术，汉初政治的转身，就在这一骂一问之间。'],
+src:'《史记·郦生陆贾列传》'},
+
+/* ── 亡国之君 ── */
+{c:'fall',n:'蜀汉后主',d:'蜀汉',t:'“此间乐，不思蜀”',x:[
+'刘禅降魏后居洛阳，司马昭宴之，令奏蜀乐。蜀旧臣皆泣，禅嬉笑自若。昭问：“颇思蜀否？”禅答：“此间乐，不思蜀。”',
+'郤正教他以泣对，禅复问时依言而答，昭曰：“何乃似郤正语？”禅惊曰：“诚如尊命。”左右皆笑。昏愚乎？保命乎？后世争论千年。'],
+src:'《三国志·后主传》注引《汉晋春秋》'},
+{c:'fall',n:'李煜',d:'南唐',t:'亡国之君，词中之帝',x:[
+'李煜嗣位时南唐已称臣于宋，他仍沉湎声色，与大周后、小周后词酒流连。975年金陵城破，他被俘至汴京，封“违命侯”。',
+'978年七夕，他作《虞美人》“故国不堪回首月明中”，宋太宗闻之大怒，赐牵机药，李煜中毒而亡，年四十二。亡了国，却留下“问君能有几多愁”。'],
+src:'《宋史·南唐李氏世家》'},
+{c:'fall',n:'孙皓',d:'东吴',t:'降晋后还要争座位',x:[
+'吴主孙皓降晋，被赐“归命侯”。晋武帝引见，谓曰：“朕设此座以待卿久矣。”皓答：“臣于南方，亦设此座以待陛下。”',
+'贾充问他：“闻君在南方凿人目、剥人面皮，此何等刑？”皓曰：“人臣有弑其君及奸回不忠者，则加此刑耳。”——直刺贾充弑君旧事，满座失色。'],
+src:'《三国志·三嗣主传》注引《晋纪》'},
+{c:'fall',n:'崇祯帝',d:'明',t:'朕非亡国之君，诸臣皆亡国之臣',x:[
+'1644年三月，李自成破北京。崇祯帝登煤山，望烽火彻天，叹曰：“苦吾民耳！”遂自缢于寿皇亭，衣襟遗诏：“朕凉德藐躬，上干天咎……任贼分裂朕尸，毋伤百姓一人。”',
+'他十七岁即位，铲除魏忠贤，勤政节俭，却刚愎多疑、屡换阁臣。史家叹：明之亡，非亡于崇祯，而亡于万历之后。'],
+src:'《明史·庄烈帝纪》'},
+{c:'fall',n:'宋钦宗',d:'北宋',t:'被掳北行，客死异乡',x:[
+'靖康元年，金兵围汴京，钦宗亲赴金营求和，被扣。次年城破，徽钦二帝及宗室、后妃、工匠三千余人被掳北上。',
+'钦宗后迁五国城，1161年被金主完颜亮强令与辽天祚帝赛马球，坠马被践踏而死。父子两帝，同为俘虏。'],
+src:'《宋史·钦宗本纪》'},
+{c:'fall',n:'周赧王',d:'战国·周',t:'债台高筑的天子',x:[
+'赧王时周室仅余一隅，为合纵伐秦向富户借贷充军资，事败无力偿还，避债于宫中高台。周人称之为“逃债台”。',
+'前256年秦灭西周，赧王入秦顿首献地，同年崩，八百年周祚断绝。'],
+src:'《史记·周本纪》'},
+
+/* ── 诸侯奇闻 ── */
+{c:'vassal',n:'晋灵公',d:'春秋·晋',t:'从台上弹人，观其避丸',x:[
+'晋灵公不君：厚敛以雕墙，从台上弹人而观其避丸；厨子煮熊掌不熟，他杀之，置尸于畚，令妇人载而过朝。',
+'赵盾屡谏，灵公患之，先遣鉏麑刺之，鉏麑见赵盾盛服将朝、坐而假寐，叹曰“不忘恭敬，民之主也”，触槐而死。后又设宴伏甲，赵盾得脱。最终灵公被赵穿弑于桃园。'],
+src:'《左传·宣公二年》'},
+{c:'vassal',n:'郑灵公',d:'春秋·郑',t:'一碗王八汤引发的弑君案',x:[
+'楚人献鼋于郑灵公，公子宋与子家将朝，子宋食指动，曰：“他日我如此，必尝异味。”入见，宰夫将解鼋，相视而笑。',
+'灵公问其故，子家告之。及食鼋，召子宋而不与。子宋怒，染指于鼎，尝之而出。灵公怒，欲杀之，子宋反与子家谋，弑灵公。“染指”一词由此而来。'],
+src:'《左传·宣公四年》'},
+{c:'vassal',n:'齐庄公',d:'春秋·齐',t:'与臣妻私通，被杀于崔杼之宅',x:[
+'齐庄公与崔杼之妻棠姜私通，屡至崔氏之宅，且以崔杼之冠赐人。崔杼怒，称病不朝。庄公问疾，入室，崔氏伏甲，庄公登台请免，不许，遂被杀。',
+'太史书曰“崔杼弑其君”，崔杼杀之；其弟继书，又被杀；第三弟仍书，崔杼乃止。南史氏闻太史尽死，执简以往。中国史官的骨气，在血里写成。'],
+src:'《左传·襄公二十五年》'},
+{c:'vassal',n:'楚成王',d:'春秋·楚',t:'临死只想吃一口熊掌',x:[
+'楚成王欲废太子商臣，商臣以宫甲围王。成王请食熊掌而死，商臣不许——熊掌难熟，恐其拖延待援。',
+'成王自缢。一代雄主，死前最后一个愿望是一只熊掌。'],
+src:'《左传·文公元年》'},
+{c:'vassal',n:'卫宣公',d:'春秋·卫',t:'筑新台，娶了自己的儿媳',x:[
+'卫宣公为世子伋娶齐女，闻其美，乃筑新台于河上，自娶之，是为宣姜。国人作《新台》诗刺之：“新台有泚，河水弥弥。燕婉之求，籧篨不鲜。”',
+'后宣姜生子寿、朔，构陷伋，宣公使盗杀之，寿以身代兄死，伋亦死。《诗经》里最不忍读的一段，出自国君的荒唐。'],
+src:'《左传·桓公十六年》'},
+{c:'vassal',n:'宋闵公',d:'春秋·宋',t:'一句玩笑，被大力士砸死',x:[
+'宋闵公与南宫万猎于蒙泽，因博争行，闵公怒，辱之曰：“始吾敬子，今子，鲁囚也，吾弗敬子矣。”南宫万力大，怒而弑公于蒙泽。',
+'后南宫万奔陈，宋人赂陈，使妇人饮之酒，以犀革裹之而归，醢之。一场博戏的口角，换了一国之君的性命。'],
+src:'《左传·庄公十一年》'},
+{c:'vassal',n:'蔡哀侯',d:'春秋·蔡',t:'调戏小姨子，招来亡国之祸',x:[
+'蔡哀侯娶于陈，息侯亦娶焉。息妫将归，过蔡，蔡侯曰“吾姨也”，止而见之，弗宾（失礼）。息侯怒，引楚文王伐蔡。',
+'楚俘蔡哀侯，蔡侯又向楚王盛赞息妫之美，楚遂灭息、掳息妫。一个女人引起的连环灭国，见于《左传》开篇数则。'],
+src:'《左传·庄公十年》'},
+{c:'vassal',n:'齐襄公',d:'春秋·齐',t:'瓜熟而代，言而无信被杀',x:[
+'齐襄公使连称、管至父戍葵丘，曰“及瓜而代”。期至，请代，弗许。二人怒，联合公孙无知作乱，弑襄公于姑棼之宫。',
+'襄公死时躲于门后，足露出，被拖出杀死。“及瓜而代”从此成为失信误国的典故。'],
+src:'《左传·庄公八年》'}
+];
+
+const grid = document.getElementById('grid');
+const catsEl = document.getElementById('cats');
+const qEl = document.getElementById('q');
+const clrEl = document.getElementById('clr');
+const countEl = document.getElementById('count');
+const emptyEl = document.getElementById('empty');
+let cat = 'all', kw = '';
+
+const esc = s => s.replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+
+function countOf(c){ return c === 'all' ? W.length : W.filter(x => x.c === c).length; }
+
+function renderCats(){
+  catsEl.innerHTML = CATS.map(c =>
+    `<button class="cat ${c.id === cat ? 'on' : ''}" data-c="${c.id}" style="${c.id === cat ? 'background:' + c.color + ';border-color:' + c.color : ''}">
+       ${c.name}<span class="n">${countOf(c.id)}</span></button>`).join('');
+}
+
+function render(){
+  const k = kw.trim();
+  const list = W.filter(x => {
+    const okCat = cat === 'all' || x.c === cat;
+    const okKw = !k || (x.n + x.d + x.t + x.x.join('') + (x.src || '')).includes(k);
+    return okCat && okKw;
+  });
+  grid.innerHTML = list.map(item => {
+    const cc = (CATS.find(c => c.id === item.c) || {}).color || '#a8762c';
+    const catName = (CATS.find(c => c.id === item.c) || {}).name || '';
+    return `<article class="card" style="--cc:${cc}" data-key="${esc(item.n + item.t)}">
+      <div class="card-top">
+        <span class="who">${esc(item.n)}</span>
+        <span class="dyn">${esc(item.d)}</span>
+        <span class="kind" style="--cc:${cc}">${catName}</span>
+      </div>
+      <h3>${esc(item.t)}</h3>
+      ${item.x.map(p => `<p>${esc(p)}</p>`).join('')}
+      ${item.src ? `<span class="src">— ${esc(item.src)}</span>` : ''}
+    </article>`;
+  }).join('');
+  countEl.textContent = `共 ${list.length} 条 · 皆有所本`;
+  emptyEl.style.display = list.length ? 'none' : 'block';
+}
+
+catsEl.addEventListener('click', e => {
+  const b = e.target.closest('.cat');
+  if (!b) return;
+  cat = b.dataset.c;
+  renderCats(); render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+qEl.addEventListener('input', () => {
+  kw = qEl.value;
+  clrEl.style.display = kw ? 'block' : 'none';
+  render();
+});
+clrEl.addEventListener('click', () => { qEl.value = ''; kw = ''; clrEl.style.display = 'none'; render(); qEl.focus(); });
+
+document.getElementById('dice').addEventListener('click', () => {
+  const pool = W.filter(x => cat === 'all' || x.c === cat);
+  const item = pool[Math.floor(Math.random() * pool.length)];
+  cat = 'all'; kw = ''; qEl.value = ''; clrEl.style.display = 'none';
+  renderCats(); render();
+  const el = grid.querySelector('[data-key="' + (item.n + item.t).replace(/"/g, '\\"') + '"]');
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('flash');
+    setTimeout(() => el.classList.remove('flash'), 1800);
+  }
+});
+
+renderCats(); render();
+</script>
+</body>
+</html>

@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>华夏历代帝王谱 · 一卷在手 千年在目</title>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
+<script src="./js/portrait-focus.js"></script>
+<script src="./js/ancient-1.js"></script>
+<script src="./js/ancient-2.js"></script>
+<script src="./js/emperors-data.js"></script>
+<script src="./js/modern-data.js"></script>
+<script src="./js/emperors-extra.js"></script>
+<script src="./js/extra-ancient.js"></script>
+<script src="./js/extra-imperial.js"></script>
+<script src="./js/extra-rep-a.js"></script>
+<script src="./js/extra-rep-b.js"></script>
+<script src="./js/extra-modern.js"></script>
+<script src="./js/extra-ancient-a.js"></script>
+<script src="./js/extra-ancient-b.js"></script>
+<script src="./js/extra-imp-a.js"></script>
+<script src="./js/extra-imp-b.js"></script>
+<script src="./js/extra-imp-c.js"></script>
+<script src="./js/portraits-ancient.js"></script>
+<script src="./js/portraits-modern.js"></script>
+<script src="./js/mao-chapters.js"></script>
+<script src="./js/mao-cinema.js"></script>
+<style>
+:root{
+  --paper:#f6f1e6;
+  --paper-2:#fffdf8;
+  --ink:#2b241e;
+  --ink-2:#3a3128;
+  --muted:#8a7a63;
+  --line:rgba(90,70,45,.15);
+  --cinnabar:#b3342c;
+  --gold:#a8762c;
+  --kai:'STKaiti','KaiTi','Kaiti SC','Kaiti TC','Noto Serif SC',serif;
+  --song:'Songti SC','STSong','SimSun','Noto Serif SC',serif;
+  --sans:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-behavior:smooth}
+body{
+  margin:0;font-family:var(--sans);color:var(--ink-2);background:var(--paper);
+  -webkit-font-smoothing:antialiased;
+}
+body.lock{overflow:hidden}
+[v-cloak]{display:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+input{font:inherit}
+img{display:block}
+
+/* ══════════════ 第一屏 · 大屏 ══════════════ */
+.hero{
+  position:relative;height:100svh;min-height:600px;overflow:hidden;
+  background:#0a0807;isolation:isolate;touch-action:pan-y pinch-zoom;
+}
+.hero-media{position:absolute;inset:0;transition:transform .38s cubic-bezier(.22,.8,.36,1)}
+.hero-img{transition:transform .34s cubic-bezier(.22,.8,.36,1)}
+.hero.is-drag .hero-img{transform:scale(1.1)}
+.hero-copy{transition:transform .38s cubic-bezier(.22,.8,.36,1)}
+.hero.is-drag .hero-media,.hero.is-drag .hero-copy{transition:none}
+
+/* 移动端滑动提示 */
+.swipe-tip{
+  display:none;align-items:center;gap:9px;margin-top:20px;
+  font-family:var(--song);font-size:11px;letter-spacing:.24em;
+  color:rgba(240,230,212,.58)
+}
+.swipe-tip .ln{width:24px;height:1px;background:currentColor;opacity:.5}
+@media (max-width:767px){.swipe-tip{display:flex}}
+
+/* 边界提示 */
+.hero-toast{
+  position:absolute;left:50%;top:calc(clamp(16px,2.6vw,30px) + 58px);
+  transform:translate(-50%,-8px);z-index:5;
+  padding:7px 16px;border-radius:999px;white-space:nowrap;
+  font-size:12px;letter-spacing:.14em;color:#f6eede;
+  background:rgba(20,15,12,.68);border:1px solid rgba(248,240,226,.2);
+  backdrop-filter:blur(8px);opacity:0;pointer-events:none;
+  transition:opacity .24s,transform .24s
+}
+.hero-toast.on{opacity:1;transform:translate(-50%,0)}
+.hero-img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:center 26%;transform:scale(1.03);
+}
+.hero-veil{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    linear-gradient(to top, rgba(8,6,5,.94) 0%, rgba(8,6,5,.8) 15%, rgba(8,6,5,.34) 42%, rgba(8,6,5,.04) 68%, rgba(8,6,5,.26) 100%),
+    linear-gradient(to right, rgba(8,6,5,.7) 0%, rgba(8,6,5,.24) 46%, rgba(8,6,5,0) 76%),
+    radial-gradient(120% 90% at 50% 50%, transparent 45%, rgba(0,0,0,.45) 100%);
+}
+.hero-top{
+  position:absolute;left:0;right:0;top:0;z-index:3;
+  display:flex;align-items:flex-start;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;row-gap:8px;
+  padding:clamp(16px,2.6vw,30px) clamp(18px,4vw,54px);
+}
+.brand{display:flex;align-items:center;gap:12px;color:#f4ecdd;text-decoration:none}
+.seal{
+  width:42px;height:42px;flex:none;border-radius:6px;display:grid;place-items:center;
+  background:linear-gradient(140deg,#c0392f,#8f231c);color:#fff5e8;
+  font-family:var(--kai);font-size:20px;letter-spacing:2px;
+  box-shadow:inset 0 0 0 1.5px rgba(255,235,210,.45),0 6px 18px -6px rgba(0,0,0,.8);
+  transform:rotate(-4deg)
+}
+.brand h1{font-family:var(--kai);font-size:clamp(15px,1.5vw,19px);letter-spacing:.26em;margin:0;font-weight:600}
+.brand p{margin:5px 0 0;font-size:10.5px;letter-spacing:.3em;color:rgba(244,236,221,.5);font-family:var(--song)}
+.hero-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-left:auto}
+.pill .lbl-s{display:none}
+.pill{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:9px 15px;border-radius:999px;font-size:12.5px;letter-spacing:.1em;
+  color:rgba(248,240,226,.92);border:1px solid rgba(248,240,226,.26);
+  background:rgba(20,15,12,.3);backdrop-filter:blur(10px);
+  transition:.2s;white-space:nowrap
+}
+.pill:hover{background:rgba(248,240,226,.16);border-color:rgba(248,240,226,.5)}
+.pill.solid{background:rgba(179,52,44,.85);border-color:rgba(255,220,200,.3)}
+.pill.solid:hover{background:rgba(196,62,52,.95)}
+.pill .cnt{font-size:10px;opacity:.75;font-variant-numeric:tabular-nums}
+
+.hero-copy{
+  position:absolute;z-index:3;
+  left:clamp(18px,4.5vw,64px);right:clamp(18px,4.5vw,64px);
+  bottom:clamp(52px,10vh,104px);
+  max-width:min(820px,86vw);
+}
+.dyn-tag{
+  display:inline-flex;align-items:center;gap:9px;
+  font-family:var(--kai);font-size:13px;letter-spacing:.32em;
+  color:rgba(248,240,226,.88);margin-bottom:18px
+}
+.dyn-tag::before{content:'';width:26px;height:1px;background:currentColor;opacity:.6}
+.dyn-tag .dot{width:6px;height:6px;border-radius:50%}
+.temple{
+  font-family:var(--kai);font-weight:700;
+  font-size:clamp(48px,7.2vw,124px);line-height:.98;letter-spacing:.06em;
+  color:#f8f2e6;margin:0;
+  text-shadow:0 4px 26px rgba(0,0,0,.5),0 1px 0 rgba(255,255,255,.08)
+}
+.name-line{
+  display:flex;align-items:baseline;flex-wrap:wrap;gap:8px 16px;
+  margin-top:20px;color:rgba(240,230,212,.9)
+}
+.name-line .lb{font-size:11.5px;letter-spacing:.3em;color:rgba(240,230,212,.5)}
+.name-line .val{font-family:var(--kai);font-size:clamp(20px,2vw,26px);color:#f8f2e6;letter-spacing:.06em}
+.name-line .sep{width:1px;height:14px;background:rgba(240,230,212,.22);align-self:center}
+.era-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.era-pill{
+  font-family:var(--song);font-size:12px;letter-spacing:.1em;
+  padding:5px 11px;border-radius:2px;color:rgba(248,240,226,.85);
+  background:rgba(248,240,226,.1);border:1px solid rgba(248,240,226,.16)
+}
+.hero-quote{
+  margin:22px 0 0;padding-left:14px;border-left:2px solid rgba(179,52,44,.75);
+  font-family:var(--song);font-size:13.5px;line-height:1.9;
+  color:rgba(240,230,212,.72);max-width:600px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden
+}
+
+.hero-side{
+  position:absolute;right:clamp(16px,3vw,40px);top:50%;transform:translateY(-50%);
+  z-index:3;display:flex;flex-direction:column;gap:8px
+}
+.hero-arrow{
+  width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  color:rgba(248,240,226,.8);border:1px solid rgba(248,240,226,.24);
+  background:rgba(18,13,10,.28);backdrop-filter:blur(8px);
+  font-size:18px;transition:.2s
+}
+.hero-arrow:hover:not(:disabled){background:rgba(248,240,226,.18);color:#fff}
+.hero-arrow:disabled{opacity:.22;cursor:not-allowed}
+
+.hero-foot{
+  position:absolute;left:0;right:0;bottom:0;z-index:3;
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:0 clamp(18px,4vw,54px) clamp(16px,3vh,26px);
+  color:rgba(240,230,212,.5);font-size:11px;letter-spacing:.22em
+}
+.hero-index{font-family:var(--song);font-variant-numeric:tabular-nums;letter-spacing:.14em}
+.hero-index b{color:#f0e4cd;font-size:15px;font-family:var(--kai);letter-spacing:.05em}
+.scroll-cue{display:flex;align-items:center;gap:9px;animation:float 2.4s ease-in-out infinite}
+.scroll-cue .bar{width:1px;height:26px;background:linear-gradient(to bottom,rgba(240,230,212,.7),transparent)}
+@keyframes float{0%,100%{transform:translateY(0);opacity:.75}50%{transform:translateY(5px);opacity:1}}
+
+/* 交叉淡入 */
+.xfade-enter-active,.xfade-leave-active{transition:opacity .7s ease}
+.xfade-enter-from,.xfade-leave-to{opacity:0}
+
+/* ══════════════ 第二屏 · 阅读 ══════════════ */
+.read{position:relative;background:var(--paper)}
+.read::before{
+  content:'';position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(70% 40% at 50% 0%, rgba(255,255,255,.9), transparent 70%),
+    repeating-linear-gradient(0deg,transparent 0 27px,rgba(120,90,50,.028) 27px 28px);
+}
+.toolbar{
+  position:sticky;top:0;z-index:40;
+  background:rgba(246,241,230,.93);backdrop-filter:blur(14px);
+  border-bottom:1px solid var(--line);
+}
+.toolbar-in{
+  max-width:1240px;margin:0 auto;padding:10px clamp(14px,3vw,32px);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap
+}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1 1 320px;scrollbar-width:none;padding-bottom:2px}
+.chips::-webkit-scrollbar{display:none}
+.chip{
+  flex:none;display:inline-flex;align-items:center;gap:6px;
+  padding:7px 13px;border-radius:999px;font-family:var(--kai);font-size:13px;
+  letter-spacing:.08em;color:#5c4d3c;border:1px solid rgba(90,70,45,.16);
+  background:rgba(255,253,248,.8);transition:.18s;white-space:nowrap
+}
+.chip:hover{border-color:rgba(90,70,45,.36);transform:translateY(-1px)}
+.chip.on{background:var(--c,#2b241e);border-color:var(--c,#2b241e);color:#fdf8ee}
+.chip .n{font-size:10px;opacity:.6;font-family:var(--sans)}
+.tools{display:flex;align-items:center;gap:8px;flex:none}
+.search{position:relative}
+.search input{
+  width:200px;padding:8px 30px 8px 32px;border-radius:8px;font-size:13.5px;
+  border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9);
+  color:var(--ink);outline:none;transition:.18s
+}
+.search input:focus{border-color:rgba(168,118,44,.6);box-shadow:0 0 0 3px rgba(168,118,44,.12);width:230px}
+.search .ico{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:#b3a58c;font-size:15px}
+.search .clr{position:absolute;right:8px;top:50%;transform:translateY(-50%);font-size:11px;color:#8a7355}
+.tbtn{
+  display:inline-flex;align-items:center;gap:6px;padding:8px 13px;border-radius:8px;
+  font-size:13px;border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9);
+  color:#5c4d3c;transition:.18s
+}
+.tbtn:hover{border-color:rgba(90,70,45,.4)}
+.tbtn.on{background:rgba(43,36,30,.9);color:#fdf8ee;border-color:transparent}
+.tbtn.red{color:var(--cinnabar);border-color:rgba(179,52,44,.28);background:rgba(179,52,44,.05)}
+.tbtn .badge{
+  min-width:15px;height:15px;padding:0 4px;border-radius:999px;font-size:9.5px;
+  display:inline-grid;place-items:center;color:#fff;background:var(--cinnabar);font-variant-numeric:tabular-nums
+}
+.tbtn .badge.zero{background:#a9a090}
+
+/* 纪元分组标签 */
+.era-tabs{
+  display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;
+  width:100%;padding-bottom:2px;margin-bottom:8px;border-bottom:1px solid transparent
+}
+.era-tabs::-webkit-scrollbar{display:none}
+.etab{
+  flex:none;display:inline-flex;align-items:center;gap:7px;
+  padding:7px 14px 9px;border-radius:7px 7px 0 0;position:relative;
+  font-family:var(--kai);font-size:13.5px;letter-spacing:.1em;color:#6f5f4a;
+  border:1px solid transparent;transition:.18s
+}
+.etab:hover{color:#2b241e;background:rgba(168,118,44,.06)}
+.etab .et-n{font-family:var(--sans);font-size:10px;opacity:.5;letter-spacing:0}
+.etab.on{
+  color:#241e19;font-weight:700;background:rgba(255,253,248,.9);
+  border-color:var(--line);border-bottom-color:transparent
+}
+.etab.on::after{
+  content:'';position:absolute;left:14px;right:14px;bottom:-1px;height:2px;
+  background:var(--cinnabar);border-radius:2px
+}
+.etab.on .et-n{opacity:.8}
+
+/* 民国沙盘入口 */
+.republic-cta{
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  margin:22px 0 4px;padding:16px 20px;border-radius:6px;text-decoration:none;
+  background:linear-gradient(120deg,rgba(120,32,28,.94),rgba(90,26,22,.96));
+  color:#f7ecd9;border:1px solid rgba(255,220,190,.18);
+  box-shadow:0 14px 34px -22px rgba(60,10,8,.9);transition:.2s
+}
+.republic-cta:hover{transform:translateY(-2px);box-shadow:0 18px 38px -20px rgba(60,10,8,.95)}
+.republic-cta .rc-k{
+  font-family:var(--kai);font-size:17px;letter-spacing:.1em;
+  display:flex;align-items:center;gap:9px
+}
+.republic-cta .rc-k::before{content:'';width:6px;height:6px;border-radius:50%;background:#e8c48a}
+.republic-cta .rc-v{flex:1;min-width:200px;font-size:12.5px;letter-spacing:.06em;color:rgba(247,236,217,.7)}
+.republic-cta .rc-go{font-size:12.5px;letter-spacing:.14em;color:#f0d5a4}
+
+/* 名录抽屉 */
+.namelist{border-bottom:1px solid var(--line);background:rgba(255,253,248,.7)}
+.namelist-in{max-width:1240px;margin:0 auto;padding:12px clamp(14px,3vw,32px)}
+.nl-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(122px,1fr));gap:6px;
+  max-height:44vh;overflow-y:auto
+}
+.nl-cell{
+  display:flex;flex-direction:column;gap:2px;text-align:left;
+  padding:7px 10px;border:1px solid transparent;border-radius:6px;transition:.15s
+}
+.nl-cell:hover{background:rgba(168,118,44,.09)}
+.nl-cell.on{background:rgba(168,118,44,.14);border-color:rgba(168,118,44,.32)}
+.nl-cell .t{font-family:var(--kai);font-size:14px;color:#3a3128;line-height:1.2}
+.nl-cell.on .t{color:var(--c,var(--gold))}
+.nl-cell .n{font-family:var(--song);font-size:11px;color:#8a7a63;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* 正文 */
+.wrap{position:relative;max-width:920px;margin:0 auto;padding:clamp(26px,4.4vw,56px) clamp(18px,4vw,40px) 24px}
+@media (min-width:1440px){.wrap{max-width:1040px}}
+@media (min-width:1700px){.wrap{max-width:1120px}}
+.crumb{
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  font-size:11.5px;letter-spacing:.26em;color:var(--muted);font-family:var(--song)
+}
+.crumb .d{color:var(--dc,var(--gold));font-weight:600}
+.crumb .bar{width:20px;height:1px;background:var(--line)}
+.art-head{display:flex;justify-content:space-between;align-items:flex-start;gap:24px;margin-top:14px}
+.art-title{
+  font-family:var(--kai);font-weight:700;margin:0;
+  font-size:clamp(34px,4.6vw,54px);line-height:1.06;letter-spacing:.05em;color:#241e19
+}
+.art-sub{margin:12px 0 0;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.art-sub .lb{font-size:11px;letter-spacing:.3em;color:var(--muted)}
+.art-sub .nm{font-family:var(--kai);font-size:22px;color:#241e19;letter-spacing:.04em}
+.art-sub .alias{font-size:12px;color:#9c8b73}
+.thumb{
+  flex:none;width:172px;height:97px;border-radius:3px;overflow:hidden;
+  border:1px solid rgba(90,70,45,.2);box-shadow:0 10px 26px -16px rgba(60,40,20,.8);
+  position:relative
+}
+.thumb img{width:100%;height:100%;object-fit:cover;object-position:center 26%}
+.thumb::after{content:'';position:absolute;inset:0;box-shadow:inset 0 0 0 3px rgba(255,255,255,.12)}
+
+.facts{
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin:26px 0 30px
+}
+.facts>div{padding:15px 16px 15px 0;border-right:1px dashed rgba(90,70,45,.14)}
+.facts>div:last-child{border-right:none}
+.facts dt{font-size:10.5px;letter-spacing:.3em;color:var(--muted);margin-bottom:7px}
+.facts dd{margin:0;font-family:var(--kai);font-size:16.5px;color:#241e19;letter-spacing:.03em;line-height:1.45}
+
+.blk{margin:0 0 28px}
+.blk-h{
+  display:flex;align-items:center;gap:9px;margin-bottom:14px;
+  font-size:13px;letter-spacing:.18em;color:#6b5a44;font-family:var(--song);font-weight:600
+}
+.blk-h::before{content:'';width:5px;height:5px;background:var(--dc,var(--gold));transform:rotate(45deg);flex:none}
+.blk-h::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(90,70,45,.22),transparent)}
+.era-wrap{display:flex;flex-wrap:wrap;gap:7px}
+.era{
+  font-family:var(--song);font-size:13px;letter-spacing:.06em;padding:5px 13px;
+  border-radius:2px;color:#6f5426;background:rgba(168,118,44,.07);
+  border:1px solid rgba(168,118,44,.22)
+}
+.tags{display:flex;flex-wrap:wrap;gap:7px}
+.tag{
+  font-family:var(--kai);font-size:13px;letter-spacing:.06em;
+  padding:5px 13px;border-radius:999px;
+  color:#7d5a22;border:1px solid rgba(168,118,44,.42);
+  background:rgba(168,118,44,.08)
+}
+.era-note{
+  display:inline-block;font-family:var(--song);font-size:14px;color:#6f6152;
+  padding:4px 0;letter-spacing:.04em
+}
+
+.prose p{
+  font-family:var(--song);font-size:clamp(17px,1.42vw,20.5px);line-height:2.02;
+  color:#2f2823;margin:0 0 1.05em;text-indent:2em;letter-spacing:.015em
+}
+.prose p:last-child{margin-bottom:0}
+
+.quote{
+  margin:34px 0 0;padding:24px 26px;position:relative;
+  background:rgba(255,253,248,.8);border:1px solid var(--line);
+  border-left:3px solid var(--dc,var(--gold))
+}
+.quote .q-mark{
+  position:absolute;top:6px;right:16px;font-family:var(--kai);font-size:52px;
+  color:rgba(168,118,44,.14);line-height:1
+}
+.quote p{
+  margin:0;font-family:var(--kai);font-size:clamp(17px,1.5vw,20px);line-height:1.95;
+  color:#5c3a34;letter-spacing:.04em
+}
+.quote cite{display:block;margin-top:12px;text-align:right;font-style:normal;font-size:12px;color:var(--muted);font-family:var(--song)}
+
+.end-mark{display:flex;align-items:center;gap:14px;margin:40px 0 0;color:rgba(168,118,44,.85)}
+.end-mark .l{flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(120,90,50,.28))}
+.end-mark .l.r{background:linear-gradient(270deg,transparent,rgba(120,90,50,.28))}
+.end-mark span{font-family:var(--kai);font-size:11.5px;letter-spacing:.5em;padding-left:.5em}
+
+.pager{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:34px}
+.pg{
+  display:flex;flex-direction:column;gap:5px;padding:16px 18px;
+  border:1px solid var(--line);background:rgba(255,253,248,.86);
+  border-radius:3px;transition:.2s;text-align:left
+}
+.pg:hover:not(:disabled){border-color:rgba(90,70,45,.36);transform:translateY(-2px);box-shadow:0 12px 26px -18px rgba(60,40,20,.7)}
+.pg:disabled{opacity:.35;cursor:not-allowed}
+.pg .k{font-size:10.5px;letter-spacing:.28em;color:var(--muted)}
+.pg .v{font-family:var(--kai);font-size:18px;color:#241e19;letter-spacing:.05em}
+.pg .m{font-size:12px;color:#9c8b73;font-family:var(--song)}
+.pg.next{text-align:right;align-items:flex-end}
+.pg.mid{align-items:center;justify-content:center;text-align:center}
+.pager-sub{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-top:18px;font-size:11.5px;color:var(--muted);letter-spacing:.14em
+}
+.to-top{display:inline-flex;align-items:center;gap:6px;color:#7a6a54;font-size:11.5px;letter-spacing:.14em}
+.to-top:hover{color:var(--cinnabar)}
+
+footer{
+  border-top:1px solid var(--line);margin-top:20px;padding:22px 18px 34px;
+  text-align:center;font-size:11px;letter-spacing:.14em;color:#9c8b73;line-height:2
+}
+
+/* PC 右侧悬浮翻页（≥1024px 显示） */
+.side-nav{
+  position:fixed;right:clamp(10px,1.8vw,28px);top:50%;transform:translateY(-50%);
+  z-index:46;display:none;flex-direction:column;gap:12px;
+}
+@media (min-width:1024px){.side-nav{display:flex}}
+.sn-btn{
+  position:relative;width:44px;height:44px;border-radius:50%;
+  display:grid;place-items:center;
+  color:#3f3428;border:1px solid rgba(90,70,45,.26);
+  background:rgba(255,253,248,.94);backdrop-filter:blur(8px);
+  box-shadow:0 10px 26px -14px rgba(60,40,20,.7),inset 0 1px 0 rgba(255,255,255,.7);
+  transition:transform .18s,background .18s,color .18s,border-color .18s;
+}
+.sn-btn svg{display:block;width:19px;height:19px}
+.sn-btn:hover:not(:disabled){
+  background:var(--dc,#2b241e);color:#fdf8ee;border-color:transparent;
+  transform:scale(1.08);box-shadow:0 12px 28px -12px rgba(60,40,20,.85)
+}
+.sn-btn:active:not(:disabled){transform:scale(.96)}
+.sn-btn:disabled{opacity:.3;cursor:not-allowed;box-shadow:0 6px 16px -14px rgba(60,40,20,.5)}
+.sn-btn .tip{
+  position:absolute;right:calc(100% + 13px);top:50%;
+  transform:translateY(-50%) translateX(5px);
+  white-space:nowrap;font-family:var(--kai);font-size:12.5px;letter-spacing:.08em;
+  color:#fdf8ee;background:rgba(43,36,30,.92);padding:6px 12px;border-radius:4px;
+  opacity:0;pointer-events:none;transition:.18s;
+  box-shadow:0 6px 18px -8px rgba(0,0,0,.5)
+}
+.sn-btn .tip::after{
+  content:'';position:absolute;left:100%;top:50%;transform:translateY(-50%);
+  border:5px solid transparent;border-left-color:rgba(43,36,30,.92)
+}
+.sn-btn:hover:not(:disabled) .tip{opacity:1;transform:translateY(-50%) translateX(0)}
+.sn-btn .tip .d{color:#e8c48a;margin-right:4px}
+@media (max-width:1279px){
+  .sn-btn{width:38px;height:38px}
+  .sn-btn svg{width:17px;height:17px}
+  .side-nav{right:8px;gap:10px}
+}
+
+/* 移动端底部操作条（<1024px 显示，手机端原样） */
+.mbar{
+  position:fixed;left:0;right:0;bottom:0;z-index:50;display:flex;
+  gap:8px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));
+  background:rgba(246,241,230,.96);backdrop-filter:blur(12px);
+  border-top:1px solid var(--line)
+}
+@media (min-width:1024px){.mbar{display:none}}
+.mbar button{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+  padding:11px 0;border-radius:8px;font-size:13px;letter-spacing:.08em;
+  border:1px solid rgba(90,70,45,.18);background:rgba(255,253,248,.9)
+}
+.mbar button:disabled{opacity:.35}
+.mbar button.red{color:var(--cinnabar);border-color:rgba(179,52,44,.26);background:rgba(179,52,44,.05)}
+
+/* 进度 */
+.progress{position:fixed;top:0;left:0;height:2px;z-index:70;background:linear-gradient(90deg,#b3342c,#d8a24a);border-radius:0 2px 2px 0;transition:width .12s linear}
+
+/* ── 响应式 ── */
+@media (max-width:1023px){
+  .thumb{width:132px;height:74px}
+  .toolbar-in{padding:9px 14px;gap:10px}
+  .search input{width:100%}
+  .search{flex:1 1 140px}
+  .tools{flex:1 1 100%;justify-content:flex-end}
+  .facts{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .facts>div:nth-child(2){border-right:none}
+  .facts>div:nth-child(1),.facts>div:nth-child(2){border-bottom:1px dashed rgba(90,70,45,.14)}
+}
+@media (max-width:767px){
+  .hero{min-height:520px}
+  .hero-img{object-position:center 22%}
+  .hero-copy{bottom:clamp(40px,8vh,72px);max-width:none}
+  .hero-veil{background:
+    linear-gradient(to top, rgba(8,6,5,.98) 0%, rgba(8,6,5,.9) 22%, rgba(8,6,5,.35) 52%, rgba(8,6,5,.05) 72%, rgba(8,6,5,.35) 100%),
+    radial-gradient(120% 90% at 50% 50%, transparent 40%, rgba(0,0,0,.5) 100%)}
+  .hero-side{display:none}
+  .hero-quote{-webkit-line-clamp:2;font-size:12.5px}
+  .brand p{display:none}
+  .hero-tools .pill{padding:8px 12px;font-size:11.5px}
+  .hero-tools .pill .lbl{display:none}
+  .hero-tools .pill .lbl-s{display:inline}
+  .hero-foot{padding:0 16px 16px}
+  .art-head{gap:14px}
+  .thumb{width:104px;height:58px}
+  .pager{grid-template-columns:1fr 1fr}
+  .pg.mid{grid-column:1/-1}
+  .mbar{display:flex}
+  .wrap{padding-bottom:20px}
+  .read{padding-bottom:64px}
+}
+@media (max-width:480px){
+  .brand{gap:9px}
+  .seal{width:34px;height:34px;font-size:16px;border-radius:5px}
+  .brand h1{font-size:13.5px;letter-spacing:.12em;white-space:nowrap}
+  .hero-tools{gap:6px}
+  .hero-tools .pill{padding:7px 11px;font-size:11px;gap:4px}
+  .hero-tools .pill.solid{padding:7px 12px;letter-spacing:.06em}
+}
+@media (min-width:1280px){
+  .temple{font-size:124px}
+}
+/* 毛主席 · 影像纪年区块的重看按钮 */
+.mao-ch-band{
+  position:relative;height:clamp(96px,13vw,132px);border-radius:10px;overflow:hidden;
+  margin-bottom:14px;isolation:isolate;
+  box-shadow:0 14px 30px -22px rgba(110,20,10,.8);
+}
+.mao-ch-band img{width:100%;height:100%;object-fit:cover;object-position:50% 46%;
+  filter:saturate(1.06) contrast(1.02);transform:scale(1.02)}
+.mao-ch-band::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,rgba(28,4,3,.86) 0%,rgba(28,4,3,.5) 34%,rgba(28,4,3,.06) 62%,rgba(28,4,3,.4) 100%),
+             linear-gradient(0deg,rgba(20,3,2,.5),transparent 60%)}
+.mao-ch-band span{
+  position:absolute;left:clamp(16px,3vw,28px);bottom:50%;transform:translateY(50%);
+  z-index:2;font-family:var(--kai);font-size:clamp(22px,3.4vw,34px);font-weight:600;
+  letter-spacing:.3em;text-indent:.3em;color:#fff2dd;
+  text-shadow:0 2px 14px rgba(0,0,0,.8),0 0 30px rgba(200,40,26,.55);
+}
+.mao-replay{
+  margin-left:auto;padding:5px 13px;border-radius:999px;font-size:11.5px;letter-spacing:.12em;
+  color:#9b2a20;border:1px solid rgba(179,52,44,.35);background:rgba(179,52,44,.06);
+  transition:.2s;white-space:nowrap;
+}
+.mao-replay:hover{background:rgba(179,52,44,.14);border-color:rgba(179,52,44,.6);color:#7d1f16}
+</style>
+</head>
+<body>
+
+<div id="app" v-cloak>
+  <div class="progress" :style="{width: progress + '%'}"></div>
+
+  <!-- ═════════════ 第一屏 ═════════════ -->
+  <section class="hero" :class="{'is-drag': dragging}"
+           @touchstart="onTouchStart" @touchmove="onTouchMove"
+           @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+    <div class="hero-media" :style="dragStyle(0.12)">
+      <transition name="xfade">
+        <img :key="heroImg" :src="heroImg" class="hero-img" alt="" :style="heroImgStyle">
+      </transition>
+    </div>
+    <div class="hero-veil"></div>
+
+    <header class="hero-top">
+      <div class="brand">
+        <div class="seal">史</div>
+        <div>
+          <h1>{{ eraTitle }}</h1>
+          <p>{{ eraSub }}</p>
+        </div>
+      </div>
+      <div class="hero-tools">
+        <button class="pill" @click="pickRandom" :title="'从未读的帝王中随机抽取，还剩 ' + remainCount + ' 位'">
+          <span>⚄</span><span class="lbl">随机览</span><span class="cnt">{{ remainCount }}</span>
+        </button>
+        <a class="pill" href="./weird.html" title="帝王奇葩事迹与奇葩死法">
+          <span>✦</span><span class="lbl">奇闻轶事</span><span class="lbl-s">奇闻</span>
+        </a>
+        <a class="pill" href="./republic.html" v-if="activeGroup === 'republic'" title="1912—1949 时间轴与势力沙盘">
+          <span>▦</span><span class="lbl">民国沙盘</span><span class="lbl-s">沙盘</span>
+        </a>
+        <button class="pill solid" @click="goRead">
+          <span>{{ readLabel }}</span><span>↓</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="hero-copy" v-if="currentEmperor" :style="dragStyle(0.2)">
+      <div class="dyn-tag">
+        <span class="dot" :style="{background: dynColor(currentEmperor.dynasty)}"></span>
+        {{ currentEmperor.dynasty }} · 第 {{ curNo }} 位
+      </div>
+      <h2 class="temple" :style="templeStyle">{{ currentEmperor.title }}</h2>
+      <div class="name-line">
+        <span class="lb">姓名</span>
+        <span class="val">{{ currentEmperor.name }}</span>
+        <span class="sep"></span>
+        <span class="lb">{{ tenureWord }}</span>
+        <span class="val" style="font-size:clamp(15px,1.5vw,19px)">{{ currentEmperor.time }}</span>
+      </div>
+      <div class="era-row" v-if="eraList.length">
+        <span class="era-pill" v-for="(e,i) in eraList.slice(0,4)" :key="i">年号 · {{ e }}</span>
+      </div>
+      <p class="hero-quote" v-if="currentEmperor.quote">“{{ currentEmperor.quote }}”</p>
+      <div class="swipe-tip"><span class="ln"></span>左右滑动 · 换{{ unitWord }}<span class="ln"></span></div>
+    </div>
+
+    <div class="hero-toast" :class="{on: !!toast}">{{ toast }}</div>
+
+    <div class="hero-side">
+      <button class="hero-arrow" @click="step(-1)" :disabled="!canStep(-1)" title="上一位">‹</button>
+      <button class="hero-arrow" @click="step(1)" :disabled="!canStep(1)" title="下一位">›</button>
+    </div>
+
+    <div class="hero-foot">
+      <div class="hero-index"><b>{{ curNo }}</b> / {{ groupAll.length }}</div>
+      <button class="scroll-cue" @click="goRead">
+        <span>下滑 · 阅览详传</span><span class="bar"></span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ═════════════ 第二屏 ═════════════ -->
+  <section class="read" id="read" ref="readRef">
+
+    <div class="toolbar">
+      <div class="toolbar-in">
+        <div class="era-tabs">
+          <button v-for="g in eraGroups" :key="g.id"
+                  :class="['etab', activeGroup === g.id ? 'on' : '']"
+                  @click="switchGroup(g.id)">
+            <span>{{ g.tab }}</span><span class="et-n">{{ groupCount(g.id) }}</span>
+          </button>
+        </div>
+        <div class="chips">
+          <button v-for="d in dynasties" :key="d" @click="selectDynasty(d)"
+                  :class="['chip', selectedDynasty === d ? 'on' : '']"
+                  :style="selectedDynasty === d ? {'--c': d === '全部' ? '#2b241e' : dynColor(d)} : {}">
+            <span v-if="d !== '全部'" class="dot" :style="{width:'5px',height:'5px',borderRadius:'50%',background:dynColor(d)}"></span>
+            {{ d }}<span class="n">{{ d === '全部' ? groupAll.length : dynastyCount(d) }}</span>
+          </button>
+        </div>
+        <div class="tools">
+          <div class="search">
+            <span class="ico">⌕</span>
+            <input v-model="searchQuery" type="text" placeholder="搜名讳·庙号">
+            <button class="clr" v-if="searchQuery" @click="searchQuery=''">清空</button>
+          </div>
+          <button class="tbtn" :class="{on:listOpen}" @click="toggleList">
+            <span>名录</span><span style="font-size:10px">{{ filteredEmperors.length }}</span>
+          </button>
+          <button class="tbtn red" @click="pickRandom">
+            <span>⚄ 随机</span>
+            <span class="badge" :class="{zero: remainCount <= 0}">{{ remainCount }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="namelist" v-show="listOpen">
+        <div class="namelist-in">
+          <div class="nl-grid" ref="nlRef">
+            <button v-for="emp in filteredEmperors" :key="emp.dynasty+emp.title+emp.name"
+                    :class="['nl-cell', isCurrent(emp) ? 'on' : '']"
+                    :style="{'--c': dynColor(emp.dynasty)}"
+                    @click="choose(emp)">
+              <span class="t">{{ emp.title }}</span>
+              <span class="n">{{ emp.name }}</span>
+            </button>
+          </div>
+          <p v-if="!filteredEmperors.length" style="margin:14px 0;color:#8a7a63;font-size:13px">未寻得相关帝王，换个关键词试试。</p>
+        </div>
+      </div>
+    </div>
+
+    <transition name="swap" mode="out-in">
+      <article class="wrap" v-if="currentEmperor" :key="currentEmperor.dynasty + currentEmperor.title + currentEmperor.name"
+               :style="{'--dc': dynColor(currentEmperor.dynasty)}">
+        <div class="crumb">
+          <span class="d">{{ currentEmperor.dynasty }}</span>
+          <span class="bar"></span>
+          <span>第 {{ curNo }} 位</span>
+          <span class="bar"></span>
+          <span>{{ currentEmperor.time }}</span>
+        </div>
+
+        <div class="art-head">
+          <div>
+            <h2 class="art-title">{{ currentEmperor.title }}</h2>
+            <p class="art-sub">
+              <span class="lb">姓名</span>
+              <span class="nm">{{ currentEmperor.name }}</span>
+            </p>
+          </div>
+          <div class="thumb" v-if="portrait">
+            <img :src="portrait" :alt="currentEmperor.title" :style="heroImgStyle">
+          </div>
+        </div>
+
+        <a class="republic-cta" v-if="activeGroup === 'republic'" href="./republic.html">
+          <span class="rc-k">民国时间轴 · 势力沙盘</span>
+          <span class="rc-v">1912—1949：军阀混战 · 北伐 · 十年内战 · 抗日战争 · 解放战争，按年可查，一年之内谁在做什么，一目了然</span>
+          <span class="rc-go">进入 →</span>
+        </a>
+
+        <dl class="facts">
+          <div><dt>{{ dynastyLabel }}</dt><dd>{{ currentEmperor.dynasty }}</dd></div>
+          <div><dt>{{ titleLabel }}</dt><dd>{{ currentEmperor.title }}</dd></div>
+          <div><dt>姓名</dt><dd>{{ currentEmperor.name }}</dd></div>
+          <div><dt>{{ timeLabel }}</dt><dd>{{ currentEmperor.time }}</dd></div>
+        </dl>
+
+        <div class="blk">
+          <div class="blk-h">{{ eraLabel }}</div>
+          <div class="era-wrap" v-if="eraList.length">
+            <span class="era" v-for="(e,i) in eraList" :key="i">{{ e }}</span>
+          </div>
+          <p class="era-note" v-else>{{ eraNote }}</p>
+        </div>
+
+        <div class="blk" v-if="(currentEmperor.tags || []).length">
+          <div class="blk-h">事迹标签</div>
+          <div class="tags">
+            <span class="tag" v-for="(t,i) in currentEmperor.tags" :key="i">{{ t }}</span>
+          </div>
+        </div>
+
+        <div class="blk mao-ch" v-if="maoChapters.length">
+          <div class="blk-h" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span>影像纪年 · 一百张照片里的毛泽东</span>
+            <button class="mao-replay" @click="replayMao">重看入场 ▸</button>
+          </div>
+          <div class="mao-ch-band">
+            <img src="images/mao-band.jpg" alt="毛主席和中央领导同志在一起" loading="lazy">
+            <span>为人民服务</span>
+          </div>
+          <div class="mao-ch-list">
+            <figure class="mao-ch-item" v-for="c in maoChapters" :key="c.k">
+              <div class="mao-ch-ph">
+                <img :src="c.img" :alt="c.cap" loading="lazy">
+                <span class="mao-ch-yr">{{ c.k }}</span>
+              </div>
+              <div class="mao-ch-tx">
+                <div class="mao-ch-hd">{{ c.y }}</div>
+                <p>{{ c.txt }}</p>
+                <figcaption>{{ c.cap }}</figcaption>
+              </div>
+            </figure>
+          </div>
+        </div>
+
+        <div class="blk">
+          <div class="blk-h">{{ unitWord }}详传 · 白话</div>
+          <div class="prose">
+            <p v-for="(para,i) in (currentEmperor.bio || [])" :key="i">{{ para }}</p>
+          </div>
+        </div>
+
+        <blockquote class="quote" v-if="currentEmperor.quote">
+          <span class="q-mark">”</span>
+          <p>{{ currentEmperor.quote }}</p>
+          <cite>—— {{ currentEmperor.quoteSrc }}</cite>
+        </blockquote>
+
+        <div class="end-mark"><span class="l"></span><span>卷 终</span><span class="l r"></span></div>
+
+        <nav class="pager">
+          <button class="pg" :disabled="!canStep(-1)" @click="step(-1)">
+            <span class="k">上一位</span>
+            <span class="v">{{ prevName || '已至卷首' }}</span>
+            <span class="m" v-if="prevEmp">{{ prevEmp.title }}</span>
+          </button>
+          <button class="pg next" :disabled="!canStep(1)" @click="step(1)">
+            <span class="k">下一位</span>
+            <span class="v">{{ nextName || '已至卷末' }}</span>
+            <span class="m" v-if="nextEmp">{{ nextEmp.title }}</span>
+          </button>
+        </nav>
+
+        <div class="pager-sub">
+          <button class="to-top" @click="goHero">↑ 回到大屏</button>
+          <span>{{ navList.length }} 位之中 · 第 {{ curNoInList }} 位</span>
+          <span style="letter-spacing:.2em">← → 键翻阅</span>
+        </div>
+
+        <footer>
+          {{ footerNote }}
+        </footer>
+      </article>
+
+      <div class="wrap" v-else key="empty" style="text-align:center;padding:80px 20px">
+        <div style="font-family:var(--kai);font-size:52px;opacity:.14">朕</div>
+        <p style="color:#8a7a63;font-size:14px;margin-top:12px">未找到匹配的帝王，请调整筛选或关键词。</p>
+      </div>
+    </transition>
+  </section>
+
+  <!-- PC 右侧悬浮翻页 -->
+  <nav class="side-nav" v-show="inReading" aria-label="上下翻页"
+       :style="{'--dc': currentEmperor ? dynColor(currentEmperor.dynasty) : '#a8762c'}">
+    <button class="sn-btn" @click="step(-1)" :disabled="!canStep(-1)" title="上一位（←）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 7.5 12l7 7"/></svg>
+      <span class="tip" v-if="prevEmp"><span class="d">{{ prevEmp.dynasty }}</span>{{ prevEmp.title }} · {{ prevEmp.name }}</span>
+      <span class="tip" v-else>已是第一位</span>
+    </button>
+    <button class="sn-btn" @click="step(1)" :disabled="!canStep(1)" title="下一位（→）">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 5l7 7-7 7"/></svg>
+      <span class="tip" v-if="nextEmp"><span class="d">{{ nextEmp.dynasty }}</span>{{ nextEmp.title }} · {{ nextEmp.name }}</span>
+      <span class="tip" v-else>已是最后一位</span>
+    </button>
+  </nav>
+
+  <!-- 移动端/平板底部操作条 -->
+  <div class="mbar" v-show="inReading">
+    <button @click="step(-1)" :disabled="!canStep(-1)">‹ 上一位</button>
+    <button class="red" @click="pickRandom">⚄ 随机</button>
+    <button @click="step(1)" :disabled="!canStep(1)">下一位 ›</button>
+  </div>
+</div>
+
+<style>
+.swap-enter-active,.swap-leave-active{transition:opacity .2s ease,transform .2s ease}
+.swap-enter-from{opacity:0;transform:translateY(10px)}
+.swap-leave-to{opacity:0;transform:translateY(-6px)}
+</style>
+
+<script>
+const { createApp, ref, computed, watch, nextTick, onMounted, onBeforeUnmount } = Vue;
+
+createApp({
+  setup() {
+    // ── 数据合并：上古先秦 + 帝制 + 民国/新中国 ──
+    const DATA = Object.assign({},
+      window.EMPEROR_ANCIENT_1 || {},
+      window.EMPEROR_ANCIENT_2 || {},
+      window.EMPEROR_DATA || {},
+      window.EMPEROR_MODERN || {}
+    );
+    const EXTRA = window.EMPEROR_EXTRA || {};
+    Object.keys(EXTRA).forEach(k => { if (DATA[k]) Object.assign(DATA[k], EXTRA[k]); });
+    // 长传补录：先秦 / 帝制 / 民国 / 新中国
+    [window.EXTRA_ANCIENT, window.EXTRA_IMPERIAL, window.EXTRA_REP_A, window.EXTRA_REP_B, window.EXTRA_MODERN]
+      .filter(Boolean).forEach(group => Object.keys(group).forEach(k => {
+        if (DATA[k]) Object.assign(DATA[k], group[k]);
+      }));
+    // 二轮补录：夏商、西周春秋战国、秦汉至清的细分朝代
+    if (window.EXTRA_MORE) Object.keys(window.EXTRA_MORE).forEach(k => {
+      if (DATA[k]) Object.assign(DATA[k], window.EXTRA_MORE[k]);
+    });
+    const PORTRAIT = window.EMPEROR_PORTRAIT || {};
+    const DYN_BG = window.DYNASTY_BG || {};
+    Object.assign(DYN_BG, {
+      "上古": "images/era-ancient.jpg",
+      "夏": "images/era-bronze.jpg", "商": "images/era-bronze.jpg", "西周": "images/era-bronze.jpg",
+      "春秋": "images/era-warring.jpg", "战国": "images/era-warring.jpg",
+      "民国": "images/era-republic.jpg", "新中国": "images/era-modern.jpg"
+    });
+    Object.keys(PORTRAIT).forEach(k => {
+      if (!DATA[k]) return;
+      DATA[k].__portrait = PORTRAIT[k];
+      // 民国 / 新中国人物 data 键与姓名字段不同，取景值按数据键挂载
+      const fk = (window.PORTRAIT_FOCAL || {})[k];
+      if (fk) DATA[k].__focal = fk;
+    });
+
+    const rawData = Object.values(DATA);
+
+    // ── 纪元分组：标题、称谓、史料来源随组切换 ──
+    const eraGroups = [
+      { id:'ancient', tab:'上古先秦', title:'华夏上古纪', unit:'国君', titleLabel:'称号 / 史称', timeLabel:'在位年代',
+        footer:'据《史记·五帝本纪》《夏本纪》《殷本纪》《周本纪》《尚书》《左传》《国语》《战国策》《竹书纪年》及夏商周断代工程年表整理 · 上古部分属神话传说时代，年代取通行说法',
+        dyn:['上古','夏','商','西周','春秋','战国'] },
+      { id:'imperial', tab:'历代帝王', title:'华夏历代帝王谱', unit:'帝王', titleLabel:'庙号 / 史称', timeLabel:'在位时间',
+        footer:'据《史记》《汉书》《后汉书》《三国志》《晋书》《隋书》《旧唐书》《新唐书》《宋史》《元史》《明史》《清史稿》及《资治通鉴》等正史整理 · 庙号谥号以史书通称为准',
+        dyn:['秦朝','西汉','新朝','更始','东汉','曹魏','蜀汉','东吴','西晋','东晋','隋朝','唐朝','武周','北宋','南宋','元朝','明朝','清朝'] },
+      { id:'republic', tab:'民国', title:'民国纪事', unit:'人物', titleLabel:'身份 / 职衔', timeLabel:'任期',
+        footer:'据《中华民国史》及通行年谱、回忆录整理 · 军阀人物以其主要活动时期为序，评价取主流史观',
+        dyn:['民国'] },
+      { id:'modern', tab:'新中国', title:'新中国纪', unit:'人物', titleLabel:'职务 / 称号', timeLabel:'任期',
+        footer:'据《中华人民共和国史》《中国共产党历史》及公开人物传记整理 · 记述以史实与公开评价为准',
+        dyn:['新中国'] }
+    ];
+    const dictOf = (() => { const m = {}; eraGroups.forEach(g => g.dyn.forEach(d => m[d] = g)); return m; })();
+    const groupOf = e => (e && dictOf[e.dynasty]) ? dictOf[e.dynasty] : eraGroups[1];
+    const groupCount = id => rawData.filter(e => groupOf(e).id === id).length;
+
+    const dynastyColors = {
+      "上古":"#8a6a3f","夏":"#7a5a34","商":"#6f4a2e","西周":"#8c6a3a",
+      "春秋":"#96603a","战国":"#7d6b3a",
+      "秦朝":"#6b4a2c","西汉":"#8c4a2f","新朝":"#6e6a5e","更始":"#7d7461",
+      "东汉":"#a0522d","曹魏":"#2f4f6f","蜀汉":"#a63a3a","东吴":"#b4653a",
+      "西晋":"#5b6d3a","东晋":"#6d7d46","隋朝":"#2e6e6a","唐朝":"#a8762c",
+      "武周":"#9e3c50","北宋":"#3a5f8a","南宋":"#4a6f9e","元朝":"#555a66",
+      "明朝":"#8f3b3b","清朝":"#3f6e52",
+      "民国":"#8b2f2b","新中国":"#b3342c"
+    };
+    const dynColor = d => dynastyColors[d] || "#8a7355";
+
+    const activeGroup = ref('imperial');
+    const groupMeta = computed(() => eraGroups.find(g => g.id === activeGroup.value) || eraGroups[1]);
+    const groupData = computed(() => rawData.filter(e => groupOf(e).id === activeGroup.value));
+    const groupAll = computed(() => groupData.value);
+    const dynasties = computed(() => ['全部', ...new Set(groupData.value.map(e => e.dynasty))]);
+    const selectedDynasty = ref("全部");
+    const searchQuery = ref("");
+    const currentEmperor = ref(DATA['嬴政'] || rawData[0]);
+    const listOpen = ref(false);
+    const progress = ref(0);
+    const inReading = ref(false);
+    const readRef = ref(null);
+    const nlRef = ref(null);
+
+    // ── 称谓与文案随纪元切换 ──
+    const unitWord = computed(() => groupMeta.value.unit);
+    const eraTitle = computed(() => groupMeta.value.title);
+    const eraSub = computed(() => {
+      const n = groupData.value.length;
+      if (activeGroup.value === 'imperial') return `二十四史 · ${n} 位帝王 · 二千一百三十三年`;
+      if (activeGroup.value === 'ancient') return `${n} 位国君 · 三皇五帝 · 夏商周 · 春秋战国 · 约前3000—前221年`;
+      if (activeGroup.value === 'republic') return `${n} 位人物 · 1912—1949 · 军阀 · 北伐 · 抗战 · 解放`;
+      return `${n} 位人物 · 1949—今 · 共和国七十七年`;
+    });
+    const titleLabel = computed(() => groupMeta.value.titleLabel);
+    const timeLabel = computed(() => groupMeta.value.timeLabel);
+    const footerNote = computed(() => groupMeta.value.footer);
+    const readLabel = computed(() => activeGroup.value === 'ancient' ? '阅览本纪' : '阅览详传');
+    // 年号区块标题随纪元变化：上古无年号、民国用民国纪年、新中国用公元纪年
+    const eraLabel = computed(() => ({
+      ancient: '年代纪略', imperial: '年号纪元', republic: '纪年方式', modern: '纪年方式'
+    })[activeGroup.value] || '年号纪元');
+    // 无年号条目改写为“无年号 · 说明”，避免出现“无（……）”这类半截话
+    const eraNote = computed(() => {
+      const e = (currentEmperor.value || {}).era || '';
+      const m = e.match(/^无(?:年号)?（(.+)）$/);
+      if (m) return '无年号 · ' + m[1];
+      if (e === '无' || e === '无年号' || e === '') return '无年号';
+      return e;
+    });
+    // 民国 / 新中国为人物，用“任期”“时期”替代“在位”“朝代”
+    const isPersonEra = computed(() => activeGroup.value === 'republic' || activeGroup.value === 'modern');
+    const tenureWord = computed(() => isPersonEra.value ? '任期' : '在位');
+    const dynastyLabel = computed(() => isPersonEra.value ? '时期' : '朝代');
+    // 长头衔（如“中央人民政府主席”“中华民国临时大总统”）自动缩字号，避免撞顶溢出
+    const templeStyle = computed(() => {
+      const n = [...((currentEmperor.value || {}).title || '')].length;
+      if (n <= 4) return {};
+      if (n <= 6) return { fontSize: 'clamp(40px,5.6vw,86px)' };
+      if (n <= 9) return { fontSize: 'clamp(32px,4.2vw,62px)' };
+      return { fontSize: 'clamp(26px,3.4vw,50px)' };
+    });
+
+    const emperorKey = e => e ? (e.dynasty + '|' + e.name + '|' + e.title) : '';
+    const isCurrent = e => !!currentEmperor.value && emperorKey(e) === emperorKey(currentEmperor.value);
+
+    const filteredEmperors = computed(() => {
+      const q = searchQuery.value.trim();
+      const list = groupData.value.filter(emp => {
+        const matchD = selectedDynasty.value === "全部" || emp.dynasty === selectedDynasty.value;
+        const matchQ = !q ||
+          emp.title.includes(q) || emp.name.includes(q) ||
+          emp.name.replace(/[()（）]/g, '').includes(q) ||
+          (emp.era || '').includes(q) || emp.dynasty.includes(q) ||
+          (emp.tags || []).some(t => t.includes(q)) ||
+          (emp.bio || []).some(p => p.includes(q)) ||
+          (emp.quote || '').includes(q);
+        return matchD && matchQ;
+      });
+      // 精确命中名讳 / 称号的排前面，避免"黄帝"先搜出正文里提到黄帝的人
+      if (q) {
+        const rank = e => (e.name === q || e.title === q) ? 0
+          : (e.title.includes(q) || e.name.includes(q)) ? 1 : 2;
+        list.sort((a, b) => rank(a) - rank(b));
+      }
+      return list;
+    });
+
+    const dynastyCount = d => groupData.value.filter(e => e.dynasty === d).length;
+
+    const eraList = computed(() => {
+      const e = (currentEmperor.value || {}).era || "";
+      if (!e || e.startsWith("无")) return [];
+      return e.split("、").filter(Boolean);
+    });
+
+    const heroImg = computed(() => {
+      const e = currentEmperor.value;
+      if (!e) return "";
+      const base = e.__portrait || DYN_BG[e.dynasty] || "";
+      // 竖屏：改用专门的竖构图（横图在手机上会被裁掉大半张脸）
+      const m = (window.PORTRAIT_MOBILE || {})[e.name];
+      if (m && (window.innerWidth || 0) < 768) return m;
+      return base;
+    });
+    const portrait = computed(() => (currentEmperor.value || {}).__portrait || "");
+
+    // 人物图取景（手机端竖屏裁切时避免偏出人物）
+    const FOCAL = window.PORTRAIT_FOCAL || {};
+    const focalOf = e => (e && (e.__focal || FOCAL[e.name])) || "";
+    const heroImgStyle = computed(() => {
+      const f = focalOf(currentEmperor.value);
+      return f ? { objectPosition: f } : {};
+    });
+
+    const curNo = computed(() => {
+      const e = currentEmperor.value;
+      if (!e) return 0;
+      return groupData.value.findIndex(x => emperorKey(x) === emperorKey(e)) + 1;
+    });
+
+    const navList = computed(() => (selectedDynasty.value === '全部' && !searchQuery.value.trim())
+      ? rawData : filteredEmperors.value);
+    const navIndex = computed(() => {
+      if (!currentEmperor.value) return -1;
+      const k = emperorKey(currentEmperor.value);
+      return navList.value.findIndex(e => emperorKey(e) === k);
+    });
+    const currentIndex = computed(() => navIndex.value);
+    const curNoInList = computed(() => currentIndex.value + 1);
+
+    const canStep = d => {
+      const i = navIndex.value;
+      if (i < 0) return false;
+      const t = i + d;
+      return t >= 0 && t < navList.value.length;
+    };
+    const prevEmp = computed(() => {
+      const i = navIndex.value;
+      return i > 0 ? navList.value[i - 1] : null;
+    });
+    const nextEmp = computed(() => {
+      const i = navIndex.value;
+      return i >= 0 && i < navList.value.length - 1 ? navList.value[i + 1] : null;
+    });
+    const prevName = computed(() => prevEmp.value ? prevEmp.value.name : '');
+    const nextName = computed(() => nextEmp.value ? nextEmp.value.name : '');
+
+    // ── 看过标记 ──
+    const viewed = new Set();
+    const viewedCount = ref(0);
+    const markViewed = e => { if (e) { viewed.add(emperorKey(e)); viewedCount.value = viewed.size; } };
+    markViewed(currentEmperor.value);
+
+    const randomPool = computed(() => filteredEmperors.value.length ? filteredEmperors.value : rawData);
+    const remainCount = computed(() => {
+      void viewedCount.value;
+      return randomPool.value.filter(e => !viewed.has(emperorKey(e))).length;
+    });
+
+    // ── 滚动位置：换人后停留在“第二屏”，不弹回大屏 ──
+    const sectionTop = () => {
+      const el = readRef.value;
+      if (el) return el.getBoundingClientRect().top + window.scrollY;
+      return window.innerHeight;
+    };
+    const stayInReading = () => {
+      nextTick(() => {
+        const top = sectionTop();
+        if (window.scrollY > top + 6) window.scrollTo({ top: top, behavior: 'smooth' });
+      });
+    };
+
+    const selectDynasty = d => { selectedDynasty.value = d; };
+    const choose = emp => {
+      currentEmperor.value = emp;
+      markViewed(emp);            // 同步登记，连点随机也不会重复
+      stayInReading();
+      nextTick(() => scrollListToActive());
+    };
+    const step = d => {
+      if (!canStep(d)) return;
+      const emp = navList.value[navIndex.value + d];
+      const g = groupOf(emp);
+      if (g.id !== activeGroup.value) {        // 跨纪元：标题、称谓、筛选一并切换
+        activeGroup.value = g.id;
+        selectedDynasty.value = '全部';
+        searchQuery.value = '';
+        listOpen.value = false;
+      }
+      choose(emp);
+    };
+    const pickRandom = () => {
+      const pool = randomPool.value;
+      let unseen = pool.filter(e => !viewed.has(emperorKey(e)));
+      if (!unseen.length) {
+        viewed.clear();
+        markViewed(currentEmperor.value);
+        unseen = pool.filter(e => emperorKey(e) !== emperorKey(currentEmperor.value));
+      }
+      const finalPool = unseen.length ? unseen : pool;
+      choose(finalPool[Math.floor(Math.random() * finalPool.length)]);
+    };
+
+    const toggleList = () => {
+      listOpen.value = !listOpen.value;
+      if (listOpen.value) nextTick(() => scrollListToActive());
+    };
+    const scrollListToActive = () => {
+      const box = nlRef.value;
+      if (!box) return;
+      const el = box.querySelector('.nl-cell.on');
+      if (!el) return;
+      const r = el.getBoundingClientRect(), b = box.getBoundingClientRect();
+      if (r.top < b.top) box.scrollTop -= (b.top - r.top) + 8;
+      else if (r.bottom > b.bottom) box.scrollTop += (r.bottom - b.bottom) + 8;
+    };
+
+    // 切换纪元：标题、称谓、列表一并更换
+    const switchGroup = id => {
+      if (activeGroup.value === id) return;
+      activeGroup.value = id;
+      selectedDynasty.value = '全部';
+      searchQuery.value = '';
+      listOpen.value = false;
+      const first = rawData.find(e => groupOf(e).id === id);
+      if (first) { currentEmperor.value = first; markViewed(first); }
+      stayInReading();
+    };
+
+    const goRead = () => window.scrollTo({ top: sectionTop(), behavior: 'smooth' });
+    const goHero = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    // ── 移动端大屏：左右滑动换帝王 ──
+    const dragging = ref(false);
+    const dragX = ref(0);
+    const toast = ref('');
+    let toastTimer = null;
+    let tX = 0, tY = 0, tT = 0, axis = '', lastDx = 0;
+
+    const flash = msg => {
+      toast.value = msg;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { toast.value = ''; }, 1200);
+    };
+
+    const dragStyle = k => (dragging.value && dragX.value)
+      ? { transform: `translate3d(${(dragX.value * k).toFixed(1)}px,0,0)` }
+      : {};
+
+    const onTouchStart = e => {
+      axis = ''; lastDx = 0; dragX.value = 0;
+      if (e.touches.length !== 1) { dragging.value = false; return; }
+      const el = e.target;
+      if (el && el.closest && el.closest('button,a,input,.hero-tools,.hero-toast')) {
+        dragging.value = false; return;
+      }
+      const t = e.touches[0];
+      tX = t.clientX; tY = t.clientY; tT = Date.now();
+      dragging.value = true;
+    };
+
+    const onTouchMove = e => {
+      if (!dragging.value || e.touches.length !== 1) return;
+      const t = e.touches[0];
+      const dx = t.clientX - tX, dy = t.clientY - tY;
+      if (!axis) {
+        if (Math.abs(dx) < 9 && Math.abs(dy) < 9) return;
+        axis = Math.abs(dx) > Math.abs(dy) * 1.15 ? 'x' : 'y';
+        if (axis === 'y') { dragging.value = false; dragX.value = 0; return; }  // 纵向：交还给页面滚动
+      }
+      if (axis !== 'x') return;
+      if (e.cancelable) e.preventDefault();
+      lastDx = dx;
+      const blocked = (dx < 0 && !canStep(1)) || (dx > 0 && !canStep(-1));
+      dragX.value = Math.max(-130, Math.min(130, blocked ? dx * 0.16 : dx * 0.62));
+    };
+
+    const onTouchEnd = () => {
+      if (!dragging.value) { axis = ''; return; }
+      const dx = lastDx;
+      const dt = Math.max(1, Date.now() - tT);
+      const speed = Math.abs(dx) / dt;                       // px/ms
+      const need = Math.min(72, Math.max(46, window.innerWidth * 0.15));
+      const commit = axis === 'x' && (Math.abs(dx) > need || (Math.abs(dx) > 34 && speed > 0.5));
+      if (commit) {
+        if (dx < 0) {
+          if (canStep(1)) { step(1); if (navigator.vibrate) navigator.vibrate(8); }
+          else flash('已是卷末 · 再无下一位');
+        } else {
+          if (canStep(-1)) { step(-1); if (navigator.vibrate) navigator.vibrate(8); }
+          else flash('已是卷首 · 再无上一位');
+        }
+      }
+      dragging.value = false; dragX.value = 0; lastDx = 0; axis = '';
+    };
+
+    const onScroll = () => {
+      const y = window.scrollY;
+      inReading.value = y > window.innerHeight * 0.55;
+      const el = readRef.value;
+      if (el) {
+        const top = el.getBoundingClientRect().top + y;
+        const h = el.offsetHeight - window.innerHeight;
+        const p = h > 0 ? (y - top) / h : 0;
+        progress.value = Math.min(100, Math.max(0, p * 100));
+      }
+    };
+
+    const onKeydown = e => {
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "INPUT" || tag === "TEXTAREA") return;
+      if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
+      if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
+    };
+
+    onMounted(() => {
+      window.addEventListener('scroll', onScroll, { passive: true });
+      window.addEventListener('keydown', onKeydown);
+      window.addEventListener('resize', onScroll);
+      nextTick(onScroll);
+    });
+    onBeforeUnmount(() => {
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('keydown', onKeydown);
+      window.removeEventListener('resize', onScroll);
+      clearTimeout(toastTimer);
+    });
+
+    watch(filteredEmperors, list => {
+      if (!list.length) { currentEmperor.value = null; return; }
+      const k = emperorKey(currentEmperor.value);
+      if (!list.some(e => emperorKey(e) === k)) currentEmperor.value = list[0];
+    });
+    watch(currentEmperor, v => markViewed(v));
+    // 进入「毛泽东」时触发全屏入场仪式（每次载入只播一次）
+    const maoChapters = computed(() => (currentEmperor.value && currentEmperor.value.name === '毛泽东')
+      ? (window.MAO_CHAPTERS || []) : []);
+    const replayMao = () => { if (window.MaoCinema) window.MaoCinema.play(); };
+    watch(currentEmperor, v => {
+      if (!v || v.name !== '毛泽东') return;
+      if (!window.MaoCinema || window.MaoCinema.played) return;
+      setTimeout(() => window.MaoCinema.play(), 260);
+    });
+    watch([eraTitle, currentEmperor], () => {
+      const e = currentEmperor.value;
+      document.title = e ? `${e.title}（${e.name}）· ${eraTitle.value}` : eraTitle.value;
+    }, { immediate: true });
+
+    // 预取相邻帝王的画像，翻页时不闪白
+    const preload = e => {
+      if (!e) return;
+      const src = e.__portrait || DYN_BG[e.dynasty];
+      if (src) { const im = new Image(); im.src = src; }
+    };
+    watch([currentIndex, filteredEmperors], () => { preload(prevEmp.value); preload(nextEmp.value); });
+
+    return {
+      rawData, dynasties, selectedDynasty, searchQuery, currentEmperor,
+      filteredEmperors, eraList, progress, inReading, listOpen,
+      readRef, nlRef, heroImg, portrait, curNo, curNoInList,
+      prevEmp, nextEmp, prevName, nextName, remainCount,
+      dynColor, dynastyCount, isCurrent, canStep,
+      eraGroups, activeGroup, groupMeta, groupData, groupAll, groupCount, switchGroup, navList,
+      unitWord, eraTitle, eraSub, titleLabel, timeLabel, footerNote, readLabel, eraLabel, eraNote,
+      tenureWord, dynastyLabel, templeStyle,
+      heroImgStyle, focalOf,
+      selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero,
+      maoChapters, replayMao,
+      dragging, dragX, toast, dragStyle, onTouchStart, onTouchMove, onTouchEnd
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

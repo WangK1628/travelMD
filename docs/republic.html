@@ -1,0 +1,876 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>民国纪事 · 1912—1949 时间轴与势力沙盘</title>
+<style>
+:root{
+  --paper:#f4efe4;--paper-2:#fffdf8;--ink:#241f1a;--ink-2:#3a3128;--muted:#8a7a63;
+  --line:rgba(90,70,45,.15);--red:#a62b25;--dark-red:#6d1b18;--gold:#a8762c;
+  --kai:'STKaiti','KaiTi','Kaiti SC','Noto Serif SC',serif;
+  --song:'Songti SC','STSong','SimSun','Noto Serif SC',serif;
+  --sans:'PingFang SC','Hiragino Sans GB','Microsoft YaHei',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;font-family:var(--sans);color:var(--ink-2);background:var(--paper);
+  background-image:repeating-linear-gradient(0deg,transparent 0 26px,rgba(120,90,50,.025) 26px 27px);
+}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;padding:0}
+
+/* 头部 */
+.rp-head{position:relative;overflow:hidden;background:#1a1512;color:#f3e9d8;
+  padding:clamp(18px,3.2vw,30px) clamp(16px,5vw,56px) clamp(26px,4vw,42px)}
+.rp-head::before{
+  content:'';position:absolute;inset:0;opacity:.5;
+  background:radial-gradient(70% 90% at 78% 10%,rgba(166,43,37,.55),transparent 62%),
+             radial-gradient(60% 70% at 10% 90%,rgba(168,118,44,.28),transparent 65%)
+}
+.rp-head>*{position:relative}
+.rp-bar{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:12.5px;letter-spacing:.12em;color:rgba(243,233,216,.65)}
+.rp-bar a:hover{color:#f6d9a8}
+.rp-title{margin:clamp(16px,3vw,26px) 0 0;display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.rp-title h1{
+  font-family:var(--kai);margin:0;font-size:clamp(34px,5.4vw,58px);line-height:1;letter-spacing:.08em;color:#fbf3e4
+}
+.rp-title .years{font-family:var(--song);font-size:13px;letter-spacing:.32em;color:rgba(243,233,216,.6);padding-bottom:6px}
+.rp-lead{margin:14px 0 0;max-width:720px;font-family:var(--song);font-size:14px;line-height:1.95;color:rgba(243,233,216,.78)}
+.rp-lead b{color:#f0c98a;font-weight:600}
+
+/* 时间轴 */
+.tl-wrap{position:sticky;top:0;z-index:30;background:rgba(244,239,228,.96);
+  backdrop-filter:blur(12px);border-bottom:1px solid var(--line);box-shadow:0 6px 18px -16px rgba(60,40,20,.6)}
+.tl-in{max-width:1180px;margin:0 auto;padding:10px clamp(12px,3.6vw,32px) 12px}
+.tl-top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.tl-year{font-family:var(--kai);font-size:22px;letter-spacing:.04em;color:#241e19;line-height:1}
+.tl-year small{font-family:var(--song);font-size:11.5px;color:var(--muted);letter-spacing:.16em;margin-left:8px}
+.tl-stage{font-size:11.5px;letter-spacing:.1em;color:#fff;background:var(--red);padding:3px 10px;border-radius:999px}
+.tl-btns{margin-left:auto;display:flex;gap:6px}
+.tl-b{
+  width:32px;height:32px;border-radius:50%;display:grid;place-items:center;
+  border:1px solid rgba(90,70,45,.2);background:rgba(255,253,248,.9);color:#5c4d3c;transition:.16s
+}
+.tl-b:hover:not(:disabled){background:#241e19;color:#fdf8ee;border-color:transparent}
+.tl-b:disabled{opacity:.3;cursor:not-allowed}
+.tl-b.play{width:auto;padding:0 13px;border-radius:999px;gap:6px;display:inline-flex;align-items:center;font-size:12.5px}
+.tl-b.play.on{background:var(--red);color:#fff;border-color:transparent}
+
+.tl-strip{position:relative;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}
+.tl-strip::-webkit-scrollbar{display:none}
+.tl-items{display:flex;gap:3px;min-width:max-content;position:relative}
+.ty{
+  position:relative;flex:none;width:36px;padding:6px 0 8px;text-align:center;
+  font-family:var(--song);font-size:11.5px;color:#8a7a63;border-radius:5px 5px 0 0;transition:.14s
+}
+.ty:hover{background:rgba(166,43,37,.08);color:#3a3128}
+.ty.on{color:#fff;background:var(--red)}
+.ty.on::after{content:'';position:absolute;left:50%;bottom:-4px;transform:translateX(-50%);
+  border:4px solid transparent;border-top-color:var(--red)}
+.ty .dot{display:block;width:4px;height:4px;border-radius:50%;background:currentColor;opacity:.45;margin:4px auto 0}
+.ty.on .dot{opacity:.9;background:#fff}
+
+/* 主体 */
+.rp-main{max-width:1180px;margin:0 auto;padding:clamp(18px,3.4vw,30px) clamp(14px,4vw,32px) 20px}
+.year-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:18px;align-items:start}
+@media (max-width:1023px){.year-grid{grid-template-columns:1fr}}
+
+.panel{background:rgba(255,253,248,.9);border:1px solid var(--line);border-radius:4px;padding:18px 20px}
+.panel-h{display:flex;align-items:center;gap:9px;margin:0 0 14px;font-family:var(--song);
+  font-size:12.5px;letter-spacing:.2em;color:#6b5a44;font-weight:600}
+.panel-h::before{content:'';width:5px;height:5px;background:var(--red);transform:rotate(45deg)}
+.panel-h .sub{font-family:var(--sans);font-size:10.5px;letter-spacing:.06em;color:#a3947c;font-weight:400;margin-left:auto}
+
+/* ══ 地图沙盘 ══ */
+.map-panel{position:relative;background:linear-gradient(180deg,#241c16 0%,#1a1511 55%,#141110 100%);
+  border-radius:6px;padding:14px clamp(10px,2vw,18px) 12px;color:#eadcc6;overflow:hidden;
+  box-shadow:0 24px 60px -40px rgba(30,20,10,.9),inset 0 0 0 1px rgba(234,220,198,.08)}
+.map-panel::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.5;
+  background:radial-gradient(70% 60% at 50% 0%,rgba(166,43,37,.16),transparent 70%)}
+.mp-top{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+.mp-title{font-family:var(--kai);font-size:15px;letter-spacing:.14em;color:#f0dcb6}
+.mp-title b{color:#f7cf90;font-weight:700;font-size:17px;letter-spacing:.02em}
+.mp-title small{display:inline-block;margin-left:6px;padding:2px 9px;border-radius:999px;
+  font-family:var(--sans);font-size:10.5px;letter-spacing:.1em;color:#fff;background:var(--red);vertical-align:1px}
+.mp-hint{margin-left:auto;font-size:10.5px;letter-spacing:.08em;color:rgba(234,220,198,.45)}
+.map-stage{position:relative;margin-top:2px}
+#cmap{display:block;width:100%;height:clamp(340px,46vw,660px)}
+.prov{stroke:#efe6d6;stroke-width:.7;vector-effect:non-scaling-stroke;cursor:pointer;transition:fill .4s,opacity .2s,filter .15s}
+.prov:hover{filter:brightness(1.45) saturate(1.15)}
+.prov.dim{opacity:.26}
+.prov.sel{stroke:#f7cf90;stroke-width:1.6}
+.hatch{pointer-events:none;transition:opacity .3s}
+.inset-bg{fill:rgba(234,220,198,.05);stroke:rgba(234,220,198,.35);stroke-width:.8}
+.inset-t{fill:rgba(234,220,198,.55);font-size:9px;letter-spacing:.16em;font-family:var(--sans)}
+.map-note{position:absolute;left:6px;bottom:2px;font-size:9.5px;letter-spacing:.06em;color:rgba(234,220,198,.35)}
+
+.mp-tip{
+  position:absolute;z-index:6;min-width:186px;max-width:250px;pointer-events:none;
+  background:rgba(18,14,11,.95);border:1px solid rgba(240,220,182,.22);border-radius:4px;
+  padding:9px 11px 10px;color:#f2e8d6;font-size:12px;line-height:1.65;
+  box-shadow:0 18px 36px -18px rgba(0,0,0,.9);opacity:0;transform:translateY(4px);
+  transition:opacity .14s,transform .14s;backdrop-filter:blur(6px)
+}
+.mp-tip.on{opacity:1;transform:translateY(0)}
+.mp-tip .tp-h{font-family:var(--kai);font-size:14.5px;letter-spacing:.08em;color:#fbf2e2;display:flex;align-items:baseline;gap:6px}
+.mp-tip .tp-h em{font-family:var(--song);font-style:normal;font-size:10.5px;color:rgba(234,220,198,.5);margin-left:auto}
+.mp-tip .tp-f{display:flex;align-items:center;gap:6px;margin-top:6px;font-family:var(--kai);font-size:12.5px;color:#f2d9ac}
+.mp-tip .tp-f i{width:9px;height:9px;border-radius:2px;flex:none}
+.mp-tip .tp-l{margin-top:4px;color:rgba(242,232,214,.86);font-size:11.5px}
+.mp-tip .tp-l b{color:#f7cf90;font-weight:600}
+.mp-tip .tp-n{margin-top:5px;font-size:10.5px;line-height:1.6;color:rgba(234,220,198,.55)}
+.mp-tip .tp-e{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(234,220,198,.18);
+  font-size:10.5px;line-height:1.6;color:rgba(234,220,198,.62)}
+.mp-tip .tp-e span{color:#e8b98a}
+
+.mp-foot{position:relative;display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin-top:6px;
+  padding-top:9px;border-top:1px solid rgba(234,220,198,.1)}
+.mp-col{display:flex;flex-direction:column;gap:5px;flex:1 1 340px;min-width:0}
+.mp-col.side{flex:0 1 228px}
+.mp-k{font-size:9.5px;letter-spacing:.22em;color:rgba(234,220,198,.38);font-family:var(--sans)}
+.mp-legend{display:flex;flex-wrap:wrap;gap:5px 11px;font-size:11px;color:rgba(234,220,198,.62)}
+.mp-legend span{display:inline-flex;align-items:center;gap:5px;cursor:pointer;padding:2px 5px;border-radius:3px;transition:.15s}
+.mp-legend span:hover{background:rgba(234,220,198,.08);color:#f2e8d6}
+.mp-legend span.on{background:rgba(247,207,144,.16);color:#f7cf90}
+.mp-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;flex:none}
+.mp-legend .h{opacity:.5;font-size:9.5px;letter-spacing:.04em}
+.mp-legend .note{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:rgba(234,220,198,.4);
+  padding-left:10px;border-left:1px solid rgba(234,220,198,.16);cursor:default}
+.mp-legend .note:hover{background:none;color:rgba(234,220,198,.4)}
+.mp-legend .note svg{display:block}
+.mp-rank{display:grid;gap:4px;align-content:start}
+.mp-rank .rk{display:grid;grid-template-columns:84px minmax(0,1fr) 18px;align-items:center;gap:6px;font-size:10px}
+.mp-rank .rk .nm{font-family:var(--kai);letter-spacing:.04em;color:rgba(234,220,198,.82);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mp-rank .rk .tr{height:5px;border-radius:3px;background:rgba(234,220,198,.11);overflow:hidden}
+.mp-rank .rk .tr i{display:block;height:100%;border-radius:3px;transition:width .4s}
+.mp-rank .rk b{text-align:right;color:#f2e8d6;font-weight:600;font-size:10.5px;font-family:var(--sans)}
+
+/* 大事记 */
+.evs{list-style:none;margin:0;padding:0}
+.evs li{
+  position:relative;padding:0 0 14px 84px;font-family:var(--song);font-size:14.5px;line-height:1.85;color:#3b3229
+}
+.evs li:last-child{padding-bottom:0}
+.evs li::before{content:'';position:absolute;left:66px;top:8px;bottom:-2px;width:1px;background:rgba(90,70,45,.16)}
+.evs li:last-child::before{display:none}
+.evs li::after{content:'';position:absolute;left:62px;top:9px;width:9px;height:9px;border-radius:50%;
+  background:#fff;border:2px solid var(--red)}
+.evs .d{position:absolute;left:0;top:2px;width:58px;text-align:right;font-size:11.5px;letter-spacing:.04em;color:var(--red);font-family:var(--sans)}
+.evs b{color:#241e19;font-weight:600}
+
+.ctx{margin-top:16px;display:grid;gap:10px}
+.ctx-card{border-left:2px solid var(--gold);padding:2px 0 2px 12px}
+.ctx-card .k{font-size:10.5px;letter-spacing:.24em;color:var(--gold);margin-bottom:4px}
+.ctx-card p{margin:0;font-family:var(--song);font-size:13.5px;line-height:1.9;color:#5a4c3d}
+
+/* 四大阶段 */
+.phases{margin-top:clamp(22px,4vw,36px)}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.ph{background:rgba(255,253,248,.86);border:1px solid var(--line);border-radius:3px;padding:18px 18px 16px;position:relative;overflow:hidden}
+.ph::before{content:'';position:absolute;left:0;top:0;right:0;height:3px;background:var(--pc,var(--red))}
+.ph h3{margin:2px 0 4px;font-family:var(--kai);font-size:19px;color:#241e19;letter-spacing:.05em}
+.ph .span{font-size:11px;letter-spacing:.16em;color:var(--muted);font-family:var(--song)}
+.ph p{margin:10px 0 0;font-family:var(--song);font-size:13.5px;line-height:1.9;color:#4a3d30}
+.ph ul{margin:10px 0 0;padding-left:1.1em;font-family:var(--song);font-size:13px;line-height:1.9;color:#5a4c3d}
+.ph li::marker{color:var(--pc,var(--red))}
+
+.rp-foot{border-top:1px solid var(--line);margin-top:26px;padding:24px 18px 44px;text-align:center;
+  font-size:11.5px;letter-spacing:.1em;color:#9c8b73;line-height:2}
+.rp-foot a{color:var(--red)}
+
+@media (max-width:640px){
+  .panel{padding:15px 15px}
+  .sb-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .evs li{padding-left:0;padding-top:22px}
+  .evs li::before,.evs li::after{display:none}
+  .evs .d{position:static;display:block;width:auto;text-align:left;margin-bottom:2px}
+  .tl-year{font-size:19px}
+  .ty{width:34px;font-size:11px}
+  .rp-title .years{font-size:11.5px;letter-spacing:.2em}
+}
+</style>
+</head>
+<body>
+
+<header class="rp-head">
+  <div class="rp-bar">
+    <a href="./history.html">← 返回帝王谱</a>
+    <a href="./weird.html">帝王奇闻录 →</a>
+  </div>
+  <div class="rp-title">
+    <h1>民国纪事</h1>
+    <span class="years">1912 — 1949</span>
+  </div>
+  <p class="rp-lead">
+    三十八年，五易国体，四场大战。此页按年排布：<b>同一年里，谁在北京、谁在广州、谁在延安、谁在东京</b>；
+    势力沙盘只画控制关系，不画边界，一眼看清谁占了哪一片。<b>军阀混战 · 北伐 · 十年内战 · 抗日战争 · 解放战争</b>，逐年可查。
+  </p>
+</header>
+
+<div class="tl-wrap">
+  <div class="tl-in">
+    <div class="tl-top">
+      <div class="tl-year" id="tlYear">1912<small>民国元年</small></div>
+      <span class="tl-stage" id="tlStage">共和初创</span>
+      <div class="tl-btns">
+        <button class="tl-b" id="prev" title="上一年">‹</button>
+        <button class="tl-b play" id="play">▶ 逐年播放</button>
+        <button class="tl-b" id="next" title="下一年">›</button>
+      </div>
+    </div>
+    <div class="tl-strip" id="strip"><div class="tl-items" id="items"></div></div>
+  </div>
+</div>
+
+<main class="rp-main">
+  <section class="map-panel">
+    <div class="mp-top">
+      <div class="mp-title">势力沙盘 · <b id="mpYear">1912</b><small id="mpStage">共和初创</small></div>
+      <div class="mp-hint" id="mpHint">鼠标移到省份 · 看谁占着这一片；点图例可单看一家</div>
+    </div>
+    <div class="map-stage" id="stage">
+      <svg id="cmap" viewBox="0 0 1000 762" preserveAspectRatio="xMidYMid meet" role="img" aria-label="1912 至 1949 年中国势力分布示意图">
+        <defs id="defs"></defs>
+        <g id="provg"></g>
+        <g id="insetg"></g>
+      </svg>
+      <div class="mp-tip" id="tip"></div>
+      <div class="map-note">控制关系示意 · 省界据公开地理数据，不作边界依据</div>
+    </div>
+    <div class="mp-foot">
+      <div class="mp-col">
+        <div class="mp-k">势力图例 · 点选只看一家</div>
+        <div class="mp-legend" id="legend"></div>
+      </div>
+      <div class="mp-col side">
+        <div class="mp-k">控制省份数</div>
+        <div class="mp-rank" id="rank"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="year-grid">
+    <section class="panel">
+      <h4 class="panel-h">本年大事<span class="sub" id="yearSub">按时间先后</span></h4>
+      <ul class="evs" id="evs"></ul>
+    </section>
+
+    <section class="panel">
+      <h4 class="panel-h">同年 · 世界与他人</h4>
+      <div class="ctx" id="ctx"></div>
+    </section>
+  </div>
+
+  <section class="phases">
+    <h4 class="panel-h" style="font-size:14px">四场大战 · 脉络</h4>
+    <div class="ph-grid" id="phases"></div>
+  </section>
+
+  <footer class="rp-foot">
+    依《中华民国史》《剑桥中华民国史》《中国抗日战争史》《中国人民解放军战史》及公开年谱整理<br>
+    沙盘为控制关系示意图，区域内势力交错、更迭频繁，取其大势，不作边界依据<br>
+    <a href="./history.html">← 回到华夏历代帝王谱</a> · <a href="./weird.html">帝王奇闻录 →</a>
+  </footer>
+</main>
+
+<script src="./js/china-map.js"></script>
+<script src="./js/map-control.js"></script>
+<script>
+/* 势力：key → 名称、颜色 */
+const F = {
+  beiyang:{n:'北洋政府',c:'#8c7a5c'},
+  wan:{n:'皖系',c:'#a8762c'},
+  zhi:{n:'直系',c:'#4a6f9e'},
+  feng:{n:'奉系',c:'#5c6470'},
+  kmt:{n:'国民党 / 南方政府',c:'#3a6ea5'},
+  gmd:{n:'国民政府',c:'#2f4f6f'},
+  cpc:{n:'中共 / 解放区',c:'#b3342c'},
+  jp:{n:'日本 / 伪政权',c:'#7d6b3a'},
+  local:{n:'地方实力派',c:'#8c6a3a'},
+  neutral:{n:'无主 / 割据',c:'#6f6a60'}
+};
+const REGIONS = ['东北','华北','华东','华中','华南','西南','西北'];
+const R = (a,b,c,d,e,f,g) => ({'东北':a,'华北':b,'华东':c,'华中':d,'华南':e,'西南':f,'西北':g});
+
+const Y = [
+{y:1912,st:'共和初创',
+ map:R('feng','beiyang','kmt','beiyang','kmt','local','beiyang'),
+ ev:[['1月1日','孙中山在南京就任临时大总统，<b>中华民国成立</b>，改用阳历'],
+     ['2月12日','清帝溥仪退位，<b>两千一百余年帝制终结</b>'],
+     ['3月10日','袁世凯在北京就任临时大总统，南北统一于名义'],
+     ['8月','同盟会改组为国民党，宋教仁主持党务']],
+ world:'泰坦尼克号沉没；第一次巴尔干战争爆发；福特流水线投产',
+ others:'鲁迅在教育部任佥事，周作人译《域外小说集》；胡适赴美求学'},
+
+{y:1913,st:'袁氏当国',
+ map:R('feng','beiyang','kmt','beiyang','kmt','local','beiyang'),
+ ev:[['3月20日','宋教仁在上海车站遇刺，两日后不治，<b>宪政尝试受挫</b>'],
+     ['4月','袁世凯向五国银行团签“善后大借款”，未经国会同意'],
+     ['7月','李烈钧在湖口起兵，<b>二次革命</b>爆发，两月而败'],
+     ['10月','国会选袁世凯为正式大总统']],
+ world:'巴尔干战火延续；爱因斯坦任教柏林；卓别林初登银幕',
+ others:'孙中山流亡日本，筹组中华革命党；陈独秀办《甲寅》撰稿'},
+
+{y:1914,st:'袁氏当国',
+ map:R('feng','beiyang','beiyang','beiyang','local','local','beiyang'),
+ ev:[['1月','袁世凯解散国会，废《临时约法》'],
+     ['7月','第一次世界大战爆发，中国宣布中立'],
+     ['11月','日军攻占青岛，取代德国在山东的权益'],
+     ['本年','《新青年》前身《甲寅》创刊，知识界开始反思共和']],
+ world:'一战爆发；巴拿马运河通航',
+ others:'胡适在康奈尔大学；李大钊入早稻田大学'},
+
+{y:1915,st:'帝制与护国',
+ map:R('feng','beiyang','beiyang','beiyang','local','local','beiyang'),
+ ev:[['1月18日','日本提出<b>“二十一条”</b>，5月9日袁政府基本接受'],
+     ['8月','筹安会成立，鼓吹帝制'],
+     ['12月12日','袁世凯宣布接受“劝进”，改元<b>洪宪</b>'],
+     ['12月25日','蔡锷等在云南通电独立，<b>护国战争</b>爆发']],
+ world:'德军使用毒气；意大利参战；孙中山与宋庆龄在东京结婚',
+ others:'陈独秀在上海创办《青年杂志》（次年改《新青年》）'},
+
+{y:1916,st:'帝制与护国',
+ map:R('feng','beiyang','beiyang','beiyang','local','local','beiyang'),
+ ev:[['3月22日','袁世凯被迫取消帝制，洪宪八十三天而终'],
+     ['6月6日','<b>袁世凯病逝</b>，黎元洪继任大总统'],
+     ['7月','护国军务院撤销，南北表面复合'],
+     ['本年','北洋分裂为皖、直两系，<b>军阀割据</b>由此开端']],
+ world:'凡尔登战役；索姆河战役；爱因斯坦发表广义相对论',
+ others:'蔡元培就任北大校长；陈独秀受聘北大文科学长'},
+
+{y:1917,st:'军阀混战',
+ map:R('feng','wan','wan','wan','kmt','local','beiyang'),
+ ev:[['6月','张勋以调停“府院之争”为名入京，<b>拥溥仪复辟</b>，十二日而败'],
+     ['8月','段祺瑞对德宣战，编练参战军'],
+     ['9月','孙中山在广州就任军政府大元帅，<b>护法运动</b>开始'],
+     ['本年','胡适发表《文学改良刍议》，文学革命起']],
+ world:'俄国十月革命；美国参战',
+ others:'李大钊撰《庶民的胜利》；毛泽东在湖南一师读书'},
+
+{y:1918,st:'军阀混战',
+ map:R('feng','wan','wan','wan','kmt','local','beiyang'),
+ ev:[['5月','段祺瑞与日本签订《中日陆军共同防敌军事协定》'],
+     ['8月','护法军政府改组，孙中山离粤赴沪'],
+     ['11月','<b>一战结束</b>，中国成为战胜国'],
+     ['本年','李大钊在北大组织马克思主义研究会']],
+ world:'一战停战协定；西班牙流感大流行',
+ others:'鲁迅发表《狂人日记》（1918年5月），新文学第一篇白话小说'},
+
+{y:1919,st:'军阀混战',
+ map:R('feng','wan','wan','wan','kmt','local','beiyang'),
+ ev:[['1月','巴黎和会开幕，中国要求收回山东权益'],
+     ['5月4日','和会决定将德国在山东权益转交日本，<b>五四运动</b>爆发'],
+     ['6月','上海工人罢工、商人罢市，运动扩至全国'],
+     ['10月','孙中山改组中华革命党为国民党']],
+ world:'《凡尔赛和约》签订；共产国际成立',
+ others:'陈独秀被捕又获释；毛泽东主编《湘江评论》；胡适与李大钊“问题与主义”之争'},
+
+{y:1920,st:'军阀混战',
+ map:R('feng','wan','zhi','zhi','kmt','local','zhi'),
+ ev:[['7月','<b>直皖战争</b>，直系与奉系联合击败皖系，段祺瑞下野'],
+     ['本年','直、奉共掌北京政府，北洋进入直奉争雄阶段'],
+     ['秋','各地“联省自治”呼声渐起']],
+ world:'国际联盟成立；美国妇女获选举权',
+ others:'李大钊在北大讲授唯物史观；周恩来赴法勤工俭学'},
+
+{y:1921,st:'军阀混战',
+ map:R('feng','zhi','zhi','zhi','kmt','local','zhi'),
+ ev:[['7月23日','<b>中国共产党第一次全国代表大会</b>在上海召开，后转嘉兴南湖'],
+     ['本年','孙中山在广州就任非常大总统，准备北伐'],
+     ['本年','华盛顿会议召开，中国提出“十项原则”']],
+ world:'华盛顿会议；爱尔兰独立',
+ others:'鲁迅在北大、女师大兼课；胡适提倡“整理国故”'},
+
+{y:1922,st:'军阀混战',
+ map:R('feng','zhi','zhi','zhi','kmt','local','zhi'),
+ ev:[['4月','<b>第一次直奉战争</b>，奉军败退关外，直系独掌北京'],
+     ['6月16日','陈炯明部炮轰广州总统府，孙中山登永丰舰，<b>护法失败</b>'],
+     ['9月','中共中央提出“打倒军阀、打倒国际帝国主义”']],
+ world:'墨索里尼进军罗马；苏联成立',
+ others:'胡适办《努力周报》，提倡“好政府主义”'},
+
+{y:1923,st:'军阀混战',
+ map:R('feng','zhi','zhi','zhi','kmt','local','zhi'),
+ ev:[['2月7日','京汉铁路工人大罢工遭镇压，<b>二七惨案</b>'],
+     ['6月','曹锟逼黎元洪去职'],
+     ['10月','曹锟以每票五千元<b>贿选总统</b>，举国声讨']],
+ world:'日本关东大地震；希特勒啤酒馆暴动',
+ others:'孙中山与越飞发表《孙文越飞宣言》；鲁迅《呐喊》出版'},
+
+{y:1924,st:'军阀混战',
+ map:R('feng','zhi','zhi','zhi','kmt','local','local'),
+ ev:[['1月','<b>国民党一大</b>在广州召开，确立联俄、联共、扶助农工三大政策'],
+     ['6月','<b>黄埔军校</b>开学，蒋介石任校长，周恩来任政治部主任'],
+     ['10月','第二次直奉战争，冯玉祥倒戈发动<b>北京政变</b>，逐溥仪出宫'],
+     ['11月','孙中山北上，主张召开国民会议']],
+ world:'列宁逝世；道威斯计划',
+ others:'鲁迅与周作人失和；徐志摩在北大任教'},
+
+{y:1925,st:'军阀混战',
+ map:R('feng','feng','zhi','zhi','kmt','local','local'),
+ ev:[['3月12日','<b>孙中山在北京逝世</b>，遗嘱“革命尚未成功”'],
+     ['5月30日','上海日商纱厂枪杀工人顾正红，<b>五卅运动</b>席卷全国'],
+     ['7月','国民政府在广州成立，国民革命军组建'],
+     ['本年','省港大罢工坚持十六个月']],
+ world:'希特勒《我的奋斗》出版；伊朗巴列维王朝建立',
+ others:'毛泽东回韶山养病并从事农运；鲁迅支持女师大学潮'},
+
+{y:1926,st:'北伐',
+ map:R('feng','feng','zhi','zhi','kmt','local','local'),
+ ev:[['3月20日','<b>中山舰事件</b>，蒋介石限制共产党人在军中的活动'],
+     ['7月9日','国民革命军在广州誓师，<b>北伐</b>开始'],
+     ['8月','汀泗桥、贺胜桥之战，叶挺独立团名扬天下'],
+     ['10月','北伐军攻占武汉三镇']],
+ world:'英国大罢工；德国加入国联',
+ others:'鲁迅赴厦门大学任教；毛泽东主持广州农讲所'},
+
+{y:1927,st:'北伐',
+ map:R('feng','feng','gmd','gmd','gmd','local','local'),
+ ev:[['4月12日','蒋介石在上海发动<b>四一二政变</b>，国共分裂'],
+     ['4月18日','南京国民政府成立'],
+     ['8月1日','<b>南昌起义</b>，中共独立领导武装斗争的开端'],
+     ['9月9日','毛泽东发动<b>秋收起义</b>，随后进军井冈山']],
+ world:'林白飞越大西洋；有声电影《爵士歌王》问世',
+ others:'鲁迅抵上海定居，开始十年“杂文时期”；胡适任北大教务长'},
+
+{y:1928,st:'北伐',
+ map:R('feng','gmd','gmd','gmd','gmd','local','local'),
+ ev:[['4月','二次北伐，蒋、冯、阎、李四集团军并进'],
+     ['6月4日','<b>皇姑屯事件</b>，张作霖被日军炸死'],
+     ['12月29日','<b>东北易帜</b>，张学良宣布服从国民政府，中国形式上统一'],
+     ['本年','井冈山会师，红军第四军成立']],
+ world:'青霉素被发现；《非战公约》签订',
+ others:'梁思成、林徽因创办东北大学建筑系；鲁迅与创造社论战'},
+
+{y:1929,st:'十年内战',
+ map:R('gmd','gmd','gmd','gmd','gmd','local','local'),
+ ev:[['本年','蒋桂战争、蒋冯战争接连爆发，地方实力派与中央反复较量'],
+     ['本年','中共中央“九月来信”，毛泽东重回红四军领导岗位'],
+     ['本年','<b>中东路事件</b>，中苏边境冲突']],
+ world:'华尔街股灾，<b>大萧条</b>开始',
+ others:'胡适发起“人权与约法”讨论；鲁迅译《艺术论》'},
+
+{y:1930,st:'十年内战',
+ map:R('gmd','gmd','gmd','gmd','gmd','local','local'),
+ ev:[['5月','<b>中原大战</b>爆发，蒋与冯、阎、李百万大军鏖战中原'],
+     ['10月','张学良率东北军入关助蒋，反蒋联军失败'],
+     ['本年','国民党军对中央苏区发动第一次“围剿”，被红军粉碎']],
+ world:'世界经济危机蔓延；甘地食盐长征',
+ others:'鲁迅参与发起中国左翼作家联盟；巴金开始写《家》'},
+
+{y:1931,st:'十年内战',
+ map:R('jp','jp','gmd','gmd','gmd','local','local'),
+ ev:[['9月18日','<b>九一八事变</b>，日军进攻沈阳，东北沦陷'],
+     ['11月','中华苏维埃共和国临时中央政府在瑞金成立，毛泽东任主席'],
+     ['本年','江淮大水，灾民逾亿']],
+ world:'英国放弃金本位；日本退出国联（1933）',
+ others:'鲁迅写《友邦惊诧论》；梅兰芳赴美演出归国'},
+
+{y:1932,st:'抗战（局部）',
+ map:R('jp','jp','gmd','gmd','gmd','local','local'),
+ ev:[['1月28日','<b>一二八事变</b>，十九路军淞沪抗战'],
+     ['3月','伪满洲国在长春成立，溥仪出任“执政”'],
+     ['本年','国民政府迁都洛阳，后还都南京']],
+ world:'富兰克林·罗斯福当选美国总统',
+ others:'鲁迅与瞿秋白交往；胡适办《独立评论》'},
+
+{y:1933,st:'抗战（局部）',
+ map:R('jp','jp','gmd','gmd','gmd','local','local'),
+ ev:[['1月','日军进攻山海关，<b>长城抗战</b>爆发，二十九军大刀队血战喜峰口'],
+     ['5月','《塘沽协定》签订，华北门户洞开'],
+     ['本年','中央苏区第四次反“围剿”胜利']],
+ world:'希特勒出任德国总理',
+ others:'鲁迅与郑振铎编《北平笺谱》；茅盾《子夜》出版'},
+
+{y:1934,st:'十年内战',
+ map:R('jp','jp','gmd','gmd','gmd','local','local'),
+ ev:[['10月','第五次反“围剿”失利，中央红军开始<b>长征</b>'],
+     ['12月','湘江战役，红军由八万余人减至三万余人']],
+ world:'苏联加入国联；罗斯福新政推进',
+ others:'曹禺《雷雨》首演；沈从文《边城》出版'},
+
+{y:1935,st:'十年内战',
+ map:R('jp','jp','gmd','gmd','gmd','local','local'),
+ ev:[['1月','<b>遵义会议</b>，确立毛泽东在党和红军中的领导地位'],
+     ['6月','“何梅协定”，华北危机加深；<b>一二九运动</b>爆发'],
+     ['10月','中央红军到达陕北吴起镇，长征胜利结束'],
+     ['本年','币制改革，推行法币']],
+ world:'意大利入侵埃塞俄比亚；德国重整军备',
+ others:'鲁迅写《在现代中国的孔夫子》；聂耳《义勇军进行曲》问世'},
+
+{y:1936,st:'十年内战',
+ map:R('jp','jp','gmd','gmd','gmd','local','cpc'),
+ ev:[['10月','红二、四方面军与红一方面军在会宁会师，长征全部结束'],
+     ['12月12日','<b>西安事变</b>，张学良、杨虎城兵谏蒋介石，促成抗日民族统一战线']],
+ world:'柏林奥运会；西班牙内战爆发',
+ others:'鲁迅10月19日病逝，万民送葬；老舍《骆驼祥子》连载'},
+
+{y:1937,st:'全面抗战',
+ map:R('jp','jp','gmd','gmd','gmd','local','cpc'),
+ ev:[['7月7日','<b>卢沟桥事变</b>，全面抗战爆发'],
+     ['8月13日','<b>淞沪会战</b>，七十余万中国军队血战三个月'],
+     ['9月','八路军平型关大捷；国共合作正式形成'],
+     ['12月13日','<b>南京陷落</b>，日军制造南京大屠杀']],
+ world:'罗斯福发表“隔离”演说；日本全面侵华',
+ others:'北京大学、清华、南开南迁，组建西南联大；冼星海创作《黄河大合唱》'},
+
+{y:1938,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['3月','<b>台儿庄大捷</b>，歼敌万余人'],
+     ['6月','黄河花园口决堤，以水代兵，亦造成巨大灾难'],
+     ['10月','<b>武汉会战</b>结束，抗战进入相持阶段'],
+     ['本年','八路军、新四军挺进敌后，建立抗日根据地']],
+ world:'慕尼黑协定；德国吞并奥地利',
+ others:'西南联大在昆明开学；艾青写《我爱这土地》'},
+
+{y:1939,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['9月','第一次<b>长沙会战</b>，日军受挫'],
+     ['冬','国民党军发动冬季攻势，八路军在华北破袭交通'],
+     ['本年','《日支新关系调整要纲》密约曝光，汪精卫投日']],
+ world:'德国入侵波兰，<b>第二次世界大战爆发</b>',
+ others:'白求恩在晋察冀殉职；西南联大遭日机轰炸'},
+
+{y:1940,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['5月','<b>枣宜会战</b>，张自忠将军殉国'],
+     ['8月','八路军发动<b>百团大战</b>，破袭正太路'],
+     ['3月','汪伪国民政府在南京成立']],
+ world:'法国投降；不列颠空战',
+ others:'延安鲁迅艺术学院演出《白毛女》前身作品；老舍完成《四世同堂》第一部'},
+
+{y:1941,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['1月','<b>皖南事变</b>，新四军军部遭围攻，国共关系紧张'],
+     ['12月','第三次长沙会战，中国军队大捷'],
+     ['12月7日','<b>珍珠港事件</b>，太平洋战争爆发，中国抗战与世界战场合流']],
+ world:'苏德战争爆发；《大西洋宪章》',
+ others:'西南联大“跑警报”中授课；钱钟书开始写《围城》'},
+
+{y:1942,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['3月','中国远征军入缅作战，戴安澜将军殉国'],
+     ['本年','河南大饥荒，饥民数百万'],
+     ['本年','延安整风运动开始']],
+ world:'中途岛海战；斯大林格勒战役',
+ others:'徐悲鸿在重庆办展；冼星海在苏联病逝'},
+
+{y:1943,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['11月','<b>开罗会议</b>，中美英发表《开罗宣言》，明确日本须归还台湾等中国领土'],
+     ['11月','常德会战，余程万师死守孤城'],
+     ['本年','敌后战场恢复扩大，根据地进入再发展阶段']],
+ world:'意大利投降；德黑兰会议',
+ others:'林语堂在美演讲；闻一多在昆明治印为生'},
+
+{y:1944,st:'全面抗战',
+ map:R('jp','jp','jp','gmd','gmd','gmd','cpc'),
+ ev:[['4月','日军发动<b>豫湘桂战役</b>，国民党军大溃退，失地千里'],
+     ['5月','中国远征军强渡怒江，<b>滇西反攻</b>，收复腾冲、龙陵'],
+     ['本年','美军观察组访问延安']],
+ world:'诺曼底登陆；布雷顿森林会议',
+ others:'西南联大师生投笔从戎；郭沫若发表《甲申三百年祭》'},
+
+{y:1945,st:'抗战胜利 · 内战前夜',
+ map:R('cpc','gmd','gmd','gmd','gmd','gmd','cpc'),
+ ev:[['8月15日','<b>日本宣布无条件投降</b>，抗战胜利，台湾光复'],
+     ['8月28日','毛泽东赴重庆谈判，签订<b>《双十协定》</b>'],
+     ['本年','中共七大、国民党六大相继召开']],
+ world:'联合国成立；广岛、长崎原子弹；二战结束',
+ others:'西南联大解散北归；巴金完成《寒夜》'},
+
+{y:1946,st:'解放战争',
+ map:R('cpc','gmd','gmd','gmd','gmd','gmd','cpc'),
+ ev:[['1月','政治协商会议在重庆召开'],
+     ['6月','国民党军进攻中原解放区，<b>全面内战爆发</b>'],
+     ['本年','解放区开展土地改革']],
+ world:'丘吉尔“铁幕演说”；冷战开端',
+ others:'闻一多、李公朴在昆明被刺；钱钟书《围城》连载'},
+
+{y:1947,st:'解放战争',
+ map:R('cpc','gmd','gmd','gmd','gmd','gmd','cpc'),
+ ev:[['5月','<b>孟良崮战役</b>，全歼整编七十四师'],
+     ['6月','刘邓大军<b>千里跃进大别山</b>，转入战略进攻'],
+     ['本年','《中国土地法大纲》颁布']],
+ world:'马歇尔计划；印巴分治',
+ others:'梅兰芳复出舞台；徐悲鸿任北平艺专校长'},
+
+{y:1948,st:'解放战争',
+ map:R('cpc','cpc','gmd','gmd','gmd','gmd','cpc'),
+ ev:[['9月—11月','<b>辽沈战役</b>，东北全境解放'],
+     ['11月—1949年1月','<b>淮海战役</b>，歼敌五十五万'],
+     ['12月','<b>平津战役</b>开始，北平和平解放谈判启动']],
+ world:'柏林危机；以色列建国',
+ others:'中央研究院选出首届院士；费孝通《乡土中国》出版'},
+
+{y:1949,st:'解放战争 · 建国',
+ map:R('cpc','cpc','cpc','cpc','cpc','cpc','cpc'),
+ ev:[['4月21日','<b>渡江战役</b>，百万雄师过大江'],
+     ['4月23日','南京解放，国民党政权覆灭'],
+     ['9月','中国人民政治协商会议第一届全体会议在北平召开'],
+     ['10月1日','<b>中华人民共和国成立</b>，民国在大陆的统治结束']],
+ world:'北约成立；苏联试爆原子弹',
+ others:'西南联大校友重聚北平；钱钟书重返清华任教'}
+];
+
+const PHASES = [
+ {t:'军阀混战', s:'1916—1928', c:'#8c6a3a', d:'袁世凯死后北洋分裂，皖、直、奉三系轮番执政，各省督军割据自雄。北京政府的更迭多由枪杆决定，政令不出都门。',
+  li:['1917 张勋复辟，十二日而败','1920 直皖战争','1922、1924 两次直奉战争','1924 北京政变，冯玉祥倒戈']},
+ {t:'国共内战（十年）', s:'1927—1936', c:'#4a6f9e', d:'四一二之后国共分裂，国民党“剿共”与红军反“围剿”反复拉锯，中间夹着中原大战与地方实力派的反蒋。',
+  li:['1927 南昌起义、秋收起义','1930 中原大战','1934 长征开始','1936 西安事变，内战转向抗日']},
+ {t:'抗日战争', s:'1931—1945', c:'#b3342c', d:'自九一八起十四年。正面战场二十二场大会战，敌后战场牵制日军主力，两个战场互为支撑，最终迎来胜利。',
+  li:['1937 卢沟桥事变、淞沪会战','1938 台儿庄大捷、武汉会战','1940 百团大战','1943 开罗会议','1945 日本投降，台湾光复']},
+ {t:'解放战争', s:'1946—1949', c:'#2f4f6f', d:'全面内战三年，从战略防御到战略进攻，三大战役定局，渡江一战而江南易手。',
+  li:['1947 挺进大别山','1948 辽沈、淮海、平津三大战役','1949 渡江战役，南京解放','1949.10.1 中华人民共和国成立']}
+];
+
+/* ── 渲染 ── */
+const MINGUO = y => y - 1911;
+let cur = 0, timer = null;
+
+const itemsEl = document.getElementById('items');
+const evsEl = document.getElementById('evs');
+const ctxEl = document.getElementById('ctx');
+const mpYear = document.getElementById('mpYear');
+const mpStage = document.getElementById('mpStage');
+const legendEl = document.getElementById('legend');
+const rankEl = document.getElementById('rank');
+const stageEl = document.getElementById('stage');
+const tipEl = document.getElementById('tip');
+
+/* ══════════ 地图沙盘 ══════════ */
+const CM = window.CHINA_MAP || { paths:{}, centers:{}, jjx:'' };
+const MF = window.MAP_FACTION || {};
+const PM = window.MAP_PROV || {};
+const BOSS = window.MAP_BOSS || {};
+const SVGNS = 'http://www.w3.org/2000/svg';
+
+const provg = document.getElementById('provg');
+const insetg = document.getElementById('insetg');
+const defs = document.getElementById('defs');
+const pathOf = {};   // 省名 → 主路径元素
+const hatchOf = {};  // 省名 → 斜纹叠层
+let focus = null;
+
+// 斜纹图案：用于"两家交错"的省份
+function makeDefs(){
+  let s = `<clipPath id="icl" clipPathUnits="userSpaceOnUse"><rect x="858" y="596" width="122" height="138"/></clipPath>
+    <pattern id="grat" width="84" height="84" patternUnits="userSpaceOnUse">
+      <path d="M84 0H0V84" fill="none" stroke="#eadcc6" stroke-width=".35" opacity=".45"/>
+    </pattern>`;
+  for (const k in MF) {
+    s += `<pattern id="h-${k}" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <line x1="0" y1="0" x2="0" y2="5" stroke="${MF[k].c}" stroke-width="1.9" opacity=".72"/>
+    </pattern>`;
+  }
+  defs.innerHTML = s;
+}
+
+function buildMap(){
+  makeDefs();
+  let g = '', ins = `<rect class="inset-bg" x="858" y="596" width="122" height="138" rx="2"/>
+    <text class="inset-t" x="919" y="748" text-anchor="middle">南海诸岛</text>`;
+  for (const name in CM.paths) {
+    const d = CM.paths[name];
+    if (!d) continue;
+    g += `<path class="prov" data-p="${name}" d="${d}"/>`;
+    g += `<path class="hatch" data-h="${name}" d="${d}" fill="none" pointer-events="none"/>`;
+  }
+  provg.innerHTML = `<rect x="0" y="0" width="1000" height="762" fill="url(#grat)" opacity=".07"/>` + g;
+
+  // 南海诸岛插图：缩略复制 + 九段线
+  let ip = '';
+  for (const name in CM.paths) if (CM.paths[name]) ip += `<path d="${CM.paths[name]}" fill="#4b463c" stroke="#a99b86" stroke-width=".6"/>`;
+  if (CM.jjx) ip += `<path d="${CM.jjx}" fill="none" stroke="#d9614f" stroke-width="2.2"/>`;
+  ins += `<g transform="translate(716.3 413.8) scale(0.317)" opacity=".95">${ip}</g>`;
+  insetg.innerHTML = ins;
+
+  provg.querySelectorAll('.prov').forEach(el => pathOf[el.dataset.p] = el);
+  provg.querySelectorAll('.hatch').forEach(el => hatchOf[el.dataset.h] = el);
+
+  provg.addEventListener('mouseover', e => { const p = e.target.closest('.prov'); if (p) showTip(p.dataset.p, e); });
+  provg.addEventListener('mousemove', e => { if (tipEl.classList.contains('on')) moveTip(e); });
+  provg.addEventListener('mouseout', e => { if (e.target.closest('.prov')) hideTip(); });
+  provg.addEventListener('click', e => {
+    const p = e.target.closest('.prov');
+    if (p) showTip(p.dataset.p, e, true);
+  });
+  document.addEventListener('click', e => { if (!e.target.closest('.prov') && !e.target.closest('.mp-tip')) hideTip(); });
+}
+
+// 该年某省的控制势力：[code, alt]
+function stateOf(p, y){
+  const arr = PM[p];
+  if (!arr || !arr.length) return ['local', null];
+  let hit = arr[0];
+  for (const it of arr) if (y >= it[0]) hit = it;
+  return [hit[1], hit[2] || null];
+}
+function bossOf(p, y, code){
+  const arr = BOSS[p];
+  if (arr) { let b = null; for (const it of arr) if (y >= it[0]) b = it[1]; if (b) return b; }
+  const f = MF[code]; if (!f) return '—';
+  let b = f.leads[0][1];
+  for (const it of f.leads) if (y >= it[0]) b = it[1];
+  return b;
+}
+
+function drawMap(y){
+  const tally = {}; const present = new Set();
+  for (const name in CM.paths) {
+    const [code, alt] = stateOf(name, y);
+    const f = MF[code] || { c:'#8c8c8c' };
+    const el = pathOf[name], h = hatchOf[name];
+    if (!el) continue;
+    el.setAttribute('fill', f.c);
+    el.dataset.code = code;
+    const dim = focus && code !== focus && alt !== focus;
+    el.classList.toggle('dim', !!dim);
+    if (h) {
+      if (alt) {
+        h.setAttribute('fill', `url(#h-${alt})`);
+        h.style.opacity = dim ? .12 : 1;
+        h.dataset.code = alt;
+      } else { h.setAttribute('fill', 'none'); h.dataset.code = ''; }
+    }
+    if (!dim) { tally[code] = (tally[code] || 0) + 1; present.add(code); }
+    if (alt) present.add(alt);
+  }
+  // 图例
+  legendEl.innerHTML = [...present].sort((a,b) => (tally[b]||0) - (tally[a]||0)).map(k => {
+    const f = MF[k]; if (!f) return '';
+    return `<span class="${focus === k ? 'on' : ''}" data-k="${k}"><i style="background:${f.c}"></i>${f.n}` +
+      (tally[k] ? `<span class="h">${tally[k]}</span>` : '') + `</span>`;
+  }).join('') + `<span class="note"><svg width="14" height="10" aria-hidden="true"><defs><pattern id="np" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="4" stroke="#b3342c" stroke-width="2.2"/></pattern></defs><rect width="14" height="10" rx="1" fill="url(#np)"/></svg>斜纹 = 两方交错</span>`;
+  // 势力排行
+  const top = Object.entries(tally).sort((a,b) => b[1] - a[1]).slice(0,6);
+  const max = top.length ? top[0][1] : 1;
+  rankEl.innerHTML = top.map(([k,n]) => {
+    const f = MF[k] || { c:'#8c8c8c', n:k };
+    return `<div class="rk"><span class="nm">${f.n}</span>
+      <span class="tr"><i style="width:${Math.max(8, n / max * 100)}%;background:${f.c}"></i></span>
+      <b>${n}</b></div>`;
+  }).join('');
+  if (tipEl.classList.contains('on') && tipEl.dataset.p) showTip(tipEl.dataset.p, null, true);
+}
+
+legendEl.addEventListener('click', e => {
+  const s = e.target.closest('[data-k]'); if (!s) return;
+  const k = s.dataset.k;
+  focus = (focus === k) ? null : k;
+  hideTip();
+  drawMap(Y[cur].y);
+});
+
+function tipHTML(p, y){
+  const [code, alt] = stateOf(p, y);
+  const f = MF[code] || { n:'地方势力', c:'#8c8c8c', note:'' };
+  const d = Y[cur];
+  const evs = d.ev.slice(0, 2).map(x => String(x[1]).replace(/<[^>]+>/g, ''));
+  return `<div class="tp-h">${p}<em>${y} 年</em></div>
+    <div class="tp-f"><i style="background:${f.c}"></i>${f.n}${alt ? `<span style="opacity:.6;font-size:10.5px"> ＋ ${(MF[alt]||{}).n || ''}</span>` : ''}</div>
+    <div class="tp-l">掌舵人 · <b>${bossOf(p, y, code)}</b></div>
+    <div class="tp-n">${f.note || ''}</div>
+    <div class="tp-e"><span>${d.y} 年大事</span> · ${evs.join('；') || '本年无特别记载'}</div>`;
+}
+
+function showTip(p, e, pin){
+  tipEl.dataset.p = p;
+  tipEl.innerHTML = tipHTML(p, Y[cur].y);
+  tipEl.classList.add('on');
+  if (e) moveTip(e);
+  if (pin) tipEl.style.opacity = 1;
+}
+function moveTip(e){
+  const box = stageEl.getBoundingClientRect();
+  placeTip(e.clientX - box.left + 16, e.clientY - box.top + 14);
+}
+function placeTip(x, y){
+  const box = stageEl.getBoundingClientRect();
+  const w = tipEl.offsetWidth || 200, h = tipEl.offsetHeight || 120;
+  tipEl.style.left = Math.max(6, Math.min(box.width - w - 6, x)) + 'px';
+  tipEl.style.top = Math.max(4, Math.min(box.height - h - 4, y)) + 'px';
+}
+function hideTip(){ tipEl.classList.remove('on'); tipEl.dataset.p = ''; }
+
+
+Y.forEach((d, i) => {
+  const b = document.createElement('button');
+  b.className = 'ty' + (i === 0 ? ' on' : '');
+  b.dataset.i = i;
+  b.innerHTML = `${d.y}<span class="dot"></span>`;
+  itemsEl.appendChild(b);
+});
+
+function render(i){
+  cur = i;
+  const d = Y[i];
+  document.getElementById('tlYear').innerHTML = `${d.y}<small>民国${MINGUO(d.y)}年</small>`;
+  document.getElementById('tlStage').textContent = d.st;
+  mpYear.textContent = d.y;
+  mpStage.textContent = d.st;
+  document.getElementById('yearSub').textContent = `${d.y} 年 · 共 ${d.ev.length} 条`;
+
+  evsEl.innerHTML = d.ev.map(([dt, tx]) => `<li><span class="d">${dt}</span>${tx}</li>`).join('');
+
+  ctxEl.innerHTML = `
+    <div class="ctx-card"><div class="k">同一年的世界</div><p>${d.world}</p></div>
+    <div class="ctx-card"><div class="k">其他人正在做什么</div><p>${d.others}</p></div>`;
+
+  drawMap(d.y);
+
+  [...itemsEl.children].forEach((el, k) => el.classList.toggle('on', k === i));
+  const activeBtn = itemsEl.children[i];
+  if (activeBtn) activeBtn.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+
+  document.getElementById('prev').disabled = i === 0;
+  document.getElementById('next').disabled = i === Y.length - 1;
+  document.title = `${d.y} 年 · 民国纪事`;
+}
+
+itemsEl.addEventListener('click', e => {
+  const b = e.target.closest('.ty');
+  if (b) { stopPlay(); render(+b.dataset.i); }
+});
+document.getElementById('prev').onclick = () => { stopPlay(); if (cur > 0) render(cur - 1); };
+document.getElementById('next').onclick = () => { stopPlay(); if (cur < Y.length - 1) render(cur + 1); };
+
+const playBtn = document.getElementById('play');
+function stopPlay(){
+  clearInterval(timer); timer = null;
+  playBtn.classList.remove('on'); playBtn.textContent = '▶ 逐年播放';
+}
+playBtn.onclick = () => {
+  if (timer) { stopPlay(); return; }
+  playBtn.classList.add('on'); playBtn.textContent = '❚❚ 暂停';
+  timer = setInterval(() => {
+    if (cur >= Y.length - 1) { stopPlay(); return; }
+    render(cur + 1);
+  }, 1700);
+};
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowLeft') { stopPlay(); if (cur > 0) render(cur - 1); }
+  if (e.key === 'ArrowRight') { stopPlay(); if (cur < Y.length - 1) render(cur + 1); }
+});
+
+document.getElementById('phases').innerHTML = PHASES.map(p => `
+  <article class="ph" style="--pc:${p.c}">
+    <h3>${p.t}</h3>
+    <div class="span">${p.s}</div>
+    <p>${p.d}</p>
+    <ul>${p.li.map(x => `<li>${x}</li>`).join('')}</ul>
+  </article>`).join('');
+
+buildMap();
+// 触屏设备换提示语：没有"鼠标移到"
+if (window.matchMedia && window.matchMedia('(hover: none)').matches) {
+  const h = document.getElementById('mpHint');
+  if (h) h.textContent = '轻点省份 · 看谁占着这一片；点图例可单看一家';
+}
+render(0);
+</script>
+</body>
+</html>
