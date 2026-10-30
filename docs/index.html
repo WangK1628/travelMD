@@ -24,6 +24,10 @@
 <script src="./js/portraits-ancient.js"></script>
 <script src="./js/portraits-modern.js"></script>
 <script src="./js/mao-chapters.js"></script>
+<script src="./js/mao-poems.js"></script>
+<script src="./js/mao-recites.js"></script>
+<script src="./js/mao-quotes.js"></script>
+<script src="./js/mao-poem-view.js"></script>
 <script src="./js/mao-cinema.js"></script>
 <style>
 :root{
@@ -449,6 +453,11 @@ footer{
 }
 .sn-btn:hover:not(:disabled) .tip{opacity:1;transform:translateY(-50%) translateX(0)}
 .sn-btn .tip .d{color:#e8c48a;margin-right:4px}
+.sn-btn.sn-poem{color:#8c2a1f;border-color:rgba(165,52,42,.34);background:rgba(255,250,242,.97)}
+.sn-btn.sn-poem .glyph{font-family:var(--kai);font-size:17px;line-height:1;letter-spacing:0;transform:translateY(-.5px)}
+.sn-btn.sn-poem:hover:not(:disabled){background:#8c2a1f;color:#fff4e6;border-color:transparent}
+.sn-btn .tip em{font-style:normal;color:#f0c9a4;font-size:11px;letter-spacing:.08em}
+.sn-btn.sn-poem + .sn-btn{margin-top:2px}
 @media (max-width:1279px){
   .sn-btn{width:38px;height:38px}
   .sn-btn svg{width:17px;height:17px}
@@ -795,6 +804,10 @@ footer{
   <!-- PC 右侧悬浮翻页 -->
   <nav class="side-nav" v-show="inReading" aria-label="上下翻页"
        :style="{'--dc': currentEmperor ? dynColor(currentEmperor.dynasty) : '#a8762c'}">
+    <button class="sn-btn sn-poem" v-if="isMao" @click="openPoems" title="毛主席诗词">
+      <span class="glyph">诗</span>
+      <span class="tip">毛主席诗词 · <em>随机一首</em></span>
+    </button>
     <button class="sn-btn" @click="step(-1)" :disabled="!canStep(-1)" title="上一位（←）">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 5 7.5 12l7 7"/></svg>
       <span class="tip" v-if="prevEmp"><span class="d">{{ prevEmp.dynasty }}</span>{{ prevEmp.title }} · {{ prevEmp.name }}</span>
@@ -810,6 +823,7 @@ footer{
   <!-- 移动端/平板底部操作条 -->
   <div class="mbar" v-show="inReading">
     <button @click="step(-1)" :disabled="!canStep(-1)">‹ 上一位</button>
+    <button v-if="isMao" @click="openPoems">诗 诗词</button>
     <button class="red" @click="pickRandom">⚄ 随机</button>
     <button @click="step(1)" :disabled="!canStep(1)">下一位 ›</button>
   </div>
@@ -1222,6 +1236,9 @@ createApp({
     const maoChapters = computed(() => (currentEmperor.value && currentEmperor.value.name === '毛泽东')
       ? (window.MAO_CHAPTERS || []) : []);
     const replayMao = () => { if (window.MaoCinema) window.MaoCinema.play(); };
+    // 毛主席诗词：右侧「诗」钮 → 随机一首（逐字渐显），诗目里可自选
+    const isMao = computed(() => !!currentEmperor.value && currentEmperor.value.name === '毛泽东');
+    const openPoems = () => { if (window.MaoPoemView) window.MaoPoemView.open(); };
     watch(currentEmperor, v => {
       if (!v || v.name !== '毛泽东') return;
       if (!window.MaoCinema || window.MaoCinema.played) return;
@@ -1248,6 +1265,7 @@ createApp({
       dynColor, dynastyCount, isCurrent, canStep,
       eraGroups, activeGroup, groupMeta, groupData, groupAll, groupCount, switchGroup, navList,
       unitWord, eraTitle, eraSub, titleLabel, timeLabel, footerNote, readLabel, eraLabel, eraNote,
+      isMao, openPoems,
       tenureWord, dynastyLabel, templeStyle,
       heroImgStyle, focalOf,
       selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero,

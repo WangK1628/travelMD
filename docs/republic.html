@@ -196,7 +196,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
 
 <header class="rp-head">
   <div class="rp-bar">
-    <a href="./history.html">← 返回帝王谱</a>
+    <a href="./index.html">← 返回帝王谱</a>
     <a href="./weird.html">帝王奇闻录 →</a>
   </div>
   <div class="rp-title">
@@ -271,7 +271,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;pad
   <footer class="rp-foot">
     依《中华民国史》《剑桥中华民国史》《中国抗日战争史》《中国人民解放军战史》及公开年谱整理<br>
     沙盘为控制关系示意图，区域内势力交错、更迭频繁，取其大势，不作边界依据<br>
-    <a href="./history.html">← 回到华夏历代帝王谱</a> · <a href="./weird.html">帝王奇闻录 →</a>
+    <a href="./index.html">← 回到华夏历代帝王谱</a> · <a href="./weird.html">帝王奇闻录 →</a>
   </footer>
 </main>
 
@@ -690,14 +690,18 @@ function buildMap(){
   provg.querySelectorAll('.prov').forEach(el => pathOf[el.dataset.p] = el);
   provg.querySelectorAll('.hatch').forEach(el => hatchOf[el.dataset.h] = el);
 
-  provg.addEventListener('mouseover', e => { const p = e.target.closest('.prov'); if (p) showTip(p.dataset.p, e); });
-  provg.addEventListener('mousemove', e => { if (tipEl.classList.contains('on')) moveTip(e); });
-  provg.addEventListener('mouseout', e => { if (e.target.closest('.prov')) hideTip(); });
+  provg.addEventListener('mouseover', e => {
+    const p = e.target.closest('.prov');
+    if (p && !tipEl.dataset.pin) showTip(p.dataset.p, e);   // 已钉住的弹窗不被悬停改掉
+  });
+  provg.addEventListener('mousemove', e => { if (tipEl.classList.contains('on') && !tipEl.dataset.pin) moveTip(e); });
+  provg.addEventListener('mouseout', e => { if (e.target.closest('.prov') && !tipEl.dataset.pin) hideTip(); });
   provg.addEventListener('click', e => {
     const p = e.target.closest('.prov');
     if (p) showTip(p.dataset.p, e, true);
   });
   document.addEventListener('click', e => { if (!e.target.closest('.prov') && !e.target.closest('.mp-tip')) hideTip(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') hideTip(); });
 }
 
 // 该年某省的控制势力：[code, alt]
@@ -781,7 +785,7 @@ function showTip(p, e, pin){
   tipEl.innerHTML = tipHTML(p, Y[cur].y);
   tipEl.classList.add('on');
   if (e) moveTip(e);
-  if (pin) tipEl.style.opacity = 1;
+  if (pin) { tipEl.style.opacity = 1; tipEl.dataset.pin = '1'; }
 }
 function moveTip(e){
   const box = stageEl.getBoundingClientRect();
@@ -793,7 +797,12 @@ function placeTip(x, y){
   tipEl.style.left = Math.max(6, Math.min(box.width - w - 6, x)) + 'px';
   tipEl.style.top = Math.max(4, Math.min(box.height - h - 4, y)) + 'px';
 }
-function hideTip(){ tipEl.classList.remove('on'); tipEl.dataset.p = ''; }
+function hideTip(){
+  tipEl.classList.remove('on');
+  tipEl.dataset.p = '';
+  tipEl.dataset.pin = '';              // 清掉钉住状态，否则内联 opacity:1 会让弹窗一直挂在屏上
+  tipEl.style.opacity = '';
+}
 
 
 Y.forEach((d, i) => {
