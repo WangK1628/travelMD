@@ -2,7 +2,8 @@
    毛主席 · 入场仪式（红底版）
    朱红虚影浮现 → 完整《沁园春·长沙》渐显为底 → 红底画像升起放大
    → 「人民万岁」题款与语录弹幕同屏 → 收束回红底首屏
-   弹幕：Canvas 绘制，上千条同屏右→左，掠过画像时被人物挡住
+   弹幕：Canvas 泳道传送带，一千余条红色语录不重复地右→左滑过，
+         每条约 13~19 秒穿屏，掠过画像时被人物挡住
    ══════════════════════════════════════════════════════════ */
 (function () {
   'use strict';
@@ -279,16 +280,28 @@
     layer.appendChild(cv);
     var ctx = cv.getContext('2d', { alpha: true });
 
-    // 位图缩放：手机 1.5（字够清楚），桌面 1（1 CSS px = 1 位图像素，drawImage 是纯 blit）
-    var SCALE = 1;
-    var W = 1, H = 1;
+    var SCALE = 1, W = 1, H = 1;
 
-    // 长句在窄画面上必然压成一团，也最吃填充率：手机上只留 ≤14 字，桌面 ≤18 字
-    var POOL = QUOTES.filter(function (q) { return q.length <= (MOBILE ? 14 : 18); });
+    /* 语录池：红宝书原文 + 群众口号 + 毛主席诗词（自动切句），去重后一千条以上 */
+    var POOL = (window.MaoQuotes ? window.MaoQuotes.all(MOBILE ? 13 : 17) : []).slice();
+    if (!POOL.length) POOL = QUOTES.filter(function (q) { return q.length <= 17; });
+
+    var bag = [], bagAt = 0;
+    function shuffle(a) {
+      for (var i = a.length - 1; i > 0; i--) {
+        var j = (Math.random() * (i + 1)) | 0, t = a[i]; a[i] = a[j]; a[j] = t;
+      }
+      return a;
+    }
+    /* 洗牌抽取：一整轮抽完之前绝不重复 */
+    function nextQuote() {
+      if (bagAt >= bag.length) { bag = shuffle(POOL.slice()); bagAt = 0; }
+      return bag[bagAt++];
+    }
 
     var FONT = '"STKaiti","KaiTi","Songti SC",serif';
     var sprites = {}, spriteKeys = 0;
-    var CACHE_MAX = MOBILE ? 340 : 660;
+    var CACHE_MAX = MOBILE ? 460 : 700;
     var measure = document.createElement('canvas').getContext('2d');
 
     function sprite(text, size, color) {
@@ -299,9 +312,9 @@
 
       measure.font = '600 ' + size + 'px ' + FONT;
       var tw = Math.ceil(measure.measureText(text).width);
-      var pad = Math.ceil(size * 0.28);
+      var pad = Math.ceil(size * 0.26);
       var w = tw + pad * 2;
-      var h = Math.ceil(size * 1.46) + pad;
+      var h = Math.ceil(size * 1.42) + pad;
 
       var c = document.createElement('canvas');
       c.width = Math.max(1, Math.round(w * SCALE));
@@ -335,85 +348,97 @@
     function tiers() {
       if (TIERS) return TIERS;
       var base = MOBILE
-        ? Math.min(13, Math.max(11, W * 0.0305))
-        : Math.min(19, Math.max(14, W * 0.0106));
+        ? Math.min(15, Math.max(12, W * 0.0335))
+        : Math.min(19, Math.max(15, W * 0.0108));
       TIERS = MOBILE ? [
-        { s: base * 1.34, c: '#ffd792' },
+        { s: base * 1.16, c: '#ffd792' },
         { s: base * 1.00, c: '#fdf1de' }
       ] : [
-        { s: base * 1.55, c: '#ffd792' },
-        { s: base * 1.16, c: '#ffd792' },
-        { s: base * 1.02, c: '#ff9b82' },
-        { s: base * 0.92, c: '#fdf1de' }
+        { s: base * 1.22, c: '#ffd792' },
+        { s: base * 1.06, c: '#ffd792' },
+        { s: base * 0.94, c: '#ff9b82' },
+        { s: base * 0.86, c: '#fdf1de' }
       ];
       return TIERS;
     }
 
-    /* 像素预算：弹幕的开销 ≈ 画布面积 × 条数。
-       分辨率按窗口面积反推，条数同步缩放，大屏小屏负载基本一致。 */
+    /* 像素预算：弹幕开销 ≈ 画布面积 × 条数，分辨率按窗口面积反推 */
     function budget() { return 1.28e6 / Math.max(1, W * H); }
 
     function autoScale() {
       if (MOBILE) return Math.min(1.5, Math.max(1, window.devicePixelRatio || 1));
-      return Math.min(1, Math.max(0.68, 0.77 * Math.sqrt(Math.min(1.6, budget()))));
+      return Math.min(1, Math.max(0.7, 0.8 * Math.sqrt(Math.min(1.6, budget()))));
     }
 
-    function autoCount() {
-      if (MOBILE) return 180;
-      return Math.round(300 * Math.min(1.15, Math.max(0.62, budget())));
-    }
+    var items = [], lanes = [];
+    var raf = 0, last = 0, alive = false, ticker = 0;
 
-    function resize() {
-      W = layer.clientWidth || window.innerWidth;
-      H = layer.clientHeight || window.innerHeight;
-      SCALE = autoScale();
-      cv.width = Math.round(W * SCALE);
-      cv.height = Math.round(H * SCALE);
-      ctx.imageSmoothingEnabled = false;   // 重设画布尺寸会重置上下文状态
-      TIERS = null;
-    }
-    resize();
-
-    var items = [];
-    var raf = 0, last = 0, alive = false;
-
-    function speed() {
-      return MOBILE ? W * 0.15 + Math.random() * W * 0.17
-                    : 190 + Math.random() * 210;      // px/s
-    }
-
-    // 生成一批弹幕实例，x 分布在屏外到屏内，保证一开场就满屏
-    var laneSeed = 0;
-
-    function seed(count) {
-      var tl = tiers();
-      var maxH = 0, t;
+    /* 每条道是一条匀速传送带：同道内字距固定、速度相同，永不追尾叠字。
+       速度取「十几秒穿过整屏」，字从右侧进场后要滑行很久才出画。 */
+    function buildLanes() {
+      var tl = tiers(), maxH = 0, t, i;
       for (t = 0; t < tl.length; t++) {
-        maxH = Math.max(maxH, Math.ceil(tl[t].s * 1.46) + Math.ceil(tl[t].s * 0.28));
+        maxH = Math.max(maxH, Math.ceil(tl[t].s * 1.42) + Math.ceil(tl[t].s * 0.26));
       }
-      // 行距按字高算，绝不小于单条精灵高度，避免上下行叠字
-      var laneH = Math.max(maxH * 1.1, H / (MOBILE ? 26 : 34));
-      var lanes = Math.max(6, Math.floor((H - laneH * 0.35) / laneH));
-
-      for (var i = 0; i < count; i++) {
-        var tier = tl[(Math.random() * tl.length) | 0];
-        var q = POOL[(Math.random() * POOL.length) | 0];
-        var sp = sprite(q, Math.round(tier.s), tier.c);
-        // 起始位置：一多半已在屏内，其余在右侧排队入场
-        var x = Math.random() < 0.62
-          ? -sp.w + Math.random() * (W + sp.w)
-          : W + 8 + Math.random() * W * 0.5;
-        var lane = (i + laneSeed++) % lanes;
-        items.push({
-          x: x,
-          y: laneH * 0.6 + lane * laneH + (Math.random() - 0.5) * laneH * 0.14,
-          v: speed(),
-          spr: sp,
-          alpha: 0.72 + Math.random() * 0.28
+      var laneH = Math.max(maxH * 1.02, H / (MOBILE ? 30 : 46));
+      var n = Math.max(5, Math.floor((H - laneH * 0.2) / laneH));
+      lanes = [];
+      for (i = 0; i < n; i++) {
+        lanes.push({
+          y: laneH * 0.5 + i * laneH,
+          v: MOBILE ? W * 0.072 + Math.random() * W * 0.038
+                    : W * 0.058 + Math.random() * W * 0.026,
+          tail: null
         });
       }
-      // 按出场顺序画：靠右的后画，避免压住已在屏内的
-      items.sort(function (a, b) { return a.x - b.x; });
+    }
+
+    function gap() { return 12 + Math.random() * 44; }
+
+    function makeItem(lane, x) {
+      var tl = tiers(), r = Math.random();
+      var tier = tl[r < 0.16 ? 0 : (r < 0.66 ? 1 : (tl.length > 3 ? 2 : 1))];
+      return {
+        x: x,
+        y: lane.y,
+        v: lane.v,
+        spr: sprite(nextQuote(), Math.round(tier.s), tier.c),
+        alpha: 0.7 + Math.random() * 0.28
+      };
+    }
+
+    /* 开场即满屏：每条道从右往左铺满，右端再留一两句排队 */
+    function seed() {
+      items = [];
+      for (var i = 0; i < lanes.length; i++) {
+        var lane = lanes[i], x = W + 18, first = null, guard = 0, it;
+        while (x > -W * 0.42 && guard++ < 42) {
+          it = makeItem(lane, x);
+          items.push(it);
+          if (!first) first = it;
+          x -= it.spr.w + gap();
+        }
+        lane.tail = first;      // 最靠右的一条，后续从它后面接
+      }
+    }
+
+    /* 补条：某条道最右一条已经完全进场，就从屏外再接一条。
+       游标轮转，避免总是前几条道先补、后面的道被饿空 */
+    var cursor = 0;
+    function tick() {
+      if (!alive) return;
+      var added = 0, n = lanes.length;
+      for (var k = 0; k < n && added < 4; k++) {
+        var lane = lanes[(cursor + k) % n], t = lane.tail;
+        // 同道同速，接在上一条屁股后面即可，永远不会追尾
+        var nx = t ? Math.max(W + 10, t.x + t.spr.w + gap()) : W + 10;
+        if (nx > W + 520) continue;          // 排队太长就缓一缓
+        var it = makeItem(lane, nx);
+        items.push(it);
+        lane.tail = it;
+        cursor = (cursor + k + 1) % n;
+        added++;
+      }
     }
 
     var accT = 0, accN = 0, thinned = 0;
@@ -457,12 +482,13 @@
       raf = requestAnimationFrame(frame);
     }
 
-    /* 预烘焙：把用到的「语录 × 字号」全部提前画成位图。
-       放在开场前空闲时段分片做，避免播到一半才创建画布造成顿挫。 */
+    /* 预烘焙：按抽取顺序把最先用到的几百条提前画成位图，
+       播放中途不再临时建画布，避免「隔一会儿顿一下」 */
     function prewarm() {
       var tl = tiers(), jobs = [], i, j;
-      for (i = 0; i < POOL.length; i++) {
-        for (j = 0; j < tl.length; j++) jobs.push([POOL[i], Math.round(tl[j].s), tl[j].c]);
+      var head = POOL.slice(0, MOBILE ? 110 : 160);
+      for (i = 0; i < head.length; i++) {
+        for (j = 0; j < tl.length; j++) jobs.push([head[i], Math.round(tl[j].s), tl[j].c]);
       }
       var k = 0;
       (function step() {
@@ -475,34 +501,43 @@
       })();
     }
 
+    function resize() {
+      W = layer.clientWidth || window.innerWidth;
+      H = layer.clientHeight || window.innerHeight;
+      SCALE = autoScale();
+      cv.width = Math.round(W * SCALE);
+      cv.height = Math.round(H * SCALE);
+      ctx.imageSmoothingEnabled = false;   // 重设画布尺寸会重置上下文状态
+      TIERS = null;
+      buildLanes();
+    }
+    resize();
+
     return {
       prewarm: prewarm,
-      start: function (count) {
-        count = count || autoCount();
-        // 二次铺量：先撒一批，接下来几秒内继续补，形成"越滚越密"的瀑布
-        seed(Math.round(count * 0.58));
-        var t0 = Date.now();
-        var timer = setInterval(function () {
-          if (!alive) { clearInterval(timer); return; }
-          var left = count - items.length;
-          if (left <= 0) { clearInterval(timer); return; }
-          seed(Math.min(Math.ceil(left * 0.5), Math.round(count * 0.12)));
-          if (Date.now() - t0 > 4200) clearInterval(timer);
-        }, 260);
+      start: function () {
+        if (alive) return;
+        resize();
+        seed();
         alive = true;
         last = 0;
         raf = requestAnimationFrame(frame);
+        ticker = setInterval(tick, 110);
       },
       stop: function () {
         alive = false;
         cancelAnimationFrame(raf);
+        clearInterval(ticker);
         items = [];
+        lanes.forEach(function (l) { l.tail = null; });
         ctx.setTransform(1, 0, 0, 1, 0, 0);
         ctx.clearRect(0, 0, cv.width, cv.height);
       },
-      count: function () { return items.length; }
+      count: function () { return items.length; },
+      pool: function () { return POOL.length; }
     };
   }
+
   function finish(immediate) {
     if (!root) return;
     running = false;
@@ -589,13 +624,11 @@
     at(7000, function () { subj.classList.remove('zoom'); subj.classList.add('settle'); });
     // ⑦ 「人民万岁」题款 + 上千条弹幕同屏开始
     at(7500, function () { word.classList.add('on'); cap.classList.remove('on'); });
-    at(7900, function () {
-      dm.start(0);   // 0 = 按窗口面积自动定条数
-    });
+    at(7600, function () { dm.start(); });
     // ⑧ 弹幕滑尽（约 10 秒）→ 收束回红底首屏
-    at(17800, function () { word.classList.remove('on'); });
-    at(18400, function () { subj.classList.remove('settle'); subj.classList.add('out'); });
-    at(19600, function () { finish(); });
+    at(33600, function () { word.classList.remove('on'); });
+    at(34200, function () { subj.classList.remove('settle'); subj.classList.add('out'); });
+    at(35400, function () { finish(); });
   }
 
   function play(force) {

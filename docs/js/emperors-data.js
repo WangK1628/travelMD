@@ -14,7 +14,7 @@
  *   quote     史书文言文选句（可选，缺省则前端不渲染）
  *   quoteSrc  文言文出处
  *
- * 用法：history.html 中 const rawData = Object.values(EMPEROR_DATA);
+ * 用法：index.html 中 const rawData = Object.values(EMPEROR_DATA);
  * ============================================================ */
 window.EMPEROR_DATA = {
 
