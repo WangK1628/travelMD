@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>华夏历代帝王谱 · 一卷在手 千年在目</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%23b3342c'/%3E%3Ctext x='32' y='47' font-size='42' text-anchor='middle' fill='%23fff6ea' font-family='Songti SC,SimSun,serif'%3E%E5%8F%B2%3C/text%3E%3C/svg%3E">
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.31/dist/vue.global.prod.js"></script>
 <script src="./js/portrait-focus.js"></script>
 <script src="./js/ancient-1.js"></script>
@@ -23,6 +24,10 @@
 <script src="./js/extra-imp-c.js"></script>
 <script src="./js/portraits-ancient.js"></script>
 <script src="./js/portraits-modern.js"></script>
+<script src="./js/mao-ch-a.js"></script>
+<script src="./js/mao-ch-b.js"></script>
+<script src="./js/mao-ch-c.js"></script>
+<script src="./js/mao-ch-d.js"></script>
 <script src="./js/mao-chapters.js"></script>
 <script src="./js/mao-poems.js"></script>
 <script src="./js/mao-recites.js"></script>
@@ -120,8 +125,10 @@ img{display:block}
   padding:9px 15px;border-radius:999px;font-size:12.5px;letter-spacing:.1em;
   color:rgba(248,240,226,.92);border:1px solid rgba(248,240,226,.26);
   background:rgba(20,15,12,.3);backdrop-filter:blur(10px);
-  transition:.2s;white-space:nowrap
+  transition:.2s;white-space:nowrap;
+  text-decoration:none
 }
+a.pill,a.pill:hover,a.pill:visited{text-decoration:none}
 .pill:hover{background:rgba(248,240,226,.16);border-color:rgba(248,240,226,.5)}
 .pill.solid{background:rgba(179,52,44,.85);border-color:rgba(255,220,200,.3)}
 .pill.solid:hover{background:rgba(196,62,52,.95)}
@@ -550,6 +557,39 @@ footer{
   transition:.2s;white-space:nowrap;
 }
 .mao-replay:hover{background:rgba(179,52,44,.14);border-color:rgba(179,52,44,.6);color:#7d1f16}
+
+/* 「回卷首」：从卷末一步退回编年纪事的开头（不是回大屏，是回事迹本身） */
+.ch-tohead{
+  width:100%;display:flex;align-items:center;gap:clamp(8px,1.6vw,14px);
+  margin-top:16px;padding:2px 0;border:0;background:none;cursor:pointer;
+  color:#5f4d37;transition:color .3s;
+}
+.ch-tohead .ln{flex:1;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(120,90,50,.22))}
+.ch-tohead .ln.r{background:linear-gradient(270deg,transparent,rgba(120,90,50,.22))}
+.ch-tohead .lb{display:inline-flex;align-items:center;gap:9px;white-space:nowrap;flex:none;
+  padding:8px 17px 8px 20px;border-radius:999px;border:1px solid rgba(120,90,50,.2);
+  background:rgba(255,253,248,.72);
+  font-family:var(--kai);font-size:13px;letter-spacing:.24em;
+  transition:letter-spacing .34s ease,background .3s,border-color .3s,box-shadow .3s}
+.ch-tohead .lb b{font-weight:400;color:#a3906f;font-family:var(--song);
+  font-size:10.5px;letter-spacing:.12em;transition:color .3s}
+.ch-tohead .ar{display:inline-block;font-family:var(--song);font-style:normal;
+  font-size:11.5px;line-height:1;transform:translateY(1px);transition:transform .34s cubic-bezier(.2,.85,.3,1)}
+.ch-tohead:hover{color:var(--cinnabar)}
+.ch-tohead:hover .lb{letter-spacing:.3em;border-color:rgba(179,52,44,.4);
+  background:rgba(179,52,44,.045);box-shadow:0 8px 18px -16px rgba(120,30,20,.9)}
+.ch-tohead:hover .ar{transform:translateY(-4px)}
+.ch-tohead:hover .lb b{color:rgba(179,52,44,.6)}
+.ch-tohead:hover .ln{background:linear-gradient(90deg,transparent,rgba(179,52,44,.34))}
+.ch-tohead:hover .ln.r{background:linear-gradient(270deg,transparent,rgba(179,52,44,.34))}
+.ch-tohead:active .ar{transform:translateY(-9px);opacity:.35}
+@media (max-width:480px){
+  .ch-tohead{margin-top:12px}
+  .ch-tohead .lb{font-size:11.5px;letter-spacing:.16em;padding:7px 13px 7px 15px}
+  .ch-tohead .lb b{display:none}
+  .ch-tohead:hover .lb{letter-spacing:.16em}
+}
 </style>
 </head>
 <body>
@@ -731,9 +771,9 @@ footer{
           </div>
         </div>
 
-        <div class="blk mao-ch" v-if="maoChapters.length">
+        <div class="blk mao-ch" v-if="maoChapters.length" ref="maoChRef">
           <div class="blk-h" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
-            <span>影像纪年 · 一百张照片里的毛泽东</span>
+            <span>编年纪事 · 从韶山冲到纪念堂（{{ maoChapters.length }} 章）</span>
             <button class="mao-replay" @click="replayMao">重看入场 ▸</button>
           </div>
           <div class="mao-ch-band">
@@ -741,17 +781,24 @@ footer{
             <span>为人民服务</span>
           </div>
           <div class="mao-ch-list">
-            <figure class="mao-ch-item" v-for="c in maoChapters" :key="c.k">
-              <div class="mao-ch-ph">
-                <img :src="c.img" :alt="c.cap" loading="lazy">
-                <span class="mao-ch-yr">{{ c.k }}</span>
-              </div>
-              <div class="mao-ch-tx">
-                <div class="mao-ch-hd">{{ c.y }}</div>
-                <p>{{ c.txt }}</p>
-                <figcaption>{{ c.cap }}</figcaption>
-              </div>
-            </figure>
+            <template v-for="(c,i) in maoChapters" :key="c.k + i">
+              <div class="mao-g" v-if="i === 0 || maoChapters[i-1].g !== c.g">{{ c.g }}</div>
+              <figure class="mao-ch-item">
+                <div class="mao-ch-ph" :class="{ 'mao-ch-ph--w': c.w }" v-if="c.img">
+                  <img :src="c.img" :alt="c.cap" loading="lazy">
+                  <span class="mao-ch-yr">{{ c.k }}</span>
+                </div>
+                <div class="mao-ch-ph mao-ch-ph--text" v-else>
+                  <span class="mao-ch-key">{{ c.key }}</span>
+                  <span class="mao-ch-yr">{{ c.k }}</span>
+                </div>
+                <div class="mao-ch-tx">
+                  <div class="mao-ch-hd">{{ c.y }}</div>
+                  <p>{{ c.txt }}</p>
+                  <figcaption v-if="c.cap">{{ c.cap }}</figcaption>
+                </div>
+              </figure>
+            </template>
           </div>
         </div>
 
@@ -782,6 +829,13 @@ footer{
             <span class="m" v-if="nextEmp">{{ nextEmp.title }}</span>
           </button>
         </nav>
+
+        <button class="ch-tohead" v-if="maoChapters.length" @click="goMaoTop"
+                title="回到编年纪事的开头">
+          <span class="ln"></span>
+          <span class="lb"><i class="ar">↑</i>回卷首 <b>编年纪事 · {{ maoChapters.length }} 章</b></span>
+          <span class="ln r"></span>
+        </button>
 
         <div class="pager-sub">
           <button class="to-top" @click="goHero">↑ 回到大屏</button>
@@ -823,7 +877,7 @@ footer{
   <!-- 移动端/平板底部操作条 -->
   <div class="mbar" v-show="inReading">
     <button @click="step(-1)" :disabled="!canStep(-1)">‹ 上一位</button>
-    <button v-if="isMao" @click="openPoems">诗 诗词</button>
+    <button v-if="isMao" @click="openPoems">诗词</button>
     <button class="red" @click="pickRandom">⚄ 随机</button>
     <button @click="step(1)" :disabled="!canStep(1)">下一位 ›</button>
   </div>
@@ -1116,6 +1170,17 @@ createApp({
     };
 
     // 切换纪元：标题、称谓、列表一并更换
+    /* 标签条可横滑：选中的那枚若滚出视野，把它拉回来（只滚标签条，不动页面） */
+    const keepTabVisible = () => nextTick(() => {
+      const t = document.querySelector('.era-tabs .etab.on');
+      const box = t && t.parentElement;
+      if (!t || !box) return;
+      const tr = t.getBoundingClientRect(), br = box.getBoundingClientRect();
+      if (tr.left < br.left + 4) box.scrollLeft += tr.left - br.left - 10;
+      else if (tr.right > br.right - 4) box.scrollLeft += tr.right - br.right + 10;
+    });
+    watch(activeGroup, keepTabVisible);
+
     const switchGroup = id => {
       if (activeGroup.value === id) return;
       activeGroup.value = id;
@@ -1129,6 +1194,16 @@ createApp({
 
     const goRead = () => window.scrollTo({ top: sectionTop(), behavior: 'smooth' });
     const goHero = () => window.scrollTo({ top: 0, behavior: 'smooth' });
+    /* 回卷首：滚到「编年纪事」这一节的开头（顶栏是 sticky，要让开它的高度） */
+    const maoChRef = ref(null);
+    const goMaoTop = () => {
+      const box = maoChRef.value;
+      if (!box) return;
+      const tb = document.querySelector('.toolbar');
+      const off = (tb ? tb.getBoundingClientRect().height : 0) + 16;
+      const y = box.getBoundingClientRect().top + window.scrollY - off;
+      window.scrollTo({ top: Math.max(0, y), behavior: 'smooth' });
+    };
 
     // ── 移动端大屏：左右滑动换帝王 ──
     const dragging = ref(false);
@@ -1209,6 +1284,8 @@ createApp({
     const onKeydown = e => {
       const tag = (e.target && e.target.tagName) || "";
       if (tag === "INPUT" || tag === "TEXTAREA") return;
+      // 诗词层开着时，方向键归它（换一首），别再翻动后面的帝王页
+      if (document.querySelector('.mp.on')) return;
       if (e.key === "ArrowLeft") { e.preventDefault(); step(-1); }
       if (e.key === "ArrowRight") { e.preventDefault(); step(1); }
     };
@@ -1269,7 +1346,7 @@ createApp({
       tenureWord, dynastyLabel, templeStyle,
       heroImgStyle, focalOf,
       selectDynasty, choose, step, pickRandom, toggleList, goRead, goHero,
-      maoChapters, replayMao,
+      maoChapters, replayMao, maoChRef, goMaoTop,
       dragging, dragX, toast, dragStyle, onTouchStart, onTouchMove, onTouchEnd
     };
   }
