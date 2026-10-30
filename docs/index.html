@@ -9,6 +9,12 @@
 <script src="./js/portrait-focus.js"></script>
 <script src="./js/ancient-1.js"></script>
 <script src="./js/ancient-2.js"></script>
+<script src="./js/era-spring-a.js"></script>
+<script src="./js/era-spring-b.js"></script>
+<script src="./js/era-spring-c.js"></script>
+<script src="./js/era-spring-d.js"></script>
+<script src="./js/era-warring-a.js"></script>
+<script src="./js/era-warring-b.js"></script>
 <script src="./js/emperors-data.js"></script>
 <script src="./js/modern-data.js"></script>
 <script src="./js/emperors-extra.js"></script>
@@ -219,8 +225,38 @@ a.pill,a.pill:hover,a.pill:visited{text-decoration:none}
   max-width:1240px;margin:0 auto;padding:10px clamp(14px,3vw,32px);
   display:flex;align-items:center;gap:14px;flex-wrap:wrap
 }
-.chips{display:flex;gap:6px;overflow-x:auto;flex:1 1 320px;scrollbar-width:none;padding-bottom:2px}
-.chips::-webkit-scrollbar{display:none}
+/* 朝代条：单行横向滚动，滚轮 / 拖拽 / 箭头 三路可动 */
+.chips-shell{position:relative;flex:1 1 360px;min-width:0;display:flex;align-items:center;gap:2px}
+.chips{
+  display:flex;gap:6px;overflow-x:auto;flex:1 1 auto;min-width:0;
+  padding:2px 0 5px;scrollbar-width:thin;scrollbar-color:rgba(90,70,45,.3) transparent;
+  cursor:grab;-webkit-overflow-scrolling:touch;overscroll-behavior-x:contain
+}
+.chips.dragging{cursor:grabbing;user-select:none}
+.chips.dragging .chip{pointer-events:none}
+.chips::-webkit-scrollbar{height:6px}
+.chips::-webkit-scrollbar-track{background:rgba(90,70,45,.07);border-radius:4px}
+.chips::-webkit-scrollbar-thumb{background:rgba(120,95,60,.45);border-radius:4px}
+.chips:hover::-webkit-scrollbar-thumb{background:rgba(120,95,60,.7)}
+.chips-nav{
+  flex:none;width:26px;height:30px;border-radius:8px;display:grid;place-items:center;
+  padding:0;color:#4a3d2d;
+  background:#fffdf8;border:1px solid rgba(90,70,45,.32);
+  box-shadow:0 1px 3px rgba(90,70,45,.14);
+  opacity:0;pointer-events:none;transition:.18s;z-index:4
+}
+.chips-nav svg{width:14px;height:14px;display:block}
+.chips-shell.can-l .chips-nav.l,.chips-shell.can-r .chips-nav.r{opacity:1;pointer-events:auto}
+.chips-nav:hover{color:#8c1f18;border-color:rgba(140,31,24,.45);background:#fff;box-shadow:0 2px 7px rgba(90,70,45,.22)}
+/* 两端渐隐，提示「后面还有」 */
+.chips-shell::before,.chips-shell::after{
+  content:'';position:absolute;top:0;bottom:7px;width:20px;pointer-events:none;
+  opacity:0;transition:.2s;z-index:2
+}
+.chips-shell::before{left:0;background:linear-gradient(90deg,rgba(246,241,230,.98),rgba(246,241,230,0))}
+.chips-shell::after{right:0;background:linear-gradient(270deg,rgba(246,241,230,.98),rgba(246,241,230,0))}
+.chips-shell.can-l::before{opacity:1}
+.chips-shell.can-r::after{opacity:1}
 .chip{
   flex:none;display:inline-flex;align-items:center;gap:6px;
   padding:7px 13px;border-radius:999px;font-family:var(--kai);font-size:13px;
@@ -308,7 +344,8 @@ a.pill,a.pill:hover,a.pill:visited{text-decoration:none}
 }
 .nl-cell:hover{background:rgba(168,118,44,.09)}
 .nl-cell.on{background:rgba(168,118,44,.14);border-color:rgba(168,118,44,.32)}
-.nl-cell .t{font-family:var(--kai);font-size:14px;color:#3a3128;line-height:1.2}
+.nl-cell .t{font-family:var(--kai);font-size:14px;color:#3a3128;line-height:1.2;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .nl-cell.on .t{color:var(--c,var(--gold))}
 .nl-cell .n{font-family:var(--song);font-size:11px;color:#8a7a63;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -494,6 +531,7 @@ footer{
 @media (max-width:1023px){
   .thumb{width:132px;height:74px}
   .toolbar-in{padding:9px 14px;gap:10px}
+  .chips-shell{flex:1 1 100%}
   .search input{width:100%}
   .search{flex:1 1 140px}
   .tools{flex:1 1 100%;justify-content:flex-end}
@@ -503,6 +541,8 @@ footer{
 }
 @media (max-width:767px){
   .hero{min-height:520px}
+  .chips-nav{display:none}
+  .chips-shell::before,.chips-shell::after{width:14px}
   .hero-img{object-position:center 22%}
   .hero-copy{bottom:clamp(40px,8vh,72px);max-width:none}
   .hero-veil{background:
@@ -679,12 +719,24 @@ footer{
             <span>{{ g.tab }}</span><span class="et-n">{{ groupCount(g.id) }}</span>
           </button>
         </div>
-        <div class="chips">
-          <button v-for="d in dynasties" :key="d" @click="selectDynasty(d)"
-                  :class="['chip', selectedDynasty === d ? 'on' : '']"
-                  :style="selectedDynasty === d ? {'--c': d === '全部' ? '#2b241e' : dynColor(d)} : {}">
-            <span v-if="d !== '全部'" class="dot" :style="{width:'5px',height:'5px',borderRadius:'50%',background:dynColor(d)}"></span>
-            {{ d }}<span class="n">{{ d === '全部' ? groupAll.length : dynastyCount(d) }}</span>
+        <div class="chips-shell" :class="{'can-l':chipsCanL,'can-r':chipsCanR}">
+          <button class="chips-nav l" @click="scrollChips(-1)" aria-label="朝代向左">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="chips" ref="chipsRef"
+               @wheel="onChipsWheel"
+               @pointerdown="onChipsDown" @pointermove="onChipsMove"
+               @pointerup="onChipsUp" @pointercancel="onChipsUp" @pointerleave="onChipsUp"
+               @scroll.passive="syncChips">
+            <button v-for="d in dynasties" :key="d" @click="pickDynasty(d)"
+                    :class="['chip', selectedDynasty === d ? 'on' : '']"
+                    :style="selectedDynasty === d ? {'--c': d === '全部' ? '#2b241e' : dynColor(d)} : {}">
+              <span v-if="d !== '全部'" class="dot" :style="{width:'5px',height:'5px',borderRadius:'50%',background:dynColor(d)}"></span>
+              {{ d }}<span class="n">{{ d === '全部' ? groupAll.length : dynastyCount(d) }}</span>
+            </button>
+          </div>
+          <button class="chips-nav r" @click="scrollChips(1)" aria-label="朝代向右">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
         </div>
         <div class="tools">
@@ -898,10 +950,26 @@ createApp({
     const DATA = Object.assign({},
       window.EMPEROR_ANCIENT_1 || {},
       window.EMPEROR_ANCIENT_2 || {},
+      window.ERA_SPRING_A || {},
+      window.ERA_SPRING_B || {},
+      window.ERA_SPRING_C || {},
+      window.ERA_SPRING_D || {},
+      window.ERA_WARRING_A || {},
+      window.ERA_WARRING_B || {},
       window.EMPEROR_DATA || {},
       window.EMPEROR_MODERN || {}
     );
     const EXTRA = window.EMPEROR_EXTRA || {};
+    // ── 春秋列国 / 战国七雄：把诸侯归入本国，供「按国别筛选」 ──
+    const STATE_OF = {
+      "姜小白":"齐","姬重耳":"晋","嬴任好":"秦","熊侣":"楚","子兹甫":"宋",
+      "姬光":"吴","姒勾践":"越","姬寤生":"郑",
+      "魏斯":"魏","田因齐":"齐","田地":"齐","熊疑":"楚","嬴渠梁":"秦","嬴稷":"秦",
+      "赵雍":"赵","姬职":"燕","韩昭侯":"韩"
+    };
+    Object.keys(STATE_OF).forEach(k => { if (DATA[k]) DATA[k].dynasty = STATE_OF[k]; });
+    // 原条目 name 填的是史称，按名讳订正
+    if (DATA['韩昭侯']) DATA['韩昭侯'].name = '韩武';
     Object.keys(EXTRA).forEach(k => { if (DATA[k]) Object.assign(DATA[k], EXTRA[k]); });
     // 长传补录：先秦 / 帝制 / 民国 / 新中国
     [window.EXTRA_ANCIENT, window.EXTRA_IMPERIAL, window.EXTRA_REP_A, window.EXTRA_REP_B, window.EXTRA_MODERN]
@@ -918,6 +986,10 @@ createApp({
       "上古": "images/era-ancient.jpg",
       "夏": "images/era-bronze.jpg", "商": "images/era-bronze.jpg", "西周": "images/era-bronze.jpg",
       "春秋": "images/era-warring.jpg", "战国": "images/era-warring.jpg",
+      "齐": "images/era-warring.jpg", "晋": "images/era-warring.jpg", "楚": "images/era-warring.jpg",
+      "秦": "images/era-warring.jpg", "宋": "images/era-warring.jpg", "吴": "images/era-warring.jpg",
+      "越": "images/era-warring.jpg", "郑": "images/era-warring.jpg", "燕": "images/era-warring.jpg",
+      "魏": "images/era-warring.jpg", "韩": "images/era-warring.jpg", "赵": "images/era-warring.jpg",
       "民国": "images/era-republic.jpg", "新中国": "images/era-modern.jpg"
     });
     Object.keys(PORTRAIT).forEach(k => {
@@ -933,8 +1005,9 @@ createApp({
     // ── 纪元分组：标题、称谓、史料来源随组切换 ──
     const eraGroups = [
       { id:'ancient', tab:'上古先秦', title:'华夏上古纪', unit:'国君', titleLabel:'称号 / 史称', timeLabel:'在位年代',
-        footer:'据《史记·五帝本纪》《夏本纪》《殷本纪》《周本纪》《尚书》《左传》《国语》《战国策》《竹书纪年》及夏商周断代工程年表整理 · 上古部分属神话传说时代，年代取通行说法',
-        dyn:['上古','夏','商','西周','春秋','战国'] },
+        footer:'据《史记·五帝本纪》《夏本纪》《殷本纪》《周本纪》与十二诸侯、六国年表，《尚书》《左传》《国语》《战国策》《竹书纪年》及夏商周断代工程年表整理；春秋五霸、战国七雄诸国世系依各国《世家》与《左传》纪年互校 · 上古部分属神话传说时代，年代取通行说法',
+        dyn:['上古','夏','商','西周','春秋','战国',
+             '齐','晋','楚','秦','宋','吴','越','郑','燕','魏','韩','赵'] },
       { id:'imperial', tab:'历代帝王', title:'华夏历代帝王谱', unit:'帝王', titleLabel:'庙号 / 史称', timeLabel:'在位时间',
         footer:'据《史记》《汉书》《后汉书》《三国志》《晋书》《隋书》《旧唐书》《新唐书》《宋史》《元史》《明史》《清史稿》及《资治通鉴》等正史整理 · 庙号谥号以史书通称为准',
         dyn:['秦朝','西汉','新朝','更始','东汉','曹魏','蜀汉','东吴','西晋','东晋','隋朝','唐朝','武周','北宋','南宋','元朝','明朝','清朝'] },
@@ -946,12 +1019,19 @@ createApp({
         dyn:['新中国'] }
     ];
     const dictOf = (() => { const m = {}; eraGroups.forEach(g => g.dyn.forEach(d => m[d] = g)); return m; })();
+    // 先秦多国并立的阅读顺序（朝代 → 春秋列国 → 战国七雄）
+    const PRE_ORDER = ['上古','夏','商','西周','春秋','郑','齐','晋','秦','楚','宋','吴','越','燕','战国','魏','赵','韩'];
+    const preRank = d => { const i = PRE_ORDER.indexOf(d); return i < 0 ? 99 : i; };
+    const yearStart = e => { const m = String((e || {}).time || '').match(/前\s*(\d+)/); return m ? -(+m[1]) : 1e9; };
     const groupOf = e => (e && dictOf[e.dynasty]) ? dictOf[e.dynasty] : eraGroups[1];
     const groupCount = id => rawData.filter(e => groupOf(e).id === id).length;
 
     const dynastyColors = {
       "上古":"#8a6a3f","夏":"#7a5a34","商":"#6f4a2e","西周":"#8c6a3a",
       "春秋":"#96603a","战国":"#7d6b3a",
+      "齐":"#8f5a2a","晋":"#7b4a2c","楚":"#8c3b3b","秦":"#5c5a34","宋":"#6d4459",
+      "吴":"#37596b","越":"#3f684a","郑":"#96682c","燕":"#4f4a70",
+      "魏":"#3a5a72","韩":"#3d6a68","赵":"#7a3f56",
       "秦朝":"#6b4a2c","西汉":"#8c4a2f","新朝":"#6e6a5e","更始":"#7d7461",
       "东汉":"#a0522d","曹魏":"#2f4f6f","蜀汉":"#a63a3a","东吴":"#b4653a",
       "西晋":"#5b6d3a","东晋":"#6d7d46","隋朝":"#2e6e6a","唐朝":"#a8762c",
@@ -963,9 +1043,21 @@ createApp({
 
     const activeGroup = ref('imperial');
     const groupMeta = computed(() => eraGroups.find(g => g.id === activeGroup.value) || eraGroups[1]);
-    const groupData = computed(() => rawData.filter(e => groupOf(e).id === activeGroup.value));
+    const groupData = computed(() => {
+      const arr = rawData.filter(e => groupOf(e).id === activeGroup.value);
+      // 先秦：先按国别阅读顺序，再按在位年代排，避免本国君主散落各处
+      if (activeGroup.value === 'ancient') {
+        arr.sort((a, b) => (preRank(a.dynasty) - preRank(b.dynasty))
+          || (a.dynasty === b.dynasty ? yearStart(a) - yearStart(b) : 0));
+      }
+      return arr;
+    });
     const groupAll = computed(() => groupData.value);
-    const dynasties = computed(() => ['全部', ...new Set(groupData.value.map(e => e.dynasty))]);
+    const dynasties = computed(() => {
+      const list = [...new Set(groupData.value.map(e => e.dynasty))];
+      if (activeGroup.value === 'ancient') list.sort((a, b) => preRank(a) - preRank(b));
+      return ['全部', ...list];
+    });
     const selectedDynasty = ref("全部");
     const searchQuery = ref("");
     const currentEmperor = ref(DATA['嬴政'] || rawData[0]);
@@ -981,7 +1073,7 @@ createApp({
     const eraSub = computed(() => {
       const n = groupData.value.length;
       if (activeGroup.value === 'imperial') return `二十四史 · ${n} 位帝王 · 二千一百三十三年`;
-      if (activeGroup.value === 'ancient') return `${n} 位国君 · 三皇五帝 · 夏商周 · 春秋战国 · 约前3000—前221年`;
+      if (activeGroup.value === 'ancient') return `${n} 位国君 · 三皇五帝 · 夏商周 · 春秋五霸 · 战国七雄 · 约前3000—前221年`;
       if (activeGroup.value === 'republic') return `${n} 位人物 · 1912—1949 · 军阀 · 北伐 · 抗战 · 解放`;
       return `${n} 位人物 · 1949—今 · 共和国七十七年`;
     });
@@ -1040,6 +1132,75 @@ createApp({
     });
 
     const dynastyCount = d => groupData.value.filter(e => e.dynasty === d).length;
+
+    // ── 朝代条横向浏览：滚轮 / 按住拖动 / 两端箭头 ──
+    const chipsRef = ref(null);
+    const chipsCanL = ref(false);
+    const chipsCanR = ref(false);
+    const syncChips = () => {
+      const el = chipsRef.value; if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      chipsCanL.value = el.scrollLeft > 2;
+      chipsCanR.value = max > 2 && el.scrollLeft < max - 2;
+    };
+    const scrollChips = dir => {
+      const el = chipsRef.value; if (!el) return;
+      el.scrollBy({ left: dir * Math.max(170, Math.round(el.clientWidth * 0.72)), behavior: 'smooth' });
+      setTimeout(syncChips, 340);
+    };
+    const onChipsWheel = e => {
+      const el = chipsRef.value; if (!el) return;
+      const max = el.scrollWidth - el.clientWidth;
+      if (max <= 2) return;
+      const d = Math.abs(e.deltaY) >= Math.abs(e.deltaX) ? e.deltaY : e.deltaX;
+      if (!d) return;
+      // 已经滚到头就放行，让页面正常上下滚
+      if ((d < 0 && el.scrollLeft <= 0) || (d > 0 && el.scrollLeft >= max - 1)) return;
+      e.preventDefault();
+      el.scrollLeft = Math.max(0, Math.min(max, el.scrollLeft + d));
+      syncChips();
+    };
+    let chipDrag = null, chipHold = false;
+    const onChipsDown = e => {
+      const el = chipsRef.value; if (!el) return;
+      if (e.pointerType === 'touch') return;           // 触屏交给系统原生横滑
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      chipDrag = { x: e.clientX, left: el.scrollLeft, moved: false, id: e.pointerId };
+    };
+    const onChipsMove = e => {
+      if (!chipDrag) return;
+      const el = chipsRef.value; if (!el) return;
+      const dx = e.clientX - chipDrag.x;
+      if (!chipDrag.moved && Math.abs(dx) > 6) {
+        chipDrag.moved = true;
+        el.classList.add('dragging');
+        try { el.setPointerCapture(chipDrag.id); } catch (_) {}
+      }
+      if (chipDrag.moved) { el.scrollLeft = chipDrag.left - dx; syncChips(); }
+    };
+    const onChipsUp = () => {
+      const el = chipsRef.value;
+      if (chipDrag && chipDrag.moved) {
+        chipHold = true;
+        setTimeout(() => { chipHold = false; }, 0);
+        if (el) el.classList.remove('dragging');
+      }
+      chipDrag = null;
+    };
+    const pickDynasty = d => { if (chipHold) return; selectDynasty(d); };
+    // 选中的朝代若在视野外，自动滚进来；切分组则回到最左
+    const revealChip = () => {
+      const el = chipsRef.value; if (!el) return;
+      const on = el.querySelector('.chip.on');
+      if (on) {
+        const r = on.getBoundingClientRect(), cr = el.getBoundingClientRect();
+        if (r.left < cr.left + 4) el.scrollLeft -= (cr.left + 4 - r.left);
+        else if (r.right > cr.right - 4) el.scrollLeft += (r.right - cr.right + 4);
+      }
+      syncChips();
+    };
+    watch(dynasties, () => { const el = chipsRef.value; if (el) el.scrollLeft = 0; nextTick(revealChip); });
+    watch(selectedDynasty, () => nextTick(revealChip));
 
     const eraList = computed(() => {
       const e = (currentEmperor.value || {}).era || "";
@@ -1294,14 +1455,18 @@ createApp({
       window.addEventListener('scroll', onScroll, { passive: true });
       window.addEventListener('keydown', onKeydown);
       window.addEventListener('resize', onScroll);
+      window.addEventListener('resize', syncChips);
       nextTick(onScroll);
+      setTimeout(syncChips, 120);
     });
     onBeforeUnmount(() => {
       window.removeEventListener('scroll', onScroll);
       window.removeEventListener('keydown', onKeydown);
       window.removeEventListener('resize', onScroll);
+      window.removeEventListener('resize', syncChips);
       clearTimeout(toastTimer);
     });
+    watch(inReading, v => { if (v) { nextTick(syncChips); setTimeout(syncChips, 160); } });
 
     watch(filteredEmperors, list => {
       if (!list.length) { currentEmperor.value = null; return; }
@@ -1336,6 +1501,8 @@ createApp({
 
     return {
       rawData, dynasties, selectedDynasty, searchQuery, currentEmperor,
+      chipsRef, chipsCanL, chipsCanR, scrollChips, onChipsWheel,
+      onChipsDown, onChipsMove, onChipsUp, syncChips, pickDynasty,
       filteredEmperors, eraList, progress, inReading, listOpen,
       readRef, nlRef, heroImg, portrait, curNo, curNoInList,
       prevEmp, nextEmp, prevName, nextName, remainCount,
