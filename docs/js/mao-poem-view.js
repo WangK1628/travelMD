@@ -16,13 +16,16 @@ window.MaoPoemView = (function () {
   var raf = 0, timers = [], cur = -1, lastPick = -1;
   /* 展阅轮转：一首不重复地走完 67 首，走完再重开一轮 */
   var shown = {}, shownN = 0, bag = [], bagAt = 0, introDone = false;
-  var scrollMode = false, panX = 0, colEls = [], colStarts = [];
+  var scrollMode = false, panX = 0, panLock = false, jumpAll = null, colEls = [], colStarts = [];
   /* 朗读状态 */
   var recEl = null, recCols = null, recLine = null, recTitle = null,
       recCta = null, recPgBar = null, recCharEls = [];
   var audio = null, recRaf = 0, recOn = false, recLineIdx = -2, recCur = -1,
       recEndTimer = 0, recDur = 0, recData = null, recStartAt = 0, recPoemIdx = -1,
       recMuted = false, recEnded = false, recHint = null, closeTimer = 0, recHideAt = 0;
+  /* 镇纸：压住纸面，取消自动卷起；一次开层之内一直有效 */
+  var pinned = false, holdTimer = 0, fadeTimer = 0,
+      rendered = false, lastDwell = 0, lastN = 0;
   var REC_HINT = '点击任意处 · 直接看全文';
   var RECITES = window.MaoRecites || [];
 
@@ -41,7 +44,7 @@ window.MaoPoemView = (function () {
     'repeating-linear-gradient(90deg,rgba(120,96,60,.035) 0 1px,transparent 1px 6px)}',
     '.mp::after{content:"";position:absolute;inset:0;pointer-events:none;',
     'background:radial-gradient(120% 100% at 50% 46%,transparent 52%,rgba(96,70,36,.16) 100%)}',
-    '.mp-stage{position:absolute;inset:clamp(26px,5vh,64px) clamp(22px,4vw,72px);',
+    '.mp-stage{position:absolute;inset:clamp(32px,6.8vh,72px) clamp(22px,4vw,72px);',
     'display:flex;align-items:center;justify-content:center}',
     '.mp-cols{display:flex;flex-direction:row-reverse;align-items:flex-start;',
     'flex:none;gap:0;transition:opacity 1.1s ease}',
@@ -64,6 +67,8 @@ window.MaoPoemView = (function () {
     'box-shadow:0 6px 16px -10px rgba(90,20,10,.9),inset 0 0 0 2px rgba(255,228,208,.34);',
     'transform:rotate(-5deg) scale(.86);opacity:0;transition:opacity .8s ease,transform .8s cubic-bezier(.2,.9,.3,1)}',
     '.mp-seal.on{opacity:.92;transform:rotate(-5deg) scale(1)}',
+    /* 字幅撑满时：印章缩一档、落到右下角空处，不压正文 */
+    '.mp.seal-low .mp-seal{width:28px;height:28px;font-size:12px;right:10px;bottom:10px;opacity:.58}',
     /* 操作条 */
     '.mp-bar{position:absolute;left:50%;bottom:clamp(12px,2.2vh,22px);transform:translateX(-50%);',
     'z-index:5;display:flex;gap:8px;opacity:0;transition:opacity .6s ease}',
@@ -72,9 +77,48 @@ window.MaoPoemView = (function () {
     'background:rgba(255,253,246,.66);color:#54402a;font-size:11.5px;letter-spacing:.14em;',
     'font-family:var(--song,serif);cursor:pointer;transition:.2s}',
     '.mp-b:hover{background:#3c2c1c;color:#f6efdd;border-color:transparent}',
+    '.mp-b em.mp-n{font-style:normal;opacity:.82}',
     /* 「朗读」入口：朱色描边，一眼能认出这首有音频 */
     '.mp-b-rec{color:#8e2318;border-color:rgba(150,40,30,.4);background:rgba(255,246,240,.8)}',
     '.mp-b-rec:hover{background:#9c2418;color:#fff3ea;border-color:transparent}',
+    /* ===== 镇纸：压住这页，它就不会自己卷走 ===== */
+    '.mp-pin{display:inline-flex;align-items:center;gap:7px;padding:4px 13px 4px 5px}',
+    '.mp-pin .st{position:relative;flex:none;width:18px;height:24px;border-radius:3px;',
+    'display:grid;place-items:center;font-family:var(--song,serif);font-size:11px;line-height:1;',
+    'color:#4b6a5d;border:1px solid rgba(84,116,102,.5);background:rgba(248,252,248,.9);',
+    'box-shadow:inset 0 1px 2px rgba(255,255,255,.75);',
+    'transition:transform .44s cubic-bezier(.2,.85,.3,1),background .44s ease,color .44s ease,box-shadow .44s ease}',
+    '.mp-pin.on{color:#3d5b4f;border-color:rgba(62,104,86,.42);background:rgba(230,242,235,.92)}',
+    '.mp-pin.on:hover{background:#37564a;color:#f4f0e4;border-color:transparent}',
+    '.mp-pin.on .st{color:#f6f2e6;border-color:transparent;transform:rotate(-6deg) translateY(1px);',
+    'background:linear-gradient(155deg,#6b8578,#37564a);',
+    'box-shadow:0 5px 14px -7px rgba(24,54,44,.95),inset 0 0 0 1px rgba(255,255,255,.14)}',
+    /* 压住的凭据：右上角落一枚「定」印 */
+    '.mp-stamp{position:absolute;right:clamp(18px,3.4vw,50px);top:clamp(16px,3.2vh,36px);z-index:4;',
+    'width:37px;height:37px;border-radius:2px;display:grid;place-items:center;',
+    'font-family:var(--kai,serif);font-size:18px;color:#fff2e6;letter-spacing:0;',
+    'background:linear-gradient(150deg,#b23c2c,#8e1e13);',
+    'box-shadow:0 3px 10px -8px rgba(90,20,10,.9);',
+    'opacity:0;transform:rotate(5deg) scale(1.7);pointer-events:none;',
+    'transition:opacity .45s ease,transform .55s cubic-bezier(.2,1.3,.4,1)}',
+    '.mp-stamp::after{content:"";position:absolute;inset:3px;border-radius:1px;',
+    'border:1px solid rgba(255,232,214,.4)}',
+    '.mp.pinned .mp-stamp{opacity:.88;transform:rotate(5deg) scale(1)}',
+    /* 将卷未卷时的耳语 */
+    '.mp-holdhint{position:absolute;left:50%;z-index:5;white-space:nowrap;',
+    'bottom:calc(clamp(12px,2.2vh,22px) + 42px);',
+    'transform:translateX(-50%) translateY(5px);',
+    'display:flex;align-items:center;gap:9px;',
+    'font-family:var(--song,serif);font-size:11px;letter-spacing:.2em;',
+    'color:rgba(96,76,52,.8);opacity:0;pointer-events:none;',
+    'transition:opacity .9s ease,transform .9s ease}',
+    '.mp-holdhint.on{opacity:1;transform:translateX(-50%) translateY(0)}',
+    '.mp-holdhint i{width:15px;height:1px;background:rgba(120,96,60,.4);flex:none}',
+    /* 长诗一屏放不下时的手卷提示（只在手卷模式出现，几秒后自己淡掉） */
+    '.mp-swipe{position:absolute;left:50%;top:clamp(26px,5vh,54px);transform:translateX(-50%) translateY(-6px);',
+    'z-index:5;white-space:nowrap;font-family:var(--song,serif);font-size:11px;letter-spacing:.22em;',
+    'color:rgba(120,96,62,.62);opacity:0;pointer-events:none;transition:opacity .8s ease,transform .8s ease}',
+    '.mp-swipe.on{opacity:1;transform:translateX(-50%) translateY(0)}',
     /* 诗目 */
     '.mp-list{position:absolute;inset:0;z-index:8;display:none;',
     'background:#f7f0e2;overflow:auto;padding:clamp(30px,6vh,64px) clamp(18px,5vw,64px)}',
@@ -102,7 +146,8 @@ window.MaoPoemView = (function () {
     '.mp.recite{background:radial-gradient(122% 118% at 50% 36%,#c42012 0%,#a8130a 44%,#780c05 100%)}',
     '.mp.recite::before{opacity:.32;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.035) 0 1px,transparent 1px 5px)}',
     '.mp.recite::after{background:radial-gradient(118% 96% at 50% 44%,transparent 44%,rgba(52,3,0,.6) 100%)}',
-    '.mp.recite .mp-stage,.mp.recite .mp-meta,.mp.recite .mp-seal,.mp.recite .mp-bar{display:none}',
+    '.mp.recite .mp-stage,.mp.recite .mp-meta,.mp.recite .mp-seal,.mp.recite .mp-bar,',
+    '.mp.recite .mp-stamp,.mp.recite .mp-holdhint{display:none}',
     '.mp-rec{position:absolute;inset:0;z-index:4;display:none}',
     '.mp.recite .mp-rec{display:block}',
     /* 背景：整首竖排，读到哪列哪列亮 */
@@ -141,13 +186,20 @@ window.MaoPoemView = (function () {
     'opacity:0;transition:opacity .7s ease,transform .7s ease;pointer-events:none}',
     '.mp-rec-cta.on{opacity:1;transform:translate(-50%,0)}',
     '@media (max-width:767px){',
-    '.mp-stage{inset:clamp(18px,4vh,42px) 14px clamp(56px,10vh,86px)}',
-    '.mp-grid{grid-template-columns:1fr 1fr;gap:0 12px}',
+    /* 上下等距：诗幅落在屏幕正中（底部按钮浮在纸面之上，靠 seal/meta 让位即可） */
+    '.mp-stage{inset:clamp(50px,9.6vh,80px) 12px}',
+    '.mp-grid{display:block;columns:2;column-gap:13px}',
+    '.mp-grid .mp-it{width:100%;break-inside:avoid;page-break-inside:avoid}',
     '.mp-rec-tip{display:none}',
     '.mp-it{font-size:13.5px;padding:8px 2px}',
-    '.mp-seal{width:34px;height:34px;font-size:15px}',
-    '.mp-meta{font-size:10.5px;bottom:clamp(62px,12vh,96px)}',
+    '.mp-seal{width:34px;height:34px;font-size:15px;bottom:clamp(74px,11.6vh,102px)}',
+    '.mp-meta{font-size:10.5px;bottom:clamp(74px,11.6vh,102px)}',
     '.mp-b{padding:6px 12px;font-size:10.5px;letter-spacing:.1em}',
+    '.mp-bar{gap:6px;max-width:calc(100vw - 20px)}',
+    '.mp-b em.mp-n{display:none}',            /* 手机上一排五键，诗目只留二字 */
+    '.mp-pin{padding:4px 10px 4px 4px}',
+    '.mp-stamp{width:30px;height:30px;font-size:15px;right:14px;top:12px}',
+    '.mp-holdhint{font-size:9.5px;letter-spacing:.12em;bottom:calc(clamp(12px,2.2vh,22px) + 40px)}',
     '.mp-rec-title{font-size:11.5px;letter-spacing:.16em}',
     '.mp-rec-hint{font-size:10px;bottom:12px}',
     '.mp-rec-cta{font-size:12px;bottom:13%}',
@@ -155,6 +207,23 @@ window.MaoPoemView = (function () {
     '.mp-rec-col span{color:rgba(255,240,232,.075)}',
     '.mp-rec-col span.lit{color:rgba(255,248,242,.24)}',
     '.mp-rec-mid::before{background:linear-gradient(180deg,rgba(112,6,1,0) 12%,rgba(112,6,1,.62) 34%,rgba(112,6,1,.72) 50%,rgba(112,6,1,.62) 66%,rgba(112,6,1,0) 88%)}',
+    '}',
+    /* 手机横屏/矮屏：竖向空间紧张，上下留白收紧，底部给操作条让位 */
+    '@media (max-height:520px){',
+    '.mp-stage{inset:10px clamp(10px,3vw,40px) clamp(46px,12vh,64px)}',
+    '.mp-seal{width:30px;height:30px;font-size:14px;bottom:52px}',
+    '.mp-meta{bottom:52px;font-size:10px}',
+    '.mp-bar{bottom:8px}',
+    '}',
+    /* 极窄屏（≤359）：一排五键要挤进 320，收紧内距与字号 */
+    '@media (max-width:359px){',
+    '.mp-bar{gap:4px}',
+    '.mp-b{padding:5px 8px;font-size:10px;letter-spacing:.02em}',
+    '.mp-pin{padding:3px 8px 3px 3px;gap:5px}',
+    '.mp-pin .st{width:15px;height:21px;font-size:9.5px}',
+    '.mp-holdhint{font-size:8.5px;letter-spacing:.06em;gap:6px}',
+    '.mp-holdhint i{width:9px}',
+    '.mp-seal{width:28px;height:28px;font-size:12px}',
     '}'
   ].join('');
 
@@ -178,14 +247,20 @@ window.MaoPoemView = (function () {
       '<div class="mp-meta"></div>' +
       '<div class="mp-seal">毛</div>' +
       '<div class="mp-bar">' +
+      '<button class="mp-b mp-pin" data-act="pin" aria-pressed="false" ' +
+      'title="镇纸 · 压住这页，不让它自行卷起（再点一次掀起）">' +
+      '<span class="st">镇</span><span class="tx">镇纸</span></button>' +
       '<button class="mp-b mp-b-rec" data-act="recite">▶ 朗读</button>' +
-      '<button class="mp-b" data-act="list">诗目 · ' + DATA.length + ' 首</button>' +
+      '<button class="mp-b" data-act="list"><span>诗目</span><em class="mp-n"> · ' + DATA.length + ' 首</em></button>' +
       '<button class="mp-b" data-act="next">换一首</button>' +
       '<button class="mp-b" data-act="close">收起 ✕</button>' +
       '</div>' +
       '<div class="mp-list"><h3>毛泽东诗词</h3><p class="mp-sub">共 ' + DATA.length + ' 首 · 点篇名即可观看<span class="mp-remain"></span>' +
       (RECITES.length ? '<span class="mp-rec-tip"> · 带「朗读」的可听朗诵</span>' : '') + '</p>' +
       '<div class="mp-grid"></div></div>' +
+      '<div class="mp-stamp">定</div>' +
+      '<div class="mp-holdhint"><i></i>此页将自行卷起 · 以镇纸压住<i></i></div>' +
+      '<div class="mp-swipe">← 左右滑动 · 看全篇 →</div>' +
       /* 朗读层 */
       '<div class="mp-rec">' +
       '<div class="mp-rec-bg"><div class="mp-rec-cols"></div></div>' +
@@ -227,15 +302,20 @@ window.MaoPoemView = (function () {
     });
 
     el.querySelector('.mp-bar').addEventListener('click', function (e) {
-      var act = e.target.getAttribute('data-act');
+      // 按钮里有字有石，点到的可能是里层 span，往上找带 data-act 的那一层
+      var hit = e.target.closest ? e.target.closest('[data-act]') : e.target;
+      var act = hit && hit.getAttribute ? hit.getAttribute('data-act') : null;
       if (act === 'list') showList();
       else if (act === 'next') playRandom();
       else if (act === 'recite') reciteStart(cur >= 0 ? cur : 0);
+      else if (act === 'pin') togglePin();
       else if (act === 'close') close();
       e.stopPropagation();
     });
 
     el.addEventListener('click', function (e) {
+      // 刚才是拖着看的，不算「点空白关闭」
+      if (el.classList.contains('dragging')) return;
       // 诗目开着时，点击一律先收起诗目（不误触朗读跳过）
       if (listEl.classList.contains('on')) { hideList(); return; }
       // 朗读中：首次点击先开声音（自动播放被拦时），之后才是跳过看全文
@@ -244,9 +324,54 @@ window.MaoPoemView = (function () {
       if (e.target === el || e.target === stage || e.target === colsEl) close();
     });
 
+    /* 手卷时可用手指/鼠标横拖着看全篇（压不压镇纸都能拖） */
+    var dragFrom = null, dragPan0 = 0;
+    function dragStart(x) {
+      if (!scrollMode) return;
+      if (jumpAll) jumpAll();          // 先让全篇可见，再开始拖
+      dragFrom = x; dragPan0 = panX;
+    }
+    function dragMove(x, ev) {
+      if (dragFrom === null || !scrollMode) return;
+      var dx = x - dragFrom;
+      if (Math.abs(dx) > 6) { el.classList.add('dragging'); panLock = true; }
+      panTo(dragPan0 + dx, false);
+      if (ev && ev.cancelable) ev.preventDefault();
+    }
+    function dragEnd() {
+      if (dragFrom === null) return;
+      dragFrom = null;
+      setTimeout(function () { el.classList.remove('dragging'); }, 90);
+    }
+    stage.addEventListener('touchstart', function (e) {
+      if (e.touches.length === 1) dragStart(e.touches[0].clientX);
+    }, { passive: true });
+    stage.addEventListener('touchmove', function (e) {
+      if (e.touches.length === 1) dragMove(e.touches[0].clientX, e);
+    }, { passive: false });
+    stage.addEventListener('touchend', dragEnd);
+    stage.addEventListener('touchcancel', dragEnd);
+    /* 桌面：按住拖动 */
+    stage.addEventListener('mousedown', function (e) {
+      if (scrollMode && e.button === 0) { dragStart(e.clientX); e.preventDefault(); }
+    });
+    stage.addEventListener('mousemove', function (e) {
+      if (dragFrom !== null) dragMove(e.clientX, null);
+    });
+    window.addEventListener('mouseup', dragEnd);
+
     document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && el && el.classList.contains('on')) {
-        if (listEl.classList.contains('on')) hideList(); else close();
+      if (!el || !el.classList.contains('on')) return;
+      if (listEl.classList.contains('on')) {
+        if (e.key === 'Escape') hideList();
+        return;
+      }
+      if (e.key === 'Escape') { close(); return; }
+      if (recOn) return;
+      // 纸面上左右键 = 换一首（页面的翻帝王已经被让开了）
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        playRandom();
       }
     });
   }
@@ -268,6 +393,70 @@ window.MaoPoemView = (function () {
     cancelAnimationFrame(raf);
     timers.forEach(clearTimeout);
     timers = [];
+    clearTimeout(holdTimer); holdTimer = 0;
+    clearTimeout(fadeTimer); fadeTimer = 0;
+    showHoldHint(false);
+  }
+
+  /* ---------- 镇纸：压住纸面，取消自动卷起 ---------- */
+  function syncPin() {
+    if (!el) return;
+    var b = el.querySelector('.mp-pin');
+    if (b) {
+      b.classList.toggle('on', pinned);
+      b.setAttribute('aria-pressed', pinned ? 'true' : 'false');
+      var tx = b.querySelector('.tx');
+      if (tx) tx.textContent = pinned ? '已压住' : '镇纸';
+    }
+    el.classList.toggle('pinned', pinned);
+  }
+
+  function showHoldHint(on) {
+    var h = el && el.querySelector('.mp-holdhint');
+    if (!h) return;
+    if (on) h.classList.add('on'); else h.classList.remove('on');
+  }
+
+  /* 排一次「自行卷起」：默认行为，镇纸压着就不排 */
+  function scheduleFade(dwell, n) {
+    clearTimeout(holdTimer);
+    holdTimer = 0;
+    if (pinned || !el || !el.classList.contains('on') || el.classList.contains('recite')) return;
+    var hold = dwell ? Math.min(18000, 4200 + n * 110) : Math.min(6800, 2600 + n * 32);
+    showHoldHint(true);
+    holdTimer = setTimeout(startFade, hold);
+  }
+
+  function startFade() {
+    holdTimer = 0;
+    showHoldHint(false);
+    if (pinned || !el || !el.classList.contains('on') || el.classList.contains('recite')) return;
+    colsEl.classList.add('out');
+    metaEl.classList.remove('on');
+    el.querySelector('.mp-seal').classList.remove('on');
+    el.querySelector('.mp-bar').classList.remove('on');
+    clearTimeout(fadeTimer);
+    fadeTimer = setTimeout(function () { fadeTimer = 0; close(); }, 1200);
+  }
+
+  function togglePin() {
+    pinned = !pinned;
+    syncPin();
+    if (pinned) {
+      clearTimeout(holdTimer); holdTimer = 0;
+      showHoldHint(false);
+      // 正卷到一半时才按下：把纸头按回去，别让旧的关闭定时器把这一页收走
+      if (colsEl.classList.contains('out')) {
+        clearTimeout(fadeTimer); fadeTimer = 0;
+        cancelClose();
+        colsEl.classList.remove('out');
+        metaEl.classList.add('on');
+        el.querySelector('.mp-seal').classList.add('on');
+        el.querySelector('.mp-bar').classList.add('on');
+      }
+    } else if (rendered) {
+      scheduleFade(lastDwell, lastN);     // 掀起镇纸：重新开始倒计时
+    }
   }
 
   /* 关层是「淡出后再隐藏」，这里把那次延时撤掉；
@@ -318,20 +507,22 @@ window.MaoPoemView = (function () {
     var tf = 1.08;                                               // 题名略大于正文
     var wPer = (nC - nT) * fCol + nT * fCol * tf + (nC - 1) * fGap + bC * fBrk;
     var layoutW = availW * (mob ? 0.9 : 0.97);                   // 左右留白，免得顶到屏幕边
-    var s = Math.min(layoutW / wPer, availH / (maxLen * 1.06), availH / 6);
+    var s = Math.min(layoutW / wPer, availH / (maxLen * (availH < 420 ? 1.16 : 1.06)), availH / 6);
     s = Math.max(mob ? 11 : 16, Math.min(150, Math.floor(s)));
+
+    /* 兜底：按最小可读字号仍排不进一屏，才改成「手卷」——略放大，靠横向移卷看全 */
+    function spanW(fs) {
+      return (nC - nT) * fs * fCol + nT * fs * fCol * tf + (nC - 1) * fs * fGap + bC * fs * fBrk;
+    }
+    scrollMode = false;
+    if (spanW(s) > availW * 0.985) {
+      var mult = mob ? 2.0 : 1.7;
+      var s2 = Math.floor(Math.min(availH / (maxLen * (availH < 420 ? 1.16 : 1.06)), layoutW * mult / wPer, mob ? 34 : 120));
+      if (s2 > s) { s = s2; scrollMode = true; }
+    }
 
     /* 列少时把富余的横向空间匀进列距，免得整幅缩在中间发飘（最多用掉一半） */
     var ts = Math.min(s * tf, availH / (titleLen * 1.06));
-
-    /* 窄屏/小窗：一句一列会把字压到看不清，改用「手卷」——放大到约两屏宽，逐列自动移卷 */
-    scrollMode = false;
-    var minRead = mob ? 15 : 32;
-    if (s < minRead) {
-      var mult = mob ? 2.2 : 1.7;
-      var s2 = Math.floor(Math.min(availH / (maxLen * 1.06), layoutW * mult / wPer, mob ? 34 : 120));
-      if (s2 > s) { s = s2; scrollMode = true; ts = Math.min(s * tf, availH / (titleLen * 1.06)); }
-    }
     var colWSum = (nC - nT) * s * fCol + nT * ts * fCol + ts * (0.12 + 0.34 * Math.max(0, nT - 1));
     var brkK = fBrk * s;
     var slack = layoutW - (colWSum + (nC - 1) * s * fGap + bC * brkK);
@@ -373,6 +564,7 @@ window.MaoPoemView = (function () {
     colsEl.style.gap = gapPx.toFixed(1) + 'px';
 
     /* 手卷模式：整幅比屏宽，靠位移移卷，起首从右端看起 */
+    panLock = false;                       // 换一首：清掉上一首的手动位置
     if (scrollMode) {
       stage.style.flexDirection = 'column';
       stage.style.justifyContent = 'center';
@@ -397,7 +589,26 @@ window.MaoPoemView = (function () {
     }
 
     metaEl.textContent = poem.y;
+    requestAnimationFrame(placeSeal);
+
+    /* 手卷（一屏放不下）：给一句「左右滑动看全篇」的提示，几秒后自己淡掉 */
+    var sw = el.querySelector('.mp-swipe');
+    if (sw) {
+      sw.classList.toggle('on', !!scrollMode);
+      if (scrollMode) timers.push(setTimeout(function () { sw.classList.remove('on'); }, 4200));
+    }
     return seq;
+  }
+
+  /* 长题目（如「七绝·为李进同志题所摄庐山仙人洞照」）会把整幅撑满，
+     印章若还钉在原位就压在字上 —— 让它退到按钮条右侧的空档里 */
+  function placeSeal() {
+    if (!el || !colsEl) return;
+    var sealEl = el.querySelector('.mp-seal');
+    if (!sealEl) return;
+    el.classList.remove('seal-low');
+    var c = colsEl.getBoundingClientRect(), s = sealEl.getBoundingClientRect();
+    if (c.height && c.bottom > s.top - 8) el.classList.add('seal-low');
   }
 
   /* 位移到 x（px），限位在手卷两端之内 */
@@ -415,14 +626,14 @@ window.MaoPoemView = (function () {
     }
   }
 
-  /* 正在写的这一列将出左侧时，整幅右移，让已写的部分仍然留在屏上 */
+  /* 手卷：正在写的这一列若跑出屏幕任一侧，整幅移回来，让当前句始终看得见 */
   function maybePan(c) {
-    if (!scrollMode || !c) return;
+    if (!scrollMode || !c || panLock) return;
     var W = stage.clientWidth;
     var sr = stage.getBoundingClientRect(), r = c.getBoundingClientRect();
-    var left = r.left - sr.left;
-    if (left > W * 0.12) return;
-    panTo(panX + (W * 0.12 - left), true);
+    var left = r.left - sr.left, right = r.right - sr.left;
+    if (left < W * 0.12) { panTo(panX + (W * 0.12 - left), true); return; }
+    if (right > W * 0.9) { panTo(panX + (W * 0.9 - right), true); }
   }
 
   /* ============ 朗读模式：红底 · 中央逐句 · 背景同步全文 ============ */
@@ -713,6 +924,10 @@ window.MaoPoemView = (function () {
 
     var seq = render(DATA[i]);
     var n = seq.length;
+    rendered = false;
+    lastDwell = dwell || 0;
+    lastN = n;
+    syncPin();                        // 镇纸状态在这一层里延续：压着就一路不卷
     // 这一首若有朗读音频，操作条给出「朗读」入口
     var recBtn = el.querySelector('.mp-b-rec');
     if (recBtn) recBtn.style.display = reciteOf(DATA[i]) ? '' : 'none';
@@ -721,6 +936,16 @@ window.MaoPoemView = (function () {
     var step = Math.max(52, Math.min(130, 6300 / Math.max(1, n)));
     var k = 0;
 
+    function finishReveal() {
+      // 全篇显完：题款、印章、操作条依次浮出，停住让人看
+      metaEl.classList.add('on');
+      el.querySelector('.mp-seal').classList.add('on');
+      el.querySelector('.mp-bar').classList.add('on');
+      rendered = true;
+      // 朗读结束转过来的，多停留（整篇要读得完）；随手浏览的，短一些。
+      // 镇纸压着就不排——这一页等用户自己收起
+      scheduleFade(lastDwell || dwell, n);
+    }
     function tick() {
       if (k < n) {
         var idx = k++;
@@ -732,20 +957,15 @@ window.MaoPoemView = (function () {
         timers.push(setTimeout(tick, step));
         return;
       }
-      // 全篇显完：题款、印章、操作条依次浮出，停住让人看
-      metaEl.classList.add('on');
-      el.querySelector('.mp-seal').classList.add('on');
-      el.querySelector('.mp-bar').classList.add('on');
-      // 朗读结束转过来的，多停留（整篇要读得完）；随手浏览的，短一些
-      var hold = dwell ? Math.min(18000, 4200 + n * 110) : Math.min(6800, 2600 + n * 32);
-      timers.push(setTimeout(function () {
-        colsEl.classList.add('out');
-        metaEl.classList.remove('on');
-        el.querySelector('.mp-seal').classList.remove('on');
-        el.querySelector('.mp-bar').classList.remove('on');
-        timers.push(setTimeout(close, 1200));
-      }, hold));
+      finishReveal();
     }
+    /* 一动手拖就知道要看全貌：别等逐字写完，立刻把全篇摆出来 */
+    jumpAll = function () {
+      if (rendered) return;
+      clearRun();
+      for (; k < n; k++) seq[k].classList.add('on');
+      finishReveal();
+    };
     tick();
   }
 
@@ -799,6 +1019,9 @@ window.MaoPoemView = (function () {
     clearRun();
     clearRecite();
     cancelClose();
+    pinned = false;                   // 收起即掀镇纸，下次进来仍旧自动卷起
+    rendered = false;
+    syncPin();
     el.classList.remove('in');
     document.documentElement.style.overflow = '';
     closeTimer = setTimeout(function () {
